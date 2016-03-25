@@ -29,12 +29,12 @@ class LightArmMultitouchView extends View {
     private static final int SIZE = 150;
 
     class Arm {
-        public Socket socket;
+        //public Socket socket;
+        public ArrayList<Socket> sockets = new ArrayList<Socket>();
         public int id;
         PointF point;
 
-        public Arm(Socket s) {
-            socket = s;
+        public Arm() {
             point = new PointF();
             unassign();
         }
@@ -54,7 +54,7 @@ class LightArmMultitouchView extends View {
     }
 
     private Paint mPaint;
-    private int[] colors = { Color.BLUE, Color.GREEN, Color.MAGENTA,
+    private int[] colors = { Color.BLUE, Color.RED, Color.GREEN,
             Color.BLACK, Color.CYAN, Color.GRAY, Color.RED, Color.DKGRAY,
             Color.LTGRAY, Color.YELLOW };
 
@@ -64,12 +64,10 @@ class LightArmMultitouchView extends View {
     //private Socket socket = null;
     //private String SERVER_IP = "10.0.0.74";
 
-    private int SERVERPORT = 1337;
+    //private int SERVERPORT = 1337;
     //PrintWriter socketOut = null;
 
     //private String ips[] = {"192.168.0.159"};
-    private String ips[] = {"10.0.0.74", "10.0.0.72"};
-    //private Socket sockets[] = new Socket[ips.length];
 
     Thread socketThread;
 
@@ -87,27 +85,43 @@ class LightArmMultitouchView extends View {
 
     class ClientThread implements Runnable {
 
-        @Override
-        public void run() {
-
-            for(int i = 0; i < ips.length; i++) {
-            //for(int i = 0; i < 2; i++) {
-                try {
-                    InetAddress serverAddr = InetAddress.getByName(ips[i]);
-                    Socket socket = new Socket(serverAddr, SERVERPORT);
-                    writeToSocket(socket, "speed 40");
-                    mArms.add(new Arm(socket));
-
-                } catch (UnknownHostException e) {
-                    e.printStackTrace();
-                    response = "UnknownHostException: " + e.toString();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    response = "IOException: " + e.toString();
-                }
+        Socket makeSocket(String ip, int port) {
+            try {
+                InetAddress serverAddr = InetAddress.getByName(ip);
+                Socket socket = new Socket(serverAddr, port);
+                writeToSocket(socket, "speed 40");
+                return socket;
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+                response = "UnknownHostException: " + e.toString();
+            } catch (IOException e) {
+                e.printStackTrace();
+                response = "IOException: " + e.toString();
             }
+
+            return null;
         }
 
+        @Override
+        public void run() {
+            int port = 1337;
+            Arm arm;
+            Socket s;
+
+            arm = new Arm();
+            mArms.add(arm);
+            s = makeSocket("10.0.0.74", port);
+            if(s != null) arm.sockets.add(s);
+            s = makeSocket("10.0.0.72", port);
+            if(s != null) arm.sockets.add(s);
+
+            arm = new Arm();
+            mArms.add(arm);
+            s = makeSocket("10.0.0.71", port);
+            if(s != null) arm.sockets.add(s);
+            s = makeSocket("10.0.0.73", port);
+            if(s != null) arm.sockets.add(s);
+        }
     }
 
     public LightArmMultitouchView(Context context, AttributeSet attrs) {
@@ -127,12 +141,13 @@ class LightArmMultitouchView extends View {
         textPaint.setTextSize(20);
     }
 
-    int angleFromPixel(float px, int max) {
-        int lower = 200, upper = 824;
+    int angleFromPixel(float px, float max) {
+        //int lower = 200, upper = 824;
+        int lower = 200+200, upper = 824-200;
         int mid = (lower + upper) / 2;
         int halfrange = mid - lower;
 
-        int angle = (int)(mid + 2*halfrange * (px/(float)max - .5));
+        int angle = (int)(mid + 2*halfrange * -(px/max - .5));
         if(angle < lower) angle = lower;
         if(angle > upper) angle = upper;
         return angle;
@@ -143,12 +158,26 @@ class LightArmMultitouchView extends View {
 
         float pxBase = arm.point.x;
         float pxWrist = arm.point.y;
+        float maxWidth = getWidth();
+        float maxHeight = getHeight();
 
-        int angleBase = angleFromPixel(pxBase, getWidth());
-        int angleWrist = angleFromPixel(pxWrist, getHeight());
+        int angleBase = angleFromPixel(pxBase, maxWidth);
+        int angleWrist = angleFromPixel(pxWrist, maxHeight);
+
+        // calculate intensity
+        double offsetX = Math.abs((pxBase/maxWidth - .5));
+        double offsetY = Math.abs((pxWrist/maxHeight - .5));
+        //double mag = Math.sqrt(offsetX*offsetX + offsetY*offsetY);
+        double mag = Math.max(offsetX, offsetY);
+
+        //int intensity = 10;
+        int intensity = (int)Math.floor(255 * .25 * (.5/mag - 1));
+        if(intensity > 255) intensity = 255;
+        if(intensity < 10) intensity = 10;
 
         String cmd = "s 1:" + angleBase + " 2:" + angleWrist;
-        writeToSocket(arm.socket, cmd);
+        cmd += "\npwm " + intensity;
+        for(Socket s: arm.sockets) writeToSocket(s, cmd);
     }
 
     @Override
@@ -172,9 +201,9 @@ class LightArmMultitouchView extends View {
 
                 // find unassigned arm
                 for(int i = 0; i < mArms.size(); i++) {
-                  arm = mArms.get(i);
-                  if(arm.assigned()) arm = null;
-                  else break;
+                    arm = mArms.get(i);
+                    if(arm.assigned()) arm = null;
+                    else break;
                 }
 
                 if(arm != null)  {
@@ -238,11 +267,10 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
