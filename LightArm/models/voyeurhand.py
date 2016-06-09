@@ -10,15 +10,15 @@ print('connecting to', server_address)
 #sock.connect(server_address)
 
 def handler(scene):
-  rad_to_deg = 180.0/3.14159
+  rad_to_deg = 180.0/math.pi
   up = bpy.data.objects['arm.004'].pose.bones['base']
   fo = bpy.data.objects['arm.004'].pose.bones['forearm.001']
 
   up_q = up.matrix.to_quaternion()
   fo_q = fo.matrix.to_quaternion()
   fo_q.rotate(up.matrix)
-  up_a = up_q.to_euler().x * rad_to_deg + 90
-  fo_a = fo_q.to_euler().z * rad_to_deg
+  up_a = up_q.to_euler().x * rad_to_deg + 180
+  fo_a = (fo_q.to_euler().z * rad_to_deg + 90) % 180
   #up_a = 0 if up_a < 0 else up_a
   print([up_a, fo_a])
   return
