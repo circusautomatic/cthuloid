@@ -10,6 +10,8 @@ print('connecting to', server_address)
 #sock.connect(server_address)
 
 def handler(scene):
+  pwm = 200
+
   rad_to_deg = 180.0/math.pi
   up = bpy.data.objects['arm.004'].pose.bones['base']
   fo = bpy.data.objects['arm.004'].pose.bones['forearm.001']
@@ -20,10 +22,10 @@ def handler(scene):
   up_a = up_q.to_euler().x * rad_to_deg + 180
   fo_a = (fo_q.to_euler().z * rad_to_deg + 90) % 180
   #up_a = 0 if up_a < 0 else up_a
-  print([up_a, fo_a])
-  return
+  angles = [up_a, fo_a]
+  #print(angles)
 
-  upperarm = bpy.data.objects['arm.004'].pose.bones["base"]
+  '''upperarm = bpy.data.objects['arm.004'].pose.bones["base"]
   forearm = bpy.data.objects['arm.004'].pose.bones["forearm.001"]
   
   upperarm_angles = upperarm.matrix.to_euler()
@@ -48,21 +50,21 @@ def handler(scene):
   #angles[1] = arm.pose.bones[1].rotation_quaternion.to_euler()[1]
   
   angles = [x * 600/math.pi + 512 for x in angles]
-
+'''
   baseID = 1
   s = 's '
-  for i in range(2):
+  for i in range(len(angles)):
     s += str(i+baseID) + ':' + str(angles[i]) + ' '
 
-  #s += '\npwm ' + str(pwm) + '\n'
+  s += '\npwm ' + str(pwm) + '\n'
   print(s)
   
-  try:
-    sock.sendall(s)
-    print(s.replace('\n', '/'))
-  except:
-    print('socket error sending')
-    bpy.app.handlers.frame_change_post.remove(handler)
+  #try:
+  sock.sendall(bytes(s, 'UTF-8'))
+  #print(s.replace('\n', '/'))
+  #except :
+  #  print('socket error sending')
+  #  bpy.app.handlers.frame_change_post.remove(handler)
 
 
 bpy.app.handlers.frame_change_post.clear()
