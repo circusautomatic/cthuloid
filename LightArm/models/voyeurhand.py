@@ -1,13 +1,10 @@
 import bpy, socket, math
 
 # Create a TCP/IP socket
+server_address = ('10.0.0.74', 1337)
+#server_address = ('127.0.0.1', 10001)
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-# Connect the socket to the port where the server is listening
-#server_address = ('10.0.0.73', 1337)
-server_address = ('127.0.0.1', 20002)
-print('connecting to', server_address)
-#sock.connect(server_address)
+sock.settimeout(2.0)
 
 def handler(scene):
   pwm = 200
@@ -54,7 +51,8 @@ def handler(scene):
   baseID = 1
   s = 's '
   for i in range(len(angles)):
-    s += str(i+baseID) + ':' + str(angles[i]) + ' '
+    angle = (angles[i] - 90) * 600.0/180 + 512
+    s += str(i+baseID) + ':' + str(int(round(angle))) + ' '
 
   s += '\npwm ' + str(pwm) + '\n'
   print(s)
@@ -66,6 +64,15 @@ def handler(scene):
   #  print('socket error sending')
   #  bpy.app.handlers.frame_change_post.remove(handler)
 
+try:
+    print('connecting to', server_address)
+    sock.connect(server_address)
+    sock.sendall(b'speed 50\n')
 
-bpy.app.handlers.frame_change_post.clear()
-bpy.app.handlers.frame_change_post.append(handler)
+    bpy.app.handlers.frame_change_post.clear()
+    bpy.app.handlers.frame_change_post.append(handler)
+
+    print('connected?')
+except socket.timeout:
+    print('error: connected timed out')
+
