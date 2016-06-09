@@ -1,13 +1,19 @@
 import bpy, socket, math
 
 # Create a TCP/IP socket
-server_address = ('10.0.0.74', 1337)
+server_address = ('10.0.0.77', 1337)
 #server_address = ('127.0.0.1', 10001)
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.settimeout(2.0)
 
 def handler(scene):
-  pwm = 200
+  pwmScale 
+  pwm = 10
+  baseID = 1
+  angles = []
+  
+  pwm = bpy.data.objects['Point'].data.energy
+  pwm = int(round(abs(pwm) / 100.0 * 255))
 
   rad_to_deg = 180.0/math.pi
   up = bpy.data.objects['arm.004'].pose.bones['base']
@@ -48,7 +54,6 @@ def handler(scene):
   
   angles = [x * 600/math.pi + 512 for x in angles]
 '''
-  baseID = 1
   s = 's '
   for i in range(len(angles)):
     angle = (angles[i] - 90) * 600.0/180 + 512
