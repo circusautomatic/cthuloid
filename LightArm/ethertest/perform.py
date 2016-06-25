@@ -41,25 +41,27 @@ class SocketThread (threading.Thread):
   def run(self):
     PWM_fade_interval = .03
 
-    if self.dimming:
-      print('fading on  ', address)
-      pwm = PWMhigh
-      while pwm > PWMlow and not gShouldExit: 
-        sendPWM(self.socket, pwm)
-        time.sleep(PWM_fade_interval)
-        interval = calcStepSize(pwm)
-        pwm -= interval
-    else:
-      print('fading off ', address)
-      pwm = PWMlow
-      while pwm < PWMhigh and not gShouldExit: 
-        sendPWM(self.socket, pwm)
-        time.sleep(PWM_fade_interval)
-        interval = calcStepSize(pwm)
-        pwm += interval
+    try:
+      if self.dimming:
+        print('fading off  ', self.address)
+        pwm = PWMhigh
+        while pwm > PWMlow and not gShouldExit: 
+          sendPWM(self.socket, pwm)
+          time.sleep(PWM_fade_interval)
+          interval = calcStepSize(pwm)
+          pwm -= interval
+      else:
+        print('fading on ', self.address)
+        pwm = PWMlow
+        while pwm < PWMhigh and not gShouldExit: 
+          sendPWM(self.socket, pwm)
+          time.sleep(PWM_fade_interval)
+          interval = calcStepSize(pwm)
+          pwm += interval
  
-    print('finished ', address)
-
+      print('finished ', self.address)
+    except:
+      print('failed ', self.address)
 
 """def signal_handler(signal, frame):
   print('\nexiting...')
@@ -76,11 +78,14 @@ for address in addresses:
   sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   sock.settimeout(2.0)
   #sock.setblocking(0)
+  #try:
   sock.connect((address, port))
   print('connected to ', address)
+  sendPWM(sock, PWMlow)
+  #except:
+  #  print('error on ', address)
   sockets.append(sock)
-  sendPWM(sock, PWMhigh)
-  on.append(True)
+  on.append(False)
 
 # 'on' list contains the opposite of the bool we send to SocketThread, so call SocketThread first and then flip
 def toggleFade(index):
