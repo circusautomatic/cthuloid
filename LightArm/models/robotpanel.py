@@ -1,7 +1,8 @@
 import bpy, socket, math, ast
 
 ARM_NAME_PREFIX = 'arm.'
-LIGHT_PWM_MAX = 255
+LIGHT_NAME_PREFIX = 'light.'
+LIGHT_PWM_MAX = 65535
 LIGHT_LUM_MAX = 1.0
 
 # map from IP address to socket
@@ -68,20 +69,28 @@ def robot_anim_handler(scene):
   baseID = 1
   
   # find light arm objects
-  for arm in bpy.data.objects:
-    if not arm.name.startswith(ARM_NAME_PREFIX): continue
-    
-    ip = arm.name[len(ARM_NAME_PREFIX):]
+  for o in bpy.data.objects:
+    if o.name.startswith(ARM_NAME_PREFIX):
+      ip = o.name[len(ARM_NAME_PREFIX):]
+      pwm = pwmFromLuminosity(getLamp(arm).data.energy)
+      angles = getAngles(arm)
 
-    pwm = pwmFromLuminosity(getLamp(arm).data.energy)
-    angles = getAngles(arm)
+      # assemble command string
+      s = 's '
+      for i in range(len(angles)):
+       s += str(i+baseID) + ':' + str(angles[i]) + ' '
 
-    # assemble command string
-    s = 's '
-    for i in range(len(angles)):
-      s += str(i+baseID) + ':' + str(angles[i]) + ' '
+      s += '\npwm ' + str(pwm) + '\n'
 
-    s += '\npwm ' + str(pwm) + '\n'
+    elif o.name.startswith(LIGHT_NAME_PREFIX):
+      ip = o.name[len(LIGHT_NAME_PREFIX):]
+      pwm = pwmFromLuminosity(o.data.energy)
+      
+      # assemble command string
+      s = 'pwm ' + str(pwm) + '\n'
+
+    else: continue
+      
     print(s)
     
     try:
@@ -152,7 +161,7 @@ class RobotPanel(bpy.types.Panel):
  
     def draw(self, context):
       self.layout.operator("circus.saver", text='Save Robot Positions')
-      self.layout.operator("circus.loader", text='Load Robot Positions')
+      #self.layout.operator("circus.loader", text='Load Robot Positions')
 
 class CircusSaver(bpy.types.Operator):
     """Export Robot Data"""
