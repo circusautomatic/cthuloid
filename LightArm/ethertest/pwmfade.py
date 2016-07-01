@@ -13,16 +13,16 @@ try:
   sock.connect(server_address)
 
   print('connected?')
-  maxpwm = 20
+  maxpwm = 5535
   i = maxpwm
   while True:
-    s = 'pwm ' + str(abs(i)) + '\n'
+    s = 'pwm ' + str(60000 + abs(i)) + '\n'
     print(s)
     sock.sendall(bytes(s, 'UTF-8'))
 
-    i -= 1
+    i -= 10
     if i <= -maxpwm: i = maxpwm
-    time.sleep(.5)
+    time.sleep(.05)
 
 except socket.timeout:
     print('error: connected timed out')
