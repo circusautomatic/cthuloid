@@ -1,12 +1,21 @@
-import bpy, socket, math, ast
+import bpy, socket, math, ast, threading, queue
+from enum import Enum
 
 ARM_NAME_PREFIX = 'arm.'
 LIGHT_NAME_PREFIX = 'light.'
 LIGHT_PWM_MAX = 65535
 LIGHT_LUM_MAX = 1.0
 
-# map from IP address to socket
+ConnState = Enum('ConnState', 'none connecting connected')
+class Connection:
+  def __init__(self, socket, state=ConnState.none):
+    self.socket = socket
+    self.state = state
+
+# map from IP address to Connection
 sockets = {}
+# ip addresses to be connected to and added to sockets dict
+sockets_queue = queue.Queue()
 
 # connect to address and store socket in persistent global map
 def connect_socket(ip, port = 1337):
@@ -15,15 +24,36 @@ def connect_socket(ip, port = 1337):
   sock.settimeout(1.0)
   
   print('connecting to', server_address)
+  sockets[ip].state = ConnState.connecting
   try:
     sock.connect(server_address)
     print('connected to', server_address)
     sock.sendall(b'speed 50\n')
-    sockets[ip] = sock
+    sockets[ip].socket = sock
+    sockets[ip].state = ConnState.connected
     return sock
 
   except socket.timeout:
-    print('error: connected timed out')
+    print('error: connection timed out on', ip)
+
+class SocketThread(threading.Thread):
+  def __init__(self, name):
+    self.shouldExit = False
+    threading.Thread.__init__(self, name=name, daemon=True)
+    self.start()
+
+  def run(self):
+    while True:
+      if self.shouldExit: return
+  
+      ip = sockets_queue.get()
+      if sockets[ip].state != ConnState.connected:
+        connect_socket(ip)
+      else:
+        print('skipping', ip)
+      sockets_queue.task_done()
+      
+socket_thread = SocketThread('st')
 
 # find the LAMP attached to this arm  
 def getLamp(arm):
@@ -58,11 +88,24 @@ def getAngles(arm):
   up_a = up_q.to_euler().x * rad_to_deg + 180
   fo_a = (fo_q.to_euler().z * rad_to_deg + 90) % 180
   #up_a = 0 if up_a < 0 else up_a
+  print(fo_q.to_euler(), fo_q)
+  #print(up_q.to_euler(), up_q)
 
   # convert to dynamixel units
   angles = [dynamixel_from_degrees(a) for a in [up_a, fo_a]]
   #print(angles)
   return angles
+
+  '''upperarm_angles = upperarm.matrix.to_euler()
+  forearm_angles = (upperarm.matrix.inverted() * forearm.matrix).to_euler()
+  print('upperarm angles:', upperarm_angles)
+  print('forearm angles: ', forearm_angles)
+  s
+  #angles[0] = arm.pose.bones[0].rotation_quaternion.to_euler()[0]
+  #angles[1] = arm.pose.bones[1].rotation_quaternion.to_euler()[1]
+  
+  angles = [x * 600/math.pi + 512 for x in angles]
+'''
 
 def robot_anim_handler(scene):
   # TODO alter serial protocol to use negative IDs
@@ -72,13 +115,13 @@ def robot_anim_handler(scene):
   for o in bpy.data.objects:
     if o.name.startswith(ARM_NAME_PREFIX):
       ip = o.name[len(ARM_NAME_PREFIX):]
-      pwm = pwmFromLuminosity(getLamp(arm).data.energy)
-      angles = getAngles(arm)
+      pwm = pwmFromLuminosity(getLamp(o).data.energy)
+      angles = getAngles(o)
 
       # assemble command string
-      s = 's '
+      s = 's'
       for i in range(len(angles)):
-       s += str(i+baseID) + ':' + str(angles[i]) + ' '
+        s += ' ' + str(i+baseID) + ':' + str(angles[i])
 
       s += '\npwm ' + str(pwm) + '\n'
 
@@ -88,36 +131,28 @@ def robot_anim_handler(scene):
       
       # assemble command string
       s = 'pwm ' + str(pwm) + '\n'
-
+      
     else: continue
       
-    print(s)
+    #print(s.replace('\n', '_'))
+    conn = None
     
+    # if this is the first time trying to talk to this device, create an entry
+    # and 
     try:
-      socket = sockets[ip]
+      conn = sockets[ip]
     except KeyError:
-      socket = connect_socket(ip)
+      print('not connected; queueing', ip)
+      sockets[ip] = Connection(None)
+      sockets_queue.put(ip)
     
-    if socket: #try:
-      socket.sendall(bytes(s, 'UTF-8'))
-    #print(s.replace('\n', '/'))
-    #except :
-    #  print('socket error sending')
-    #  bpy.app.handlers.frame_change_post.remove(handler)
-
-  '''upperarm = bpy.data.objects['arm.004'].pose.bones["base"]
-  forearm = bpy.data.objects['arm.004'].pose.bones["forearm.001"]
-  
-  upperarm_angles = upperarm.matrix.to_euler()
-  forearm_angles = (upperarm.matrix.inverted() * forearm.matrix).to_euler()
-  print('upperarm angles:', upperarm_angles)
-  print('forearm angles: ', forearm_angles)
-  
-  #angles[0] = arm.pose.bones[0].rotation_quaternion.to_euler()[0]
-  #angles[1] = arm.pose.bones[1].rotation_quaternion.to_euler()[1]
-  
-  angles = [x * 600/math.pi + 512 for x in angles]
-'''
+    if conn and conn.state == ConnState.connected:
+      try:
+        conn.socket.sendall(bytes(s, 'UTF-8'))
+      except (socket.timeout, BrokenPipeError, ConnectionResetError) as e:
+        print('lost connection; queueing', ip)
+        conn.state = ConnState.none
+        sockets_queue.put(ip)
 
 def saveToFile(filepath):
   with open(filepath, 'w') as f:
