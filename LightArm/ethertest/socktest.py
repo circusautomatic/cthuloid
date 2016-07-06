@@ -2,7 +2,7 @@ import socket, os, errno, select, threading, time, random
 import signal, sys
 
 starting_port = 10001
-num_sockets = 5
+num_sockets = 2
 timeout = 100
 sockets = [] 
 
@@ -10,8 +10,8 @@ for port in range(starting_port, starting_port + num_sockets):
   sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   sock.setblocking(0)
   err = sock.connect_ex(('localhost', port))
-  if err != errno.EINPROGRESS:
-    pass
+  #if err != errno.EINPROGRESS:
+  #  pass
   print errno.errorcode[err], os.strerror(err)
   sockets.append(sock)
 
@@ -62,8 +62,8 @@ while not S.shouldExit:
   time.sleep(1)
   i = random.randint(0, len(sockets)-1)
   #for i in range(0, len(sockets)):
-  try:
-    sockets[i].send('r' + str(i))
-  except socket.error:
-    print 'error writing to socket' # and recreate connection periodically
+  #try:
+  sockets[i].send('r' + str(i))
+  #except socket.error:
+    #print 'error writing to socket' # and recreate connection periodically
 

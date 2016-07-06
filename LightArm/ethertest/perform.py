@@ -2,7 +2,7 @@ import socket, os, errno, select, threading, time, random
 import signal, sys
 from console import getch
 
-addresses = ["10.0.0.71", "10.0.0.72", "10.0.0.74"]
+addresses = ["10.0.0.77", "10.0.0.72", "10.0.0.69"]
 port = 1337
 timeout = 100
 socketThreads = [] 
@@ -15,14 +15,13 @@ def sendPWM(sock, pwm):
   #self.socket.send(cmd)
   sock.sendall(bytes(cmd, 'UTF-8'))
 
-PWMlow = 5
-PWMhigh = 200
+PWMlow = 200
+PWMhigh = 65535
 
 def calcStepSize(x):
-  if x < 32: return 1
-  elif x < 64: return 2
-  elif x < 128: return 3
-  else: return 4
+  if x < 1000: return 10
+  elif x < 6000: return 50
+  else: return 1000
 
 class SocketThread (threading.Thread):
   def __init__(self, socket, address, dimming):
@@ -98,7 +97,8 @@ while True:
   print(c)
   if c == '\x1b': sys.exit()
   if c == '1': toggleFade(0)
-  if c == '2': toggleFade(1); toggleFade(2)
+  if c == '2': toggleFade(1)
+  if c == '3': toggleFade(2)
 #while not gShouldExit:
 #    time.sleep(.2)
     
