@@ -84,12 +84,11 @@ def getAngles(arm):
 
   up_q = up.matrix.to_quaternion()
   fo_q = fo.matrix.to_quaternion()
-  fo_q.rotate(up.matrix)
+  fo_q.rotate(up_q.inverted())
   up_a = up_q.to_euler().x * rad_to_deg + 180
-  fo_a = (fo_q.to_euler().z * rad_to_deg + 90) % 180
+  fo_a = fo_q.to_euler().z * rad_to_deg + 90
   #up_a = 0 if up_a < 0 else up_a
-  print(fo_q.to_euler(), fo_q)
-  #print(up_q.to_euler(), up_q)
+  print(fo_q.to_euler(), fo_a)
 
   # convert to dynamixel units
   angles = [dynamixel_from_degrees(a) for a in [up_a, fo_a]]
