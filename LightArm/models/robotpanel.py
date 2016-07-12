@@ -85,10 +85,12 @@ def getAngles(arm):
   up_q = up.matrix.to_quaternion()
   fo_q = fo.matrix.to_quaternion()
   fo_q.rotate(up_q.inverted())
-  up_a = up_q.to_euler().x * rad_to_deg + 180
+  
+  # TODO get local orientation somehow instead of adding 180 and 90
+  up_a = up.matrix.to_euler().x * rad_to_deg + 180
   fo_a = fo_q.to_euler().z * rad_to_deg + 90
   #up_a = 0 if up_a < 0 else up_a
-  print(fo_q.to_euler(), fo_a)
+  #print(fo_q.to_euler(), fo_a)
 
   # convert to dynamixel units
   angles = [dynamixel_from_degrees(a) for a in [up_a, fo_a]]
@@ -133,7 +135,7 @@ def robot_anim_handler(scene):
       
     else: continue
       
-    #print(s.replace('\n', '_'))
+    print(s.replace('\n', '_'))
     conn = None
     
     # if this is the first time trying to talk to this device, create an entry
