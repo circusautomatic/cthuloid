@@ -2,6 +2,7 @@ import bpy, socket, math, ast, threading, queue
 from enum import Enum
 
 ARM_NAME_PREFIX = 'arm.'
+GIMBAL_NAME_PREFIX = 'garm.'
 LIGHT_NAME_PREFIX = 'light.'
 LIGHT_PWM_MAX = 65535
 LIGHT_LUM_MAX = 1.0
@@ -35,6 +36,8 @@ def connect_socket(ip, port = 1337):
 
   except socket.timeout:
     print('error: connection timed out on', ip)
+  except OSError:
+    print('error: network error reaching', ip)
 
 class SocketThread(threading.Thread):
   def __init__(self, name):
@@ -56,7 +59,7 @@ class SocketThread(threading.Thread):
 socket_thread = SocketThread('st')
 
 # find the LAMP attached to this arm  
-def getLamp(arm):
+def findLamp(arm):
   for child in arm.children:
     if child.type == 'LAMP':
       return child
@@ -70,13 +73,33 @@ def luminosityFromPWM(pwm):
     lum = pwm * LIGHT_LUM_MAX / LIGHT_PWM_MAX
     return lum
 
+def dynamixel_from_degrees(angle):
+  return int(round((angle - 90) * 600.0/180 + 512))
+
+def getGimbalAngles(gimbal):
+  # convert to degrees because they are easier to debug
+  rad_to_deg = 180.0/math.pi
+  up = gimbal.pose.bones['base']
+  fo = gimbal.pose.bones['forearm']
+
+  up_q = up.matrix.to_quaternion()
+  fo_q = fo.matrix.to_quaternion()
+  fo_q.rotate(up_q.inverted())
+  
+  # TODO to_euler flips to positive when < -169 degrees
+  # TODO convert up_a to dynamixel continuous rotation units...
+  up_a = up_q.to_euler().z * rad_to_deg + 180
+  fo_a = fo_q.to_euler().z * rad_to_deg + 90
+  #print(up_a, fo_a)
+
+  # convert to dynamixel units
+  angles = [dynamixel_from_degrees(a) for a in [up_a, fo_a]]
+  print(angles)
+  return angles
+
 # returns a list of arm angles, starting from the base
 # units are dynamixel units [200, 824]
-def getAngles(arm):
-    
-  def dynamixel_from_degrees(angle):
-    return int(round((angle - 90) * 600.0/180 + 512))
-    
+def getArmAngles(arm):    
   # convert to degrees because they are easier to debug
   rad_to_deg = 180.0/math.pi
   up = arm.pose.bones['base']
@@ -108,23 +131,34 @@ def getAngles(arm):
   angles = [x * 600/math.pi + 512 for x in angles]
 '''
 
-def robot_anim_handler(scene):
-  # TODO alter serial protocol to use negative IDs
+def assembleLightServoString(angles, pwm):
   baseID = 1
+  s = 's'
   
+  for i in range(len(angles)):
+    s += ' ' + str(i+baseID) + ':' + str(angles[i])
+
+  s += '\npwm ' + str(pwm) + '\n'
+  return s
+
+def robot_anim_handler(scene):
   # find light arm objects
   for o in bpy.data.objects:
     if o.name.startswith(ARM_NAME_PREFIX):
       ip = o.name[len(ARM_NAME_PREFIX):]
-      pwm = pwmFromLuminosity(getLamp(o).data.energy)
-      angles = getAngles(o)
+      pwm = pwmFromLuminosity(findLamp(o).data.energy)
+      angles = getArmAngles(o)
 
       # assemble command string
-      s = 's'
-      for i in range(len(angles)):
-        s += ' ' + str(i+baseID) + ':' + str(angles[i])
+      s = assembleLightServoString(angles, pwm)
+      
+    elif o.name.startswith(GIMBAL_NAME_PREFIX):
+      ip = o.name[len(GIMBAL_NAME_PREFIX):]
+      pwm = pwmFromLuminosity(findLamp(o).data.energy)
+      angles = getGimbalAngles(o)
 
-      s += '\npwm ' + str(pwm) + '\n'
+      # assemble command string
+      s = assembleLightServoString(angles, pwm)
 
     elif o.name.startswith(LIGHT_NAME_PREFIX):
       ip = o.name[len(LIGHT_NAME_PREFIX):]
@@ -164,7 +198,7 @@ def saveToFile(filepath):
       
       ip = arm.name[len(ARM_NAME_PREFIX):]
       angles = getAngles(arm)
-      light = pwmFromLuminosity(getLamp(arm).data.energy)
+      light = pwmFromLuminosity(findLamp(arm).data.energy)
       
       dict = {'angles': angles, 'light': light}
       arms[ip] = dict
@@ -183,7 +217,7 @@ def loadFromFile(filepath):
       arm = bpy.data.objects[name]
       
       pwm = data['light']
-      getLamp(arm).data.energy = luminosityFromPWM(pwm)
+      findLamp(arm).data.energy = luminosityFromPWM(pwm)
   
       angles = data['angles']
       # TODO_set angles
