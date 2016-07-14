@@ -73,8 +73,12 @@ def luminosityFromPWM(pwm):
     lum = pwm * LIGHT_LUM_MAX / LIGHT_PWM_MAX
     return lum
 
+# expects [-90, 90]
+#  return int(round(angle * 600.0/180 + 512))
+
+# expects [-135, +135]
 def dynamixel_from_degrees(angle):
-  return int(round((angle - 90) * 600.0/180 + 512))
+  return int(round(angle * 1024.0/300 + 512))
 
 def getGimbalAngles(gimbal):
   # convert to degrees because they are easier to debug
@@ -88,13 +92,13 @@ def getGimbalAngles(gimbal):
   
   # TODO to_euler flips to positive when < -169 degrees
   # TODO convert up_a to dynamixel continuous rotation units...
-  up_a = up_q.to_euler().z * rad_to_deg + 180
-  fo_a = fo_q.to_euler().z * rad_to_deg + 90
+  up_a = up_q.to_euler().z * rad_to_deg - 45
+  fo_a = fo_q.to_euler().z * rad_to_deg
   #print(up_a, fo_a)
 
   # convert to dynamixel units
   angles = [dynamixel_from_degrees(a) for a in [up_a, fo_a]]
-  print(angles)
+  #print(angles)
   return angles
 
 # returns a list of arm angles, starting from the base
@@ -110,8 +114,8 @@ def getArmAngles(arm):
   fo_q.rotate(up_q.inverted())
   
   # TODO get local orientation somehow instead of adding 180 and 90
-  up_a = up.matrix.to_euler().x * rad_to_deg + 180
-  fo_a = fo_q.to_euler().z * rad_to_deg + 90
+  up_a = up.matrix.to_euler().x * rad_to_deg + 90
+  fo_a = fo_q.to_euler().z * rad_to_deg
   #up_a = 0 if up_a < 0 else up_a
   #print(fo_q.to_euler(), fo_a)
 
