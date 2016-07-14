@@ -1,0 +1,12 @@
+# These rules should work on newer udev architecture as well as the older one.
+# Basically they watch for all "usb" subsystem add/change events, that occur
+# for devices with VID==0403 and PID==6001 (meaning FTDI-based devices), and
+# set their device nodes' permissions so that ALL users can read and write to
+# them. The devices nodes are found under /dev/bus/usb/xxx/yyy.
+
+ACTION=="add|change", ATTRS{interface}=="DMX USB PRO", MODE="0666", SYMLINK="dmxusb"
+
+ACTION=="add|change", SUBSYSTEM=="tty", ATTRS{serial}=="8543632343135131C0A1", MODE="0666", SYMLINK="led"
+
+ACTION=="add|change", SUBSYSTEM=="tty", ATTRS{product}=="FT232R USB UART", MODE="0666", SYMLINK="arbotix"
+

@@ -1,0 +1,32 @@
+Cardboard robot.
+Uses Adafruit Servo Shield to run servos.
+Python is used to talk to the Arduino over serial.
+Shows are built using Blender.
+
+Getting Hello World working:
+1. Upload the Arduino code.
+2. Open the Serial Monitor. If you don't establish a connection before sending Python commands it won't work.
+3. Open a terminal and change to the python directory, then run this command:
+4. python 180.py
+This should rotate up to 9 servos back and forth.
+
+Reading from a file:
+Follow steps 1-3.
+Instead of 180.py, run:
+python testshow.py
+This should run the comma separate list of data in the testdata file.
+
+Changing the number of servos:
+If you change the number of servos coming from Python to the Arduino, you must change the BUFSIZE in the Arduino code.
+
+How it works:
+The Python sends a control byte of 255 followed by n bytes, each of which represents a servo rotation between 0-180.
+The Arduino collects all n bytes, then it updates all servos at once.
+The next byte should be another control byte of 255.
+The reason for the control byte is that if you stop sending data, then reestablish connection, you need a way of telling the Arduino to start over the frame, so you don't end up adding data in the middle of a frame.
+
+credits : 
+
+Jacob Fenwick
+Fleeky Flanco
+Francesco Capodieci
