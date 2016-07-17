@@ -1,5 +1,6 @@
 import bpy, socket, math, ast, threading, queue
 from enum import Enum
+from mathutils import *
 
 ARM_NAME_PREFIX = 'arm.'
 GIMBAL_NAME_PREFIX = 'garm.'
@@ -73,31 +74,31 @@ def luminosityFromPWM(pwm):
     lum = pwm * LIGHT_LUM_MAX / LIGHT_PWM_MAX
     return lum
 
-# expects [-90, 90]
-#  return int(round(angle * 600.0/180 + 512))
-
 # expects [-135, +135]
 def dynamixel_from_degrees(angle):
+#  return int(round(angle * 600.0/180 + 512))
   return int(round(angle * 1024.0/300 + 512))
 
-def getGimbalAngles(gimbal):
-  # convert to degrees because they are easier to debug
-  rad_to_deg = 180.0/math.pi
-  up = gimbal.pose.bones['base']
-  fo = gimbal.pose.bones['forearm']
-
-  up_q = up.matrix.to_quaternion()
-  fo_q = fo.matrix.to_quaternion()
-  fo_q.rotate(up_q.inverted())
+def getGimbalAngles(gimbal, direction):
+  #TODO subtract from  gimbal base or top of first bone
+  direction = direction.location - gimbal.location
   
-  # TODO to_euler flips to positive when < -169 degrees
-  # TODO convert up_a to dynamixel continuous rotation units...
-  up_a = up_q.to_euler().z * rad_to_deg - 45
-  fo_a = fo_q.to_euler().z * rad_to_deg
-  #print(up_a, fo_a)
+  fo = gimbal.pose.bones['forearm']
+  up = gimbal.pose.bones['base']
 
-  # convert to dynamixel units
-  angles = [dynamixel_from_degrees(a) for a in [up_a, fo_a]]
+  fo_a = math.acos(direction.z / direction.length)
+  fo_a = min(math.pi/2, fo_a)
+  up_a = math.atan2(direction.y, direction.x) + math.pi/2
+  #if fo_a < 0: fo_a = 0
+  print(up_a, fo_a)
+  
+  up.rotation_mode = 'XYZ'
+  up.rotation_euler = Euler((0, up_a, 0))
+
+  fo.rotation_mode = 'XYZ'
+  fo.rotation_euler = Euler((fo_a, 0, 0))
+
+  angles = [dynamixel_from_degrees(a * 180/math.pi) for a in [up_a, fo_a]]
   #print(angles)
   return angles
 
@@ -146,6 +147,8 @@ def assembleLightServoString(angles, pwm):
   return s
 
 def robot_anim_handler(scene):
+  iktarget = bpy.data.objects['Cube']
+  
   # find light arm objects
   for o in bpy.data.objects:
     if o.name.startswith(ARM_NAME_PREFIX):
@@ -159,7 +162,7 @@ def robot_anim_handler(scene):
     elif o.name.startswith(GIMBAL_NAME_PREFIX):
       ip = o.name[len(GIMBAL_NAME_PREFIX):]
       pwm = pwmFromLuminosity(findLamp(o).data.energy)
-      angles = getGimbalAngles(o)
+      angles = getGimbalAngles(o, iktarget)
 
       # assemble command string
       s = assembleLightServoString(angles, pwm)

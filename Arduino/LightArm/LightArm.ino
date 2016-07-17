@@ -14,6 +14,8 @@
 #include <SC.h>
 #include <PWM.h>
 
+#include "eeprom.h"
+
 // Comment this out to read and write from Serial instead of Ethernet.
 // Arduino IDE is wigging out when selecting which ethernet library to use; see line 50.
 #define COMM_ETHERNET
@@ -62,22 +64,94 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
   #include <SPI.h>
   #include <Ethernet.h>
 
-  const uint16_t PORT = 1337;
-  const uint8_t IP_A = 10;
-  const uint8_t IP_B = 0;
-  const uint8_t IP_C = 2;
-  const uint8_t IP_D = 1;  // used to set MAC address
-  
-  IPAddress IP(IP_A, IP_B, IP_C, IP_D);
-  IPAddress GATEWAY(10, 0, 0, 1);
-  IPAddress SUBNET(255, 255, 0, 0);
-  static uint8_t MAC[6] = {0x00,0x01,0x02,0x03,0xa4,IP_D};
+  uint16_t Port             = 1337;
+  uint8_t  IP[]             = {10, 0, 2, 1};      // used to set MAC address as well
+  uint8_t  GatewayAddress[] = {10, 0, 0, 1};
+  uint8_t  SubnetMask[]     = {255, 255, 0, 0};
+  uint8_t  MacAddress[6]    = {0x00, 0x01, IP[0], IP[1], IP[2], IP[3]};
 
-  EthernetServer TCPserver(PORT);
+  EthernetServer TCPserver(Port);
 
   // print to the current ethernet client if there is one
   EthernetClient Client;
   #define gPrinter Client
+  
+  void setupEthernet() {
+    Serial.print("Starting ethernet server on address: ");
+    
+    IPAddress ip = IPAddress(IP);
+    IPAddress gateway = IPAddress(GatewayAddress);
+    IPAddress subnet = IPAddress(SubnetMask);
+
+    // (re-)instantiate the ethernet and tcp objects
+    Ethernet.begin(MacAddress, ip, gateway, gateway, subnet);
+    TCPserver = EthernetServer(Port);
+    TCPserver.begin();
+    
+    Serial.println(Ethernet.localIP());
+  }
+  
+  
+  // 6-byte string abbreviation for for Circus Automatic Light
+  const char EEPROM_HEADER_STRING[] = {'C', 'i', 'r', 'c', 'A', 'L'};
+  const uint16_t EEPROM_SETTINGS_VERSION = 0;
+  
+  struct EEPROMSettings {
+    struct Header {
+      char string[sizeof(EEPROM_HEADER_STRING)];
+      uint16_t version;
+    } header;
+    
+    // data
+    uint32_t ipAddress;
+    uint32_t subnetMask;
+    uint32_t gatewayAddress;
+    uint16_t port;
+    uint8_t macAddress[6];
+        
+    EEPROMSettings() {
+      memcpy(header.string, EEPROM_HEADER_STRING, sizeof(EEPROM_HEADER_STRING));
+      header.version = EEPROM_SETTINGS_VERSION;
+    }
+  };
+  
+  boolean loadSettings() {
+    EEPROMSettings current;
+    memcpyFromEEPROM(0, &current, sizeof(current));
+  
+    // check to see if valid settings are saved in EEPROM
+    if (memcmp(current.header.string, EEPROM_HEADER_STRING, sizeof(EEPROM_HEADER_STRING))) {
+      Serial.println("EEPROM does not contain valid settings.");
+      return false;
+    }
+    // additionally, check for the current version
+    if (current.header.version != EEPROM_SETTINGS_VERSION) {
+      Serial.println("Settings stored in EEPROM have wrong version.");
+      return false;
+    }
+    
+    memcpy(IP, &current.ipAddress, sizeof(IP));
+    memcpy(GatewayAddress, &current.gatewayAddress, sizeof(GatewayAddress));
+    memcpy(SubnetMask, &current.subnetMask, sizeof(SubnetMask));
+    memcpy(MacAddress, &current.macAddress, sizeof(MacAddress));
+    Port = current.port;
+    
+    return true;
+  }
+  
+  void saveSettings() {
+    EEPROMSettings h;
+    
+    memcpy(&h.ipAddress, IP, sizeof(IP));
+    memcpy(&h.gatewayAddress, GatewayAddress, sizeof(GatewayAddress));
+    memcpy(&h.subnetMask, SubnetMask, sizeof(SubnetMask));
+    memcpy(&h.macAddress, MacAddress, sizeof(MacAddress));
+    h.port = Port;
+    
+    //printlnDebug("Writing settings to EEPROM...");
+    memcpyToEEPROM(0, &h, sizeof(h));
+  }
+  
 #endif
 
 #include <PrintLevel.h>
@@ -86,7 +160,7 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
 // Servo globals
 /////////////////////////////////////////////////////////////////////////////////////
 
-const int MaxServos = 32;
+const int MaxServos = 2;
 BioloidController Servos(1000000);
 
 const int BroadcastID = 254;
@@ -133,21 +207,27 @@ void cmdRelax();
 void cmdTorque();
 void cmdCircle();
 void cmdSetID();
+void cmdSetIPAddress();
+void cmdSetPort();
+void restartNetwork();
 
 static const SerialCommand::Entry CommandsList[] = {
-  {"plevel", cmdSetPrintLevel},
-  {"pwm",    cmdPWMPins},
-  {"v",      readVoltage},
-  {"r",      readServoPositions},
-  {"s",      cmdMoveServos},
-  {"p",      cmdLoadPose},
-//  {"i",      cmdInterpolateServos},
-//  {"B",      cmdInterpolateServosBinary},
-  {"speed",  cmdSetMaxSpeed},
-  {"relax",  cmdRelax},
-  {"torq",   cmdTorque},
-  {"circle", cmdCircle},
-  {"id",     cmdSetID},
+  {"plevel",  cmdSetPrintLevel},
+  {"pwm",     cmdPWMPins},
+  {"v",       readVoltage},
+  {"r",       readServoPositions},
+  {"s",       cmdMoveServos},
+  {"p",       cmdLoadPose},
+//  {"i",       cmdInterpolateServos},
+//  {"B",       cmdInterpolateServosBinary},
+  {"speed",   cmdSetMaxSpeed},
+  {"relax",   cmdRelax},
+  {"torq",    cmdTorque},
+  {"circle",  cmdCircle},
+  {"id",      cmdSetID},
+  {"ip",      cmdSetIPAddress},
+  {"port",    cmdSetPort},
+  {"restart", restartNetwork},
   {NULL,     NULL}
 };
 
@@ -741,6 +821,52 @@ void cmdSetID() {
   setRX(0);
 }
 
+void restartNetwork() {
+  Client.flush();
+  Client.stop();  // hopefully this closes the connection gracefully
+  setupEthernet();
+}
+
+const char *RestartNetworkMessage = "Success. Type \"restart\" to restart network interface";
+
+void cmdSetIPAddress() {
+  char *arg = CmdMgr.next();
+  if(arg == NULL) {
+    printlnError("Error: expected IP address");
+    return;
+  }
+  
+  IPAddress address;
+  if(address.fromString(arg) == false) {
+    printlnError("Error: expected IP address in form XXX.XXX.XXX.XXX");
+    return;
+  }
+  
+  uint32_t u = address;
+  memcpy(IP, &u, sizeof(IP));
+  printlnAlways(RestartNetworkMessage);
+}
+
+void cmdSetPort() {
+  char *arg = CmdMgr.next();
+  char *end;
+  long port;
+
+  // mea culpa but I don't want to save
+  if(   arg == NULL 
+     || !(port = strtol(arg, &end, 10))
+     || *end != '\0'
+     || port < 1
+     || port > 65535)
+  {
+    printlnError("Error: port number between 1 and 65535");
+    return;
+  }
+  
+  Port = port;
+  printlnAlways(RestartNetworkMessage);
+}
+
 // expects space-delimited ints 0-65535, or space delimited <index>:<pwm> pairs, where <index> is 1-based
 void cmdPWMPins() {
   const char *SetPWMUsageMsg = "Error: takes up to 6 arguments between 0 and 65535, or <index>:<value> pairs where <index> starts at 1.";
@@ -750,8 +876,8 @@ void cmdPWMPins() {
 
   char *arg = CmdMgr.next();
   if(arg == NULL) {
-   printlnError("Error: no arguments");
-   return;
+    printlnError("Error: no arguments");
+    return;
   }
   
   // see if we have a <index>:<value> tuple, or just an integer
@@ -839,40 +965,20 @@ void setup() {
   Serial.begin(38400);
 
   // Initialize the high resolution PWM library.
-  // Frequency: 151 Hz
-  // Number of Possible Duties: 52981
-  // Resolution: 15 bit
-  // Note: tests indicate full 16 bits of PWM division
+  // Frequency: 10000 Hz
+  // Run PWM.h example sketch to see all possible PWM settings for a given pin
   InitTimersSafe(); //initialize all timers except for 0, to save time keeping functions
   Serial.print("setting PWM pin frequeny: ");
-  Serial.println(SetPinFrequency(PWMPins[0], 151));    // TODO for all PWM pins on arduino mega
+  Serial.println(SetPinFrequency(PWMPins[0], 10000));    // TODO for all PWM pins on arduino mega
 
-  // look for first ID that responds
-  int i = 1;
-
-/*  for(; i < BroadcastID; i++) {
-    if(ax12GetRegister(i, AX_PRESENT_POSITION_L, 2) != -1) {
-      break;
-    }
-  }
-
-  if(i == BroadcastID) i = 1; // failed to find a servo, so default to 1
-*/
   // query for and read in the position of each servo
   // TODO: mod Servos class to query for IDs, and store lowest ID that responds
-  Servos.setup(MaxServos/*, i*/);
+  Servos.setup(MaxServos);//, 1);
   Servos.readPose();
   broadcastSpeed();
 
 #ifdef COMM_ETHERNET
-  // setup ethernet module
-  // TODO: assign static IP based on lowest present servo ID
-  Serial.print("Starting ethernet server on address: ");
-
-  Ethernet.begin(MAC, IP, GATEWAY, GATEWAY, SUBNET);
-    
-  TCPserver.begin();
-  Serial.println(Ethernet.localIP());
+  setupEthernet();
 #endif
   
   // Safe guard: the move interpolation code moves all servos, so if a servo starts
