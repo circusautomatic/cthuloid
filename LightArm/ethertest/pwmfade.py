@@ -3,7 +3,7 @@
 import socket, math, time
 
 # Create a TCP/IP socket
-server_addresses = [('10.0.0.69', 1337), ('10.0.0.72', 1337), ('10.0.0.77', 1337)]
+server_addresses = [('10.0.2.2', 1337)]#, ('10.0.0.72', 1337), ('10.0.0.77', 1337)]
 #server_address = ('127.0.0.1', 10001)
 sockets = []
 
@@ -16,7 +16,9 @@ try:
     sockets.append(sock)
 
   print('connected?')
-  maxpwm = 65500
+  maxpwm = 65535
+  minpwm = 3000
+  inc = -100
   i = maxpwm
   while True:
     for sock in sockets:
@@ -24,8 +26,8 @@ try:
       print(s)
       sock.sendall(bytes(s, 'UTF-8'))
 
-      i -= 1000
-      if i <= -maxpwm: i = maxpwm
+      i += inc
+      if i <= minpwm or i >= maxpwm: inc *= -1
       time.sleep(.05)
 
 except socket.timeout:
