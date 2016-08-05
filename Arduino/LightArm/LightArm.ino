@@ -65,7 +65,7 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
   #include <Ethernet.h>
 
   uint16_t Port             = 1337;
-  uint8_t  IP[]             = {10, 0, 2, 1};      // used to set MAC address as well
+  uint8_t  IP[]             = {10, 0, 2, 2};      // used to set MAC address as well
   uint8_t  GatewayAddress[] = {10, 0, 0, 1};
   uint8_t  SubnetMask[]     = {255, 255, 0, 0};
   uint8_t  MacAddress[6]    = {0x00, 0x01, IP[0], IP[1], IP[2], IP[3]};
@@ -228,6 +228,7 @@ static const SerialCommand::Entry CommandsList[] = {
   {"ip",      cmdSetIPAddress},
   {"port",    cmdSetPort},
   {"restart", restartNetwork},
+  {"compliance", cmdSetCompliance},
   {NULL,     NULL}
 };
 
@@ -408,11 +409,53 @@ void broadcastSpeed() {
   ax12SetRegister2(BroadcastID, AX_GOAL_SPEED_L, gServoSpeed);
 }
 
+// a value of 128 seems to produce the smoothest servo motion
+// see AX-12 Dynamixel manual
+void setCompliance(int comp) {
+  int ms = 20;
+  
+  //Serial.println("setting copmpliance...");
+  ax12SetRegister(BroadcastID, AX_CW_COMPLIANCE_SLOPE, comp);   delay(ms); 
+  ax12SetRegister(BroadcastID, AX_CCW_COMPLIANCE_SLOPE, comp);  delay(ms); 
+
+  //Serial.print("AX_CW_COMPLIANCE_SLOPE: ");
+  //Serial.print(ax12GetRegister(1, AX_CW_COMPLIANCE_SLOPE, 1));    delay(ms);
+  //Serial.print(' ');
+  //Serial.println(ax12GetRegister(2, AX_CW_COMPLIANCE_SLOPE, 1));  delay(ms);
+  
+  //Serial.print("AX_CCW_COMPLIANCE_SLOPE: ");
+  //Serial.print(ax12GetRegister(1, AX_CCW_COMPLIANCE_SLOPE, 1));   delay(ms);
+  //Serial.print(' ');
+  //Serial.println(ax12GetRegister(2, AX_CCW_COMPLIANCE_SLOPE, 1)); delay(ms);
+}
+
 //////////////////////////////////////////////////////////////////////////////////
 // commands accessible from text interface
 
 void cmdUnrecognized(const char *cmd) {
   printlnError("unrecognized command");
+}
+
+void cmdSetCompliance() {
+  if(char *arg = CmdMgr.next()) {
+    if(CmdMgr.next()) {
+      printlnError("Error: takes 0 or 1 arguments");
+      return;
+    }
+
+    char *end;
+    double comp = strtod(arg, &end);
+
+    if(*end != '\0' || comp < 1 || comp > 128) {
+      printlnError("Error: compliance must be between 1 and 128");
+      return;
+    }
+    
+    setCompliance((int)comp);
+    printlnInfo("Compliance set");
+  }
+
+  else printlnError("No arguments");
 }
 
 void readVoltage() {
@@ -844,6 +887,7 @@ void cmdSetIPAddress() {
   
   uint32_t u = address;
   memcpy(IP, &u, sizeof(IP));
+  saveSettings();
   printlnAlways(RestartNetworkMessage);
 }
 
@@ -864,6 +908,7 @@ void cmdSetPort() {
   }
   
   Port = port;
+  saveSettings();
   printlnAlways(RestartNetworkMessage);
 }
 
@@ -963,6 +1008,7 @@ void cmdSetPrintLevel() {
 
 void setup() {
   Serial.begin(38400);
+  loadSettings();
 
   // Initialize the high resolution PWM library.
   // Frequency: 10000 Hz
@@ -975,8 +1021,11 @@ void setup() {
   // TODO: mod Servos class to query for IDs, and store lowest ID that responds
   Servos.setup(MaxServos);//, 1);
   Servos.readPose();
+
+  //setCompliance(128);   //default is 32?
   broadcastSpeed();
 
+  
 #ifdef COMM_ETHERNET
   setupEthernet();
 #endif
