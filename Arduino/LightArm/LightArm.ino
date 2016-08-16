@@ -65,10 +65,10 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
   #include <Ethernet.h>
 
   uint16_t Port             = 1337;
-  uint8_t  IP[]             = {10, 0, 2, 2};      // used to set MAC address as well
+  uint8_t  IP[]             = {10, 0, 2, 255};    // also used in MAC address
   uint8_t  GatewayAddress[] = {10, 0, 0, 1};
   uint8_t  SubnetMask[]     = {255, 255, 0, 0};
-  uint8_t  MacAddress[6]    = {0x00, 0x01, IP[0], IP[1], IP[2], IP[3]};
+  //uint8_t  MacAddress[6]    = {0x00, 0x01, IP[0], IP[1], IP[2], IP[3]};
 
   EthernetServer TCPserver(Port);
 
@@ -77,6 +77,9 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
   #define gPrinter Client
   
   void setupEthernet() {
+    // mac address is function of our IP address
+    uint8_t mac[6] = {0x00, 0x01, IP[0], IP[1], IP[2], IP[3]};
+    
     Serial.print("Starting ethernet server on address: ");
     
     IPAddress ip = IPAddress(IP);
@@ -84,7 +87,7 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
     IPAddress subnet = IPAddress(SubnetMask);
 
     // (re-)instantiate the ethernet and tcp objects
-    Ethernet.begin(MacAddress, ip, gateway, gateway, subnet);
+    Ethernet.begin(mac, ip, gateway, gateway, subnet);
     TCPserver = EthernetServer(Port);
     TCPserver.begin();
     
@@ -107,13 +110,18 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
     uint32_t subnetMask;
     uint32_t gatewayAddress;
     uint16_t port;
-    uint8_t macAddress[6];
+    //uint8_t macAddress[6];
         
     EEPROMSettings() {
       memcpy(header.string, EEPROM_HEADER_STRING, sizeof(EEPROM_HEADER_STRING));
       header.version = EEPROM_SETTINGS_VERSION;
     }
   };
+
+  void invalidateSettings() {
+    int32_t zero = 0;
+    memcpyToEEPROM(0, &zero, sizeof(zero));
+  }
   
   boolean loadSettings() {
     EEPROMSettings current;
@@ -133,7 +141,7 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
     memcpy(IP, &current.ipAddress, sizeof(IP));
     memcpy(GatewayAddress, &current.gatewayAddress, sizeof(GatewayAddress));
     memcpy(SubnetMask, &current.subnetMask, sizeof(SubnetMask));
-    memcpy(MacAddress, &current.macAddress, sizeof(MacAddress));
+    //memcpy(MacAddress, &current.macAddress, sizeof(MacAddress));
     Port = current.port;
     
     return true;
@@ -145,7 +153,7 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
     memcpy(&h.ipAddress, IP, sizeof(IP));
     memcpy(&h.gatewayAddress, GatewayAddress, sizeof(GatewayAddress));
     memcpy(&h.subnetMask, SubnetMask, sizeof(SubnetMask));
-    memcpy(&h.macAddress, MacAddress, sizeof(MacAddress));
+    //memcpy(&h.macAddress, MacAddress, sizeof(MacAddress));
     h.port = Port;
     
     //printlnDebug("Writing settings to EEPROM...");
@@ -208,8 +216,10 @@ void cmdTorque();
 void cmdCircle();
 void cmdSetID();
 void cmdSetIPAddress();
+void cmdSetGatewayAddress();
 void cmdSetPort();
 void restartNetwork();
+void cmdClearSettings();
 
 static const SerialCommand::Entry CommandsList[] = {
   {"plevel",  cmdSetPrintLevel},
@@ -226,9 +236,11 @@ static const SerialCommand::Entry CommandsList[] = {
   {"circle",  cmdCircle},
   {"id",      cmdSetID},
   {"ip",      cmdSetIPAddress},
+  {"gateway", cmdSetGatewayAddress},
   {"port",    cmdSetPort},
   {"restart", restartNetwork},
   {"compliance", cmdSetCompliance},
+  {"clear",   cmdClearSettings},
   {NULL,     NULL}
 };
 
@@ -870,6 +882,20 @@ void restartNetwork() {
   setupEthernet();
 }
 
+void cmdClearSettings() {
+  if(char *arg = CmdMgr.next()) {
+    if(!strcmp(arg, "settings")) {
+      invalidateSettings();
+      
+      // TODO provide a way to soft reset to restart with factory settings
+      printlnAlways("Settings cleared. Hard reboot to start with factory settings.");
+      return;
+    }
+  }
+
+  printlnError("Error: argument must be \'settings\'.");
+}
+
 const char *RestartNetworkMessage = "Success. Type \"restart\" to restart network interface";
 
 void cmdSetIPAddress() {
@@ -891,25 +917,41 @@ void cmdSetIPAddress() {
   printlnAlways(RestartNetworkMessage);
 }
 
-void cmdSetPort() {
+void cmdSetGatewayAddress() {
   char *arg = CmdMgr.next();
-  char *end;
-  long port;
-
-  // mea culpa but I don't want to save
-  if(   arg == NULL 
-     || !(port = strtol(arg, &end, 10))
-     || *end != '\0'
-     || port < 1
-     || port > 65535)
-  {
-    printlnError("Error: port number between 1 and 65535");
+  if(arg == NULL) {
+    printlnError("Error: expected IP address");
     return;
   }
   
-  Port = port;
+  IPAddress address;
+  if(address.fromString(arg) == false) {
+    printlnError("Error: expected IP address in form XXX.XXX.XXX.XXX");
+    return;
+  }
+  
+  uint32_t u = address;
+  memcpy(GatewayAddress, &u, sizeof(GatewayAddress));
   saveSettings();
   printlnAlways(RestartNetworkMessage);
+}
+
+void cmdSetPort() {
+  char *arg = CmdMgr.next();
+  
+  if (arg != NULL) {
+    char *end;
+    long port = strtol(arg, &end, 10);
+    
+    if(*end == '\0' && port > 0 && port <= 65535) {
+      Port = port;
+      saveSettings();
+      printlnAlways(RestartNetworkMessage);
+      return;
+    }
+  }
+
+  printlnError("Error: port number expected between 1 and 65535"); 
 }
 
 // expects space-delimited ints 0-65535, or space delimited <index>:<pwm> pairs, where <index> is 1-based
