@@ -35,7 +35,7 @@ void circle() {
 }
 
 void setCompliance(int comp) {
-  int ms = 100;
+  int ms = 50;
   
   Serial.println("setting copmpliance...");
   ax12SetRegister(1, AX_CW_COMPLIANCE_SLOPE, comp);   delay(ms); 
@@ -71,11 +71,11 @@ void setup() {
   //ax12SetRegister(1, AX_TORQUE_ENABLE, 0); delay(100);
   //ax12SetRegister(2, AX_TORQUE_ENABLE, 0); delay(1000);
 
-  setCompliance(32);
-  circle();  
+  //setCompliance(32);
+  //circle();  
 
-  setCompliance(64);
-  circle();  
+  //setCompliance(64);
+  //circle();  
 
   setCompliance(128);
   circle();  
