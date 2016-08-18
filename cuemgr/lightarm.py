@@ -128,20 +128,28 @@ import socket, os, errno, select, threading, time, random, signal, sys, struct
 #        self.write(b'r\n')
 
 class NetworkArm:
-  def __init__(self, id=None, addr=None, port=1337):
+  NumServos = 2
+  def __init__(self, id=None, addr=None, port=1337, inverted=None):
+    '''
+    pass either id or addr
+    id is the last byte of the IP address
+    addr is the whole IP address as a string
+    inverted is a list of NumServos booleans
+    
+    '''
     self.address = addr
-    if self.address == None: self.address = '10.0.0.' + str(id)
+    if self.address == None: self.address = '10.0.2.' + str(id)
     self.port = port
     self.socket = None
 
-    self.inverted = [False]*2
-    self.angles = [-1]*2
+    self.inverted = inverted or [False] * self.NumServos 
+    self.angles = [512] * self.NumServos
     self.relaxed = False
 
     # LEDs
     self.MinValue = 0
     self.MaxValue = 255
-    self.intensity = self.MinValue
+    self.intensity = self.MaxValue
 
     self.createSocket()
     #for i in range(1, self.NumServos+1):
@@ -164,7 +172,7 @@ class NetworkArm:
   # argument is PWM value 0-255
   def setLED(self, intensity):
     self.intensity = intensity
-    cmd = 'pwm ' + str(intensity)
+    cmd = 'pwm ' + str(intensity*256 + 255) # TODO hack cuz of new PWM range [0-65535]
     self.send(cmd)
 
   def relax(self):
@@ -186,32 +194,33 @@ class NetworkArm:
 
   def setAngle(self, dim, angle): 
     self.angles[dim] = angle
-    self.sendMove()
+    self.sendPosition()
 
   def setAngles(self, listOf2):
     for i in len(self.angles):
       self.angles[i] = listOf2[i]
-    self.sendMove()
+    self.sendPosition()
 
-  def sendMove(self):
-    # servo IDs start at 1; the odd ID is the base servo; the following even ID is the wrist
+  def sendPosition(self):
+    # servo IDs start at 1; base Servo ID = 1, wrist Servo ID = 2
     # but we're storing angles in a zero-indexed list
-    # also we haven't updated the firmware yet, so send the new angles for every possible ID combo
     cmd = 's'
 
-    for i in range(1, 33):
+    for i in range(self.NumServos):
       dim = (i-1) % len(self.angles)
-      angle = self.invert(dim, self.angles[dim])
-      cmd += ' ' + str(i) + ':' + str(angle)
+      angle = self.invert(i, self.angles[i])
+      cmd += ' ' + str(i+1) + ':' + str(angle)
 
     self.send(cmd)
 
+  # appends newline
   def send(self, string):
     print(string)
     self.socket.send((string + '\n').encode())
 
 
 class SocketsThread (threading.Thread):
+  # this class operates on the sockets in arms.arms
   def __init__(self, arms):
     self.arms = arms
     self.shouldExit = False
@@ -241,7 +250,9 @@ class SocketsThread (threading.Thread):
 
       for s in w:
         print('ready for writing:', s.getsockname())
-        #s.send(b'r')
+        s.send(b'speed 50\n')
+        self.arms.findArm(s).sendPosition()
+
         writers.remove(s)
         readers.append(s)
 
@@ -266,11 +277,13 @@ class LightArms:
   def __init__(self):
     # 
     self.arms = [
-      NetworkArm(addr='localhost', port=10001),
-      NetworkArm(addr='localhost', port=10002),
-      NetworkArm(addr='localhost', port=10003),#73),
-      #NetworkArm(74),
+      NetworkArm(2, inverted=[False, True]),
+      NetworkArm(3),
+      NetworkArm(4),
+      NetworkArm(6),
+      #NetworkArm(6),
     ]
+    #for i in range(5): self.arms.append(NetworkArm(addr='localhost', port=3001+i))
 
     self.thread = SocketsThread(self)
 

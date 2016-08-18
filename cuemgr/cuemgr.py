@@ -37,7 +37,7 @@ class LightArmView:
   def __init__(self):
     self.lineInputKey = 'c'
 
-    self.PageWidth = 4    
+    self.PageWidth = 4
     self.ixCursor = 0
     self.mode = 0   # index into self.Modes
 
@@ -47,7 +47,7 @@ class LightArmView:
   Modes = ['individual', 'group']
 
   # map names to servo vector indices
-  ServoDims = {'x':0, 'y':1}
+  ServoDims = {'x':1, 'y':0}
 
   def toggleMode(self):
     self.mode = (self.mode + 1 ) % len(self.Modes)
@@ -96,6 +96,7 @@ class LightArmView:
       Arms.setAngle(id, dim, angle + inc)
 
   def modI(self, inc):
+    print('ids:', self.selected())
     for id in self.selected():
       Arms.setLED(id, fitLEDRange(Arms.getLED(id) + inc))
 
@@ -403,10 +404,10 @@ if __name__ == '__main__':
       currentView = cueView
       currentView.onFocus()
     elif ch == '2': 
-      currentView = dmxView
+      currentView = lightArmView
       currentView.onFocus()
     elif ch == '3':
-      currentView = lightArmView
+      currentView = dmxView
       currentView.onFocus()
 
     # every view can have a separate key to enter a command line of text

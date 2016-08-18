@@ -14,7 +14,7 @@ class Scene:
 class CueEngine:
   def __init__(self):
     self.scenes = [Scene('Beginning Blackout')]
-    self.scenes[0].add(CueLoad('load off'))
+    #self.scenes[0].add(CueLoad('load off'))
     self.reset()
 
   def reset(self):

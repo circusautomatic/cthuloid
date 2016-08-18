@@ -52,9 +52,9 @@ class DmxChannels:
         
         self.dataChanged = False
         self.client = None
-        try:
-            self.wrapper = ClientWrapper()
-            self.client = self.wrapper.Client()
+        try: pass
+#            self.wrapper = ClientWrapper()
+#            self.client = self.wrapper.Client()
         except:
             print("Error: couldn't connect to OLA server")
             #getch()
