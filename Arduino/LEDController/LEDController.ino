@@ -18,11 +18,11 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 // this flag will invert PWM output (255-output), for active-low devices
-#define INVERT_HIGH_AND_LOW
+//#define INVERT_HIGH_AND_LOW
 
 #define MAX_PWM 65535
 
-const int PWMPins[] = {/*3, 5, 6, 9, 10,*/ 11};  // Arduino Uno PWM pins
+const int PWMPins[] = {/*3, 5, 6, 9, 10,*/ 11, 12};
 const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
 
 
@@ -55,10 +55,10 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
   #include <Ethernet.h>
 
   const uint16_t PORT = 1337;
-  const uint8_t ID_IP = 69;
+  const uint8_t ID_IP = 10;
   static uint8_t MAC[6] = {0x00,0x01,0x02,0x03,0xa4,ID_IP};
 
-  IPAddress IP(10,0,0,ID_IP);
+  IPAddress IP(10,0,2,ID_IP);
   IPAddress GATEWAY(10,0,0,1);
   IPAddress SUBNET(255, 255, 255, 0);
 
@@ -256,14 +256,6 @@ void cmdSetPrintLevel() {
 
 void setup() {
   Serial.begin(38400);
-  
-  //Frequency: 151 Hz
-  //Number of Possible Duties: 52981
-  //Resolution: 15 bit
-  //Tests indicate full 16 bits of PWM division
-  InitTimersSafe(); //initialize all timers except for 0, to save time keeping functions
-  Serial.print("setting PWM pin frequeny: ");
-  Serial.println(SetPinFrequency(PWMPins[0], 151));    // TODO for all PWM pins on arduino mega
 
 #ifdef COMM_ETHERNET
   // setup ethernet module
@@ -276,7 +268,20 @@ void setup() {
   Serial.println(Ethernet.localIP());
 #endif
 
-  printAlways("PWM controller. PWM pins are expected to be ");
+  // Initialize the high resolution PWM library.
+  // Frequency: 10000 Hz
+  // Run PWM.h example sketch to see all possible PWM settings for a given pin
+  InitTimersSafe(); //initialize all timers except for 0, to save time keeping functions
+  
+  for(int i = 0; i < NumPWMPins; i++) {
+    pinMode(PWMPins[i], OUTPUT);
+    Serial.print("setting PWM pin ");
+    Serial.print(PWMPins[i]);
+    Serial.print(" frequeny: ");
+    Serial.println(SetPinFrequency(PWMPins[i], 1));    // TODO for all PWM pins on arduino mega
+  }
+
+  /*printAlways("PWM controller. PWM pins are expected to be ");
   
   for(int i = 0; i < NumPWMPins; i++) {
     pinMode(PWMPins[i], OUTPUT);
@@ -288,7 +293,7 @@ void setup() {
     printAlways(PWMPins[i]);
   }
   
-  printAlways(".\n");
+  printAlways(".\n");*/
 }
 
 void loop() {
