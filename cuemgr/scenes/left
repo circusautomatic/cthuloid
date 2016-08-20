@@ -1,0 +1,5 @@
+{
+ 'version': 0,
+ 'DMX': None,
+ 'LightArm': {'10.0.2.2': {'servos': [592, 712], 'intensity': 999}, '10.0.2.6': {'servos': [592, 712], 'intensity': 999}, '10.0.2.3': {'servos': [592, 712], 'intensity': 999}, '10.0.2.4': {'servos': [592, 712], 'intensity': 999}, '10.0.2.5': {'servos': [512, 512], 'intensity': 999}}
+}

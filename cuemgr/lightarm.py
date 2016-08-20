@@ -220,8 +220,11 @@ class NetworkArm:
 
   # appends newline
   def send(self, string):
-    print(string)
-    self.socket.send((string + '\n').encode())
+    #print(string)
+    try:
+      self.socket.send((string + '\n').encode())
+    except (BrokenPipeError, BlockingIOError) as e:
+      print(self.address, '-', str(e))
 
 
 class SocketsThread (threading.Thread):
@@ -248,7 +251,7 @@ class SocketsThread (threading.Thread):
 
     while not self.shouldExit:
       r, w, e = select.select(readers, writers, errors, 1)
-      if r or w: print('select readers/writers:', len(r), ',', len(w))
+      #if r or w: print('select readers/writers:', len(r), ',', len(w))
 
       for s in e:
         print('error:', s.getsockname())
@@ -275,7 +278,7 @@ class SocketsThread (threading.Thread):
           print('closed')
           r.remove(s)
           return#continue
-        print('received:', data)
+        #print('received:', data)
         arm = self.arms.findArm(s)
         arm.updateAngles(data)
 
@@ -285,10 +288,12 @@ class LightArms:
   def __init__(self):
     # 
     self.arms = [
-      NetworkArm(5, inverted=[False, True]), # stage left front
-      NetworkArm(4),                         # stage left back
-      NetworkArm(6),                         # stage right back
+        #NetworkArm(8)#, inverted=[True, False]),  # stage right side
       NetworkArm(3, inverted=[True, False]), # stage right front
+      NetworkArm(6),                         # stage right back
+      NetworkArm(2),                         # stage left back
+      NetworkArm(4, inverted=[False, True]), # stage left front
+      NetworkArm(5, inverted=[True, False]), # stage left side
     ]
     #for i in range(5): self.arms.append(NetworkArm(addr='localhost', port=3001+i))
 
@@ -362,10 +367,11 @@ class LightArms:
   def load(self, armData):
     for address, d in armData.items():
       arm = self.findArm(address)
+      if arm is None: continue
       arm.setLED(d['intensity'])
-      for i in len(d['servos']):
-        arm.setAngle(i, d.angles[i])
-    
+      angles = d['servos'] 
+      for i in range(len(angles)):
+        arm.setAngle(i, angles[i])
 
 Arms = LightArms()
 

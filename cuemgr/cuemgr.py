@@ -39,9 +39,9 @@ class LightArmView:
   def __init__(self):
     self.lineInputKey = 'c'
 
-    self.PageWidth = 4
+    self.PageWidth = Arms.num()
     self.ixCursor = 0
-    self.mode = 0   # index into self.Modes
+    self.mode = 1   # index into self.Modes
 
     self.inc = LinearStateMachine([1, 5, 20])
 
@@ -422,17 +422,17 @@ if __name__ == '__main__':
       cmd = tokens[0]
 
       # program-wide commands ?
-      try:
-        if cmd ==   'exit': programExit()
-        elif cmd == 'save': cmdSave(tokens, line)
-        elif cmd == 'load': cmdCue(line, CueLoad)
-        elif cmd == 'fade': cmdCue(line, CueFade)
-        elif cmd == 'cuesheet': cmdLoadCueSheet(line) # handled in cview
-        else: currentView.handleLineInput(line)
-      except ArithmeticError as e:
-        print(e)
-        getch()
-        programExit()
+      #try:
+      if cmd ==   'exit': programExit()
+      elif cmd == 'save': cmdSave(tokens, line)
+      elif cmd == 'load': cmdCue(line, CueLoad)
+      elif cmd == 'fade': cmdCue(line, CueFade)
+      elif cmd == 'cuesheet': cmdLoadCueSheet(line) # handled in cview
+      else: currentView.handleLineInput(line)
+      #except ArithmeticError as e:
+       # print(e)
+       # getch()
+       # programExit()
 
     else:
       currentView.handleChar(ch)

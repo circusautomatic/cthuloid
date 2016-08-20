@@ -112,10 +112,10 @@ class CueLoad(Cue):
         DMX.setAndSend(0, self.targetDMX)
 
       # Light Arms - may be absent
-      try:
-        if self.armData: Arms.load(self.armData)
-      except:
-        pass
+      #try:
+      if self.armData: Arms.load(self.armData)
+      #except:
+      #  pass
 
     
   # fade from current scene to new scene
@@ -168,8 +168,11 @@ class CueFade(CueLoad):
         
         # map each address to an index
         for address, data in self.armData.items():
-          i = Arms.arms.index(Arms.findArm(address))
-          target[i] = self.armData['intensity']
+          try:
+            i = Arms.arms.index(Arms.findArm(address))
+            target[i] = data['intensity']
+          except ValueError as e:
+            pass
 
         for i in range(Arms.num()):
           current[i] = Arms.getLED(i)
@@ -202,7 +205,7 @@ class CueFade(CueLoad):
             nextPrintTime += printPeriodPeriod
 
           if now > endTime: break
-          nexTime += timestep
+          nextTime += timestep
           time.sleep(nextTime - time.time())
 
         # make sure we arrive at the target numbers, as rounding error may creep in
@@ -218,11 +221,11 @@ class CueFade(CueLoad):
 
 # instantiate a class and run it
 def cmdCue(line, CueClass):
-  try:
+  #try:
     cue = CueClass(line)
     cue.run()
-  except BaseException as e:
-    print(e)
+  #except BaseException as e:
+  #  print(e)
 
 # save current OLA scene
 def cmdSave(tokens, line):
