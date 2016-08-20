@@ -177,7 +177,9 @@ class NetworkArm:
   # argument is PWM value 0-999
   def setLED(self, intensity):
     self.intensity = intensity
-    cmd = 'pwm ' + str(self.toHighFreq(intensity))
+    pwm = str(self.toHighFreq(intensity))
+    cmd = 'pwm ' + pwm
+    if self.address == '10.0.2.10': cmd += ' ' + pwm   # hack for static light 
     self.send(cmd)
 
   def relax(self):
@@ -288,12 +290,13 @@ class LightArms:
   def __init__(self):
     # 
     self.arms = [
-        #NetworkArm(8)#, inverted=[True, False]),  # stage right side
+      #NetworkArm(8)#, inverted=[True, False]),  # stage right side
       NetworkArm(3, inverted=[True, False]), # stage right front
       NetworkArm(6),                         # stage right back
       NetworkArm(2),                         # stage left back
       NetworkArm(4, inverted=[False, True]), # stage left front
       NetworkArm(5, inverted=[True, False]), # stage left side
+      NetworkArm(10),                        # aerial overhead
     ]
     #for i in range(5): self.arms.append(NetworkArm(addr='localhost', port=3001+i))
 
