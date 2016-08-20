@@ -148,7 +148,7 @@ class NetworkArm:
 
     # LEDs
     self.MinValue = 0
-    self.MaxValue = 255
+    self.MaxValue = 999
     self.intensity = self.MaxValue
 
     self.createSocket()
@@ -169,10 +169,15 @@ class NetworkArm:
 
   def getLED(self): return self.intensity
 
-  # argument is PWM value 0-255
+  # input range is 0-999
+  # output range is 0-65535
+  def toHighFreq(self, pwm):
+    return int(15000 + pwm * 50000 / 999)
+
+  # argument is PWM value 0-999
   def setLED(self, intensity):
     self.intensity = intensity
-    cmd = 'pwm ' + str(intensity*256 + 255) # TODO hack cuz of new PWM range [0-65535]
+    cmd = 'pwm ' + str(self.toHighFreq(intensity))
     self.send(cmd)
 
   def relax(self):
@@ -263,6 +268,9 @@ class SocketsThread (threading.Thread):
           print('refused')
           r.remove(s)
           continue
+        except ConnectionResetError:
+          self.findArm(s).createSocket() #reconnect
+          continue
         if not data:
           print('closed')
           r.remove(s)
@@ -277,11 +285,10 @@ class LightArms:
   def __init__(self):
     # 
     self.arms = [
-      NetworkArm(2, inverted=[False, True]),
-      NetworkArm(3),
-      NetworkArm(4),
-      NetworkArm(6),
-      #NetworkArm(6),
+      NetworkArm(5, inverted=[False, True]), # stage left front
+      NetworkArm(4),                         # stage left back
+      NetworkArm(6),                         # stage right back
+      NetworkArm(3, inverted=[True, False]), # stage right front
     ]
     #for i in range(5): self.arms.append(NetworkArm(addr='localhost', port=3001+i))
 
@@ -297,9 +304,12 @@ class LightArms:
 
   def num(self): return len(self.arms)
 
-  def findArm(self, socket):
+  def findArm(self, socketOrIP):
     for arm in self.arms:
-      if socket == arm.socket: return arm
+      if isinstance(socketOrIP, str):
+        if socketOrIP == arm.address: return arm
+      else:
+        if socketOrIP == arm.socket: return arm
     return None
 
   def getLED(self, index):
@@ -339,7 +349,23 @@ class LightArms:
         route.setAngle(dicts[route])
 
   def __str__(self):
-    return
+    d = {}
+    for arm in self.arms:
+      led = arm.getLED()
+      angles = []
+      for i in range(NetworkArm.NumServos):
+        angles.append(arm.getAngle(i))
+      d[arm.address] = {'servos':angles, 'intensity':led}
+
+    return str(d)
+
+  def load(self, armData):
+    for address, d in armData.items():
+      arm = self.findArm(address)
+      arm.setLED(d['intensity'])
+      for i in len(d['servos']):
+        arm.setAngle(i, d.angles[i])
+    
 
 Arms = LightArms()
 

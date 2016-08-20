@@ -5,6 +5,8 @@ from cueengine import CueEngine
 from trackspot import TrackSpot
 
 CuesFilename = 'cuesheet4.txt'
+MaxPWM = 999
+
 
 CueMgr = CueEngine()
 
@@ -14,7 +16,7 @@ def restAfterWord(word, line):
 class LinearStateMachine:
   def __init__(self, states):
     self.modes = states
-    self.current = 0    #index into states
+    self.current = len(states)-1    #index into states
 
   def __call__(self): return self.modes[self.current]
   def prev(self): self.current = max(0, min(len(self.modes)-1, self.current - 1))
@@ -30,7 +32,7 @@ class View:
 
 
 def fitServoRange(v): return max(212, min(812, v))
-def fitLEDRange(v): return max(0, min(255, v))
+def fitLEDRange(v): return max(0, min(MaxPWM, v))
 
 
 class LightArmView:
@@ -203,7 +205,7 @@ class SliderView:
     self.ixCursor = 0
     self.NumChannels = DMX.NumChannels
     self.MinValue = 0
-    self.MaxValue = 255
+    self.MaxValue = MaxPWM
 
     self.PageWidth = 16
  

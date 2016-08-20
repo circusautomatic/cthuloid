@@ -3,7 +3,7 @@ from console import *
 from lightarm import Arms
 from dmx import DmxChannels
 
-Arms = LightArms()
+#Arms = LightArms()
 DMX = DmxChannels()
 
 def openCueFile(filenameOnly, mode='r'):
@@ -97,10 +97,10 @@ class CueLoad(Cue):
       data = loadCueFile(self.filename)
     
       self.targetDMX = None
-      if 'DMX' in data:
-        self.targetDMX = data['DMX']
-        if not isinstance(self.targetDMX, list) or not isinstance(sum(self.targetDMX), int):
-          raise BaseException('error in DMX portion')
+#      if 'DMX' in data:
+#        self.targetDMX = data['DMX']
+#        if not isinstance(self.targetDMX, list) or not isinstance(sum(self.targetDMX), int):
+#          raise BaseException('error in DMX portion')
 
       # Light Arms - may be absent
       try:
@@ -220,7 +220,7 @@ def cmdSave(tokens, line):
     raise BaseException('no filename')
 
   filename = restAfterWord(tokens[0], line)
-  dmx = str(DMX.get())
+  dmx = 'None' #str(DMX.get())
   arms = str(Arms)
   text = "{\n 'version': 0,\n 'DMX': " + dmx + ",\n 'LightArm': " + arms + "\n}"
   #text = "{\n 'version': 0,\n 'DMX': " + dmx + ",\n 'LightArm': {\n  'Servos': " + str(ucServos) + ",\n  'LEDs': " + str(ucLEDs) + "\n }\n}"
