@@ -40,12 +40,6 @@ def loadCueFile(filenameOnly):
   with openCueFile(filenameOnly) as f:
     text = f.read()
 
-    # test for file version
-    if text[0] == '[':
-      # just a list of dmx channel values
-      dmx = ast.literal_eval(text)
-      return {'DMX':dmx}
-
     json = ast.literal_eval(text)
     #print(json)
     return json
@@ -156,18 +150,29 @@ class CueFade(CueLoad):
       printPeriodPeriod = .25
       printPeriodTimestepCount = printPeriodPeriod / timestep
 
-      # Light Arms - may be absent
+      # Light Arms
       # TODO fade light arms!
-      try:
-        if self.armData: Arms.load(self.armData)
-      except:
-        pass
+      #try:
+        #  if self.armData: Arms.load(self.armData)
+      #except:
+        #  # pass
 
       # DMX
-      if self.targetDMX:
-        target = self.targetDMX
-        current = DMX.get()
-        vel = [0] * len(current)
+      #if self.targetDMX:
+      if self.armData:
+        #target = self.targetDMX
+        #current = DMX.get()
+        target = [0] * Arms.num()
+        current = [0] * Arms.num()
+        vel = [0] * Arms.num()
+        
+        # map each address to an index
+        for address, data in self.armData.items():
+          i = Arms.arms.index(Arms.findArm(address))
+          target[i] = self.armData['intensity']
+
+        for i in range(Arms.num()):
+          current[i] = Arms.getLED(i)
 
         # calculate delta for each timestep
         # -1 means don't change
@@ -184,8 +189,10 @@ class CueFade(CueLoad):
         while 1:
           # calculate new channel values and transmit
           for i in range(len(current)): current[i] += vel[i]
-          channels = [round(x) for x in current] 
-          DMX.setAndSend(0, channels)
+          #channels = [round(x) for x in current] 
+          #DMX.setAndSend(0, channels)
+          for i in range(Arms.num()):
+            Arms.setLED(i, current[i])
 
           now = time.time()
 
@@ -199,7 +206,10 @@ class CueFade(CueLoad):
           time.sleep(nextTime - time.time())
 
         # make sure we arrive at the target numbers, as rounding error may creep in
-        DMX.setAndSend(0, target)
+        #DMX.setAndSend(0, target)
+        for i in range(Arms.num()):
+          Arms.setLED(i, target[i])
+        
         print('DONE')
     #except:
     #  raise BaseException('Error talking to OLA DMX server')

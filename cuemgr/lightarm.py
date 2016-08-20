@@ -172,7 +172,7 @@ class NetworkArm:
   # input range is 0-999
   # output range is 0-65535
   def toHighFreq(self, pwm):
-    return int(15000 + pwm * 50000 / 999)
+    return int(10535 + pwm / 999 * 55000)
 
   # argument is PWM value 0-999
   def setLED(self, intensity):
