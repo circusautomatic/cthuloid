@@ -1,6 +1,6 @@
 """Interface for communicating with spotlight robots via network sockets.
 
-Each spotlight robot:
+A spotlight robot:
 - has two servos and an LED.
 - has an ethernet port and separate IP address
 - listens on port 1337
@@ -301,14 +301,14 @@ class SocketsThread (threading.Thread):
 
 
 class LightArms:
-"""Abstracts control of a network of spotlight robots.
-
-It uses an instance of SocketsThread for non-blocking network communication. Calling exit()
-is necessary to terminate the thread.
-
-self.arms is a list of class NetworkArm, each with an IP address.
-
-"""
+  """Abstracts control of a network of spotlight robots.
+  
+  It uses an instance of SocketsThread for non-blocking network communication. Calling exit()
+  is necessary to terminate the thread.
+  
+  self.arms is a list of class NetworkArm, each with an IP address.
+  
+  """
 
   def __init__(self):
     # 

@@ -1,22 +1,13 @@
 """A console-based cueing program designed for running threatrical productions.
 
-This program controls lights in real time, can save and load light parameters (cues) as text files, and can
-run the show from a cuesheet by stepping through cues and scenes using keyboard shortcuts.
+See readme for an overview. 
 
-I'm certain there exist many suitable cueing programs; this one was thrown together during tech week 
-to control ethernet-controlled robot spotlight prototypes and traditional DMX-controlled theater lights with one 
-flexible interface, which didn't seem like it would be all that much work at the time.
+The program automatically loads 'cuesheet.txt'. Cues are assumed to be in the folder 'scenes'.
+See cue.py and cueengine.py for more information on cues and cuesheets.
+See lightarm.py for info on spotlight robots.
+See dmx.py for 
 
-A cue is dictionary of settings for theater hardware (stage lights and robot spotlights at present) saved in
-a json file. Cues can be arranged in scenes and grouped to execute simultaneously or sequentially.
-Cues are read from a cuesheet: a single text file which uses nested indentation to indicate scenes and groups.
-
-A partial MVC approach is taken, where the view and controller are the same class. To switch views press
-keyboard key 1, 2, or 3. Note that keyboard keys 8, 9, and 0 are mapped to changing light parameters in some views.
-
-View '1' navigates through cues with keyboard shortcuts and is meant for running the show.
-View '2' is an interface for controling robot spotlights in realtime and reading and writing cues.
-View '3' is an interface for controling DMX theater hardware in realtime and reading and writing cues.
+This file contains definitions of the 3 program views and and an input loop.
 
 TODO:
   - move to curses

@@ -1,6 +1,6 @@
 """Engine for navigating through cues loaded from a cuesheet.
 
-Cues can be nested in scenes. This engine supports stepping forward and backward through,
+Cues can be nested in scenes. This engine supports stepping forward and backward through cues,
 and for jumping to other scenes. See cue.py for more info.
 
 """

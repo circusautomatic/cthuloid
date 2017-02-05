@@ -1,0 +1,29 @@
+cuemgr is a a console-based cueing program designed for running threatrical productions.
+
+This program controls lights in real time, can save and load light parameters (cues) as text files, and can run a show from a cuesheet by stepping through cues and scenes using keyboard shortcuts.
+
+I'm certain there exist many suitable cueing programs; this one was thrown together during tech week to control ethernet-controlled robot spotlight prototypes and traditional DMX-controlled theater lights with one flexible interface, which didn't seem like it would be all that much work at the time.
+
+A cue is dictionary of settings for theater hardware (stage lights and robot spotlights at present) saved in a json file. Cues can be arranged in scenes and grouped to execute simultaneously or sequentially. Cues are read from a cuesheet: a single text file which uses nested indentation to indicate scenes and groups. The program automatically loads 'cuesheet.txt' at startup. Cues are assumed to be in the folder 'scenes'.
+
+Pressing the 'C' key at any time lets you type in one of the following commands:
+- load <filename> - load cue (light parameters) to file
+- save <filename> - save cue (light parameters) from file
+- cuesheet <filename> - load a new ordering of cues to be stepped through
+
+To switch views press keyboard key 1, 2, or 3. Note that keyboard keys 8, 9, and 0 are mapped to changing light parameters in some views.
+
+View '1' navigates through cues with keyboard shortcuts and is meant for running the show.
+View '2' is an interface for controling robot spotlights in realtime and reading and writing cues.
+View '3' is an interface for controling DMX theater hardware in realtime and reading and writing cues.
+
+At startup, this program will try to connect to multiple devices over TCP/IP.
+- An Open Lighting Architecture server program running on the local machine. See dmx.py.
+- Multiple LightArm spotlight robots on the network. The address and properties of the robots are defined in lightarm.py for the moment.
+
+TODO:
+  - move to curses framework
+  - display all keyboard controls
+  - support a config file
+
+

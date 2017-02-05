@@ -2,10 +2,12 @@
 Defines types of cues (sets of hardware parameters), and provides for loading and saving them.
 
 We unfortunately use the word 'cue' in two different ways:
-1. A cue is a text file containing hardware parameters in json.
-   Note that cues may also be grouped together into a sequence, which is itself treated as a cue.
-2. A cue is an instruction to transition to a new set of parameters, either by
-    setting them instantaneously or by incrementally fading from the previous parameters.
+1. A cue is a text file containing hardware parameters in json. Note that cues may also be grouped together
+   into a sequence, which is itself treated as a cue.
+2. A cue is an instruction to transition to a new set of hardware parameters, either by setting them 
+   instantaneously or by incrementally fading from the previous parameters. An instruction is a one-word
+   command followed by the name of the file that holds the hardware parameters
+
 
 
 """

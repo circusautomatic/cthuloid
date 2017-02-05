@@ -6,4 +6,4 @@ Folders of note:
 - LightArm - ethernet-enabled spotlight robot project
 - Arduino/LightArm - firware for the spotlight robot
 - Arduino/LEDController - firmware for ethernet-enabled controller for LEDs at high resolution
-- ghettopticon - humanoid robot mounted on a motorized wheelchair
+- ghettopticon - humanoid robot mounted on a motorized wheelchair (should be mvoed to its own repo)

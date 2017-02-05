@@ -1,4 +1,4 @@
-"""Keyboard and console output functions."""
+"""Keyboard and console output functions in lieu of using curses."""
 
 def clearScreen():
     #os.system('clear')

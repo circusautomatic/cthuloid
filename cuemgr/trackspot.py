@@ -8,7 +8,7 @@ class TrackSpot:
     # channel function names starting with firstChannel
     self.channelNames = ['X position', 'Y position', 'Color', 'Pattern', 'Strobe', 'Intensity', 'Movement speed']
 
-    # DMX values for different colors
+    # DMX values for standard colors for knockoff tracklight
     self.colorKey = """\
 0   white
 30  blue
