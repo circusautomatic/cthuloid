@@ -1,19 +1,50 @@
+"""A console-based cueing program designed for running threatrical productions.
+
+This program controls lights in real time, can save and load light parameters (cues) as text files, and can
+run the show from a cuesheet by stepping through cues and scenes using keyboard shortcuts.
+
+I'm certain there exist many suitable cueing programs; this one was thrown together during tech week 
+to control ethernet-controlled robot spotlight prototypes and traditional DMX-controlled theater lights with one 
+flexible interface, which didn't seem like it would be all that much work at the time.
+
+A cue is dictionary of settings for theater hardware (stage lights and robot spotlights at present) saved in
+a json file. Cues can be arranged in scenes and grouped to execute simultaneously or sequentially.
+Cues are read from a cuesheet: a single text file which uses nested indentation to indicate scenes and groups.
+
+A partial MVC approach is taken, where the view and controller are the same class. To switch views press
+keyboard key 1, 2, or 3. Note that keyboard keys 8, 9, and 0 are mapped to changing light parameters in some views.
+
+View '1' navigates through cues with keyboard shortcuts and is meant for running the show.
+View '2' is an interface for controling robot spotlights in realtime and reading and writing cues.
+View '3' is an interface for controling DMX theater hardware in realtime and reading and writing cues.
+
+TODO:
+  - move to curses
+  - display all keyboard controls
+
+"""
+
 import sys, os, os.path, threading, ast, time, signal
 from console import * 
 from cue import *
 from cueengine import CueEngine
 from trackspot import TrackSpot
 
-CuesFilename = 'cuesheet4.txt'
+CuesFilename = 'cuesheet.txt'   #initial cuesheet automatically loaded
 MaxPWM = 999
 
-
 CueMgr = CueEngine()
+
+# these functions define the min and max values for robot spotlight parameters
+def fitServoRange(v): return max(212, min(812, v))
+def fitLEDRange(v): return max(0, min(MaxPWM, v))
 
 def restAfterWord(word, line):
   return line[line.find(word) + len(word):].strip()
 
 class LinearStateMachine:
+  """A faux iterator on an ordered list that can move forward or backward and clamps at the ends.
+     There is probably a more Pythonic way to do this.""" 
   def __init__(self, states):
     self.modes = states
     self.current = len(states)-1    #index into states
@@ -22,34 +53,32 @@ class LinearStateMachine:
   def prev(self): self.current = max(0, min(len(self.modes)-1, self.current - 1))
   def next(self): self.current = max(0, min(len(self.modes)-1, self.current + 1))
     
-
 class View:
+  """Abstract base class for a program view"""
   def __init__(self):
     self.lineInputKey = 'c'
+    print(self.__class__)
   def onFocus(self): pass
   def display(self): pass
   def handleChar(self): pass
 
 
-def fitServoRange(v): return max(212, min(812, v))
-def fitLEDRange(v): return max(0, min(MaxPWM, v))
-
-
-class LightArmView:
+class LightArmView(View):
+  """View that controls spotlight robots"""
   def __init__(self):
-    self.lineInputKey = 'c'
+    super().__init__()
 
-    self.PageWidth = Arms.num()
+    self.PageWidth = 4#Arms.num()
     self.ixCursor = 0
     self.mode = 1   # index into self.Modes
 
     self.inc = LinearStateMachine([1, 5, 20])
 
-  # modify one arm or a group of 4 at a time
-  Modes = ['individual', 'group']
-
   # map names to servo vector indices
   ServoDims = {'x':1, 'y':0}
+
+  # do we modify one arm or a group 
+  Modes = ['individual', 'group']
 
   def toggleMode(self):
     self.mode = (self.mode + 1 ) % len(self.Modes)
@@ -97,6 +126,7 @@ class LightArmView:
       angle = fitServoRange(Arms.getAngle(id, dim)) 
       Arms.setAngle(id, dim, angle + inc)
 
+  # add increment to the intensity of the currently selected arm(s)
   def modI(self, inc):
     print('ids:', self.selected())
     for id in self.selected():
@@ -151,7 +181,7 @@ class LightArmView:
 
   def display(self):
     clearScreen()
-    numArms = self.numArms()   # TODO get this from Arms
+    numArms = self.PageWidth #self.numArms()
 
     def printHSep(firstColBlank=True):
       if firstColBlank: print('   |', end='')
@@ -199,9 +229,11 @@ class LightArmView:
     printHSep(False)
 
 
-class SliderView:
+class SliderView(View):
+  """View for controling DMX lights"""
+
   def __init__(self): 
-    self.lineInputKey = 'c'
+    super().__init__()
     self.ixCursor = 0
     self.NumChannels = DMX.NumChannels
     self.MinValue = 0
@@ -312,11 +344,13 @@ class SliderView:
           self.ixCursor = max(0, ixPageStart - self.PageWidth)
 
 
+class CueView(View):
+  """View for running cues from currently loaded cuesheet"""
 
-
-class CueView:
   def __init__(self):
-    self.lineInputKey = 'c'
+    super().__init__()
+
+    # hack for manually adjusting track spotlights during the show, specific the Great Star Theater
     self.spots = [
       TrackSpot(DMX, 161, 'w', 's', 'a', 'd', 'e', 'q'),
       TrackSpot(DMX, 170, '8', '5', '6', '4', '9', '7'),
@@ -351,7 +385,7 @@ class CueView:
     elif ch == ',' or ch == '<':
       CueMgr.prevScene()
 
-    # track spots off or on
+    # the rest of this function is a hack to manually adjust DMX spotlights during the show
     elif ch == 't':
       for spot in self.spots:
         DMX.set(spot.strobe, 255) 
@@ -362,18 +396,11 @@ class CueView:
         DMX.set(spot.intensity, 0)
       DMX.send()
 
-    # manual control of track spots
     else:
       for spot in self.spots: spot.onKey(ch)
 
   def handleLineInput(self, line):
     pass
-
-dmxView = SliderView()
-lightArmView = LightArmView() 
-cueView = CueView()
-
-currentView = lightArmView
 
 def cmdLoadCueSheet(line):
   tokens = line.split()
@@ -386,7 +413,11 @@ def signal_handler(signal, frame):
   Arms.exit()
   exit()
 
-def programExit(): signal_handler(None, None)
+def programExit(): 
+  signal_handler(None, None)
+
+views = [CueView(), LightArmView(), SliderView()]
+currentView = views[0]
 
 if __name__ == '__main__':
   signal.signal(signal.SIGINT, signal_handler)
@@ -402,14 +433,9 @@ if __name__ == '__main__':
     if ch == '\x03' or ch == 'z' or ch == 'Z':
       programExit()
 
-    elif ch == '1': 
-      currentView = cueView
-      currentView.onFocus()
-    elif ch == '2': 
-      currentView = lightArmView
-      currentView.onFocus()
-    elif ch == '3':
-      currentView = dmxView
+    # change view
+    elif len(ch) == 1 and ch >= '1' and ch <= '3': 
+      currentView = views[ord(ch) - ord('1')] 
       currentView.onFocus()
 
     # every view can have a separate key to enter a command line of text
@@ -421,18 +447,13 @@ if __name__ == '__main__':
       if len(tokens) == 0: continue
       cmd = tokens[0]
 
-      # program-wide commands ?
-      #try:
+      # program-wide commands 
       if cmd ==   'exit': programExit()
       elif cmd == 'save': cmdSave(tokens, line)
       elif cmd == 'load': cmdCue(line, CueLoad)
       elif cmd == 'fade': cmdCue(line, CueFade)
       elif cmd == 'cuesheet': cmdLoadCueSheet(line) # handled in cview
       else: currentView.handleLineInput(line)
-      #except ArithmeticError as e:
-       # print(e)
-       # getch()
-       # programExit()
 
     else:
       currentView.handleChar(ch)

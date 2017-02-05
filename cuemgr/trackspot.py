@@ -1,11 +1,14 @@
-# A 7-channel knockoff stage light
-# the following args are letters for keyboard control: up, down, left, right, brighter, darker
+"""Keyboard control of a 7-channel knockoff stage tracklight with 2-axis motor"""
+
 class TrackSpot:
+  """Constructor arguments starting with up are keyboard key codes. 
+  Brighter and Darker may change color instead of intensity."""
   def __init__(self, dmx, firstChannel, up, down, left, right, brighter, darker):
 
     # channel function names starting with firstChannel
     self.channelNames = ['X position', 'Y position', 'Color', 'Pattern', 'Strobe', 'Intensity', 'Movement speed']
 
+    # DMX values for different colors
     self.colorKey = """\
 0   white
 30  blue

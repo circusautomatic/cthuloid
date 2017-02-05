@@ -1,6 +1,8 @@
+"""Keyboard and console output functions."""
+
 def clearScreen():
     #os.system('clear')
-    #print("\x1b[2J\x1b[H", end='')
+    print("\x1b[2J\x1b[H", end='')
     return
 
 def _find_getch():
@@ -27,6 +29,6 @@ def _find_getch():
 
 getch = _find_getch()
 
-def getchMsg(str='Press any key'):
+def getchMsg(str='Press any key...'):
   print(str, end=' ', flush=True)
   getch()

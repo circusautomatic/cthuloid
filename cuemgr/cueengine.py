@@ -1,3 +1,10 @@
+"""Engine for navigating through cues loaded from a cuesheet.
+
+Cues can be nested in scenes. This engine supports stepping forward and backward through,
+and for jumping to other scenes. See cue.py for more info.
+
+"""
+
 import time, threading
 from console import *
 from cue import *
@@ -136,7 +143,7 @@ class CueEngine:
                 popIndent()
                 pops += 1
               
-              # did we pop to an previously unused indent? Handle this case:
+              # did we pop to a previously unused indent? Handles the following:
               # s
               #   s
               #  s

@@ -1,9 +1,8 @@
-import sys
-import os
-import os.path
-import threading
+# Open Lighting Architecture singleton thread for interacting with a DMx
+# USB device.
+
+import sys, os, os.path, threading, ast
 from ola.ClientWrapper import ClientWrapper
-import ast
 
 class OlaThread(threading.Thread):
     def __init__(self):

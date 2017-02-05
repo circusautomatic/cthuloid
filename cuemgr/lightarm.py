@@ -1,3 +1,13 @@
+"""Interface for communicating with spotlight robots via network sockets.
+
+Each spotlight robot:
+- has two servos and an LED.
+- has an ethernet port and separate IP address
+- listens on port 1337
+- speaks a human-readable protocol.
+
+"""
+
 import socket, os, errno, select, threading, time, random, signal, sys, struct
 
 #######################################################################
@@ -128,7 +138,13 @@ import socket, os, errno, select, threading, time, random, signal, sys, struct
 #        self.write(b'r\n')
 
 class NetworkArm:
+  """Abstracts one spotlight robot over ethernet.
+ 
+  This class is collected by class LightArms and its socket is waited on by class SocketsThread.
+  """
+  
   NumServos = 2
+  
   def __init__(self, id=None, addr=None, port=1337, inverted=None):
     '''
     pass either id or addr
@@ -179,7 +195,6 @@ class NetworkArm:
     self.intensity = intensity
     pwm = str(self.toHighFreq(intensity))
     cmd = 'pwm ' + pwm
-    if self.address == '10.0.2.10': cmd += ' ' + pwm   # hack for static light 
     self.send(cmd)
 
   def relax(self):
@@ -230,7 +245,7 @@ class NetworkArm:
 
 
 class SocketsThread (threading.Thread):
-  # this class operates on the sockets in arms.arms
+  """waits on the sockets in the arms of a LightArms object"""
   def __init__(self, arms):
     self.arms = arms
     self.shouldExit = False
@@ -286,6 +301,14 @@ class SocketsThread (threading.Thread):
 
 
 class LightArms:
+"""Abstracts control of a network of spotlight robots.
+
+It uses an instance of SocketsThread for non-blocking network communication. Calling exit()
+is necessary to terminate the thread.
+
+self.arms is a list of class NetworkArm, each with an IP address.
+
+"""
 
   def __init__(self):
     # 
@@ -296,7 +319,7 @@ class LightArms:
       NetworkArm(2),                         # stage left back
       NetworkArm(4, inverted=[False, True]), # stage left front
       NetworkArm(5, inverted=[True, False]), # stage left side
-      NetworkArm(10),                        # aerial overhead
+      #NetworkArm(10),                        # aerial overhead
     ]
     #for i in range(5): self.arms.append(NetworkArm(addr='localhost', port=3001+i))
 
@@ -376,6 +399,7 @@ class LightArms:
       for i in range(len(angles)):
         arm.setAngle(i, angles[i])
 
+#singleton
 Arms = LightArms()
 
 if __name__ == '__main__':

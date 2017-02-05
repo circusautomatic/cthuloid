@@ -1,10 +1,25 @@
+"""
+Defines types of cues (sets of hardware parameters), and provides for loading and saving them.
+
+We unfortunately use the word 'cue' in two different ways:
+1. A cue is a text file containing hardware parameters in json.
+   Note that cues may also be grouped together into a sequence, which is itself treated as a cue.
+2. A cue is an instruction to transition to a new set of parameters, either by
+    setting them instantaneously or by incrementally fading from the previous parameters.
+
+
+"""
+
 import sys, os, threading, ast, time
 from console import *
-from lightarm import Arms
 from dmx import DmxChannels
+from lightarm import Arms
 
 #Arms = LightArms()
 DMX = DmxChannels()
+
+#########################################################################################################
+# helpers
 
 def openCueFile(filenameOnly, mode='r'):
   return open('scenes/' + filenameOnly, mode)
@@ -13,12 +28,12 @@ def restAfterWord(word, line):
   return line[line.find(word) + len(word):].strip()
 
 def frange(start, end=None, inc=None):
-    "A range function, that does accept float increments..."
+    "A range function which does accept float increments..."
 
     if end == None:
         end = start + 0.0
         start = 0.0
-    else: start += 0.0 # force it to be a float
+    else: start = float(start)
 
     if inc == None:
         inc = 1.0
@@ -35,8 +50,8 @@ def frange(start, end=None, inc=None):
 
     return L
 
-# return a dictionary of DMX, LED channels, and Servo angles
 def loadCueFile(filenameOnly):
+  """return a dictionary of DMX, LED channels, and Servo angles"""
   with openCueFile(filenameOnly) as f:
     text = f.read()
 
@@ -47,20 +62,21 @@ def loadCueFile(filenameOnly):
     # TODO check version
     #if json['version'] == 0:
 
-########################################################
+##############################################################################################
 # cue commands
 
 class Cue:
+  """Base class. Initialization, loading, and running may happen at different times."""
   def __init__(self, line):
     self.line = line
-
   def load(self):
     pass
-
   def run(self, immediate=False):
     print('empty cue')
 
+
 class CueSequence(Cue):
+  """A list of cues that waits for the previous cue to finish before executing the next"""
   def __init__(self, line):
     Cue.__init__(self, line)
     self.cues = []
@@ -71,8 +87,11 @@ class CueSequence(Cue):
       print ('-', cue.line.strip())
       cue.run()
 
+
 # load scene from local file
 class CueLoad(Cue):
+  """Loads a cue from file and executes, broken into multiple steps"""
+
   def __init__(self, line):
     Cue.__init__(self, line)
 
@@ -100,7 +119,7 @@ class CueLoad(Cue):
       try:
         self.armData = data['LightArm']
       except:
-        self.leds = self.servos = None
+        self.armData = None
       #except BaseException as e:
     #  raise BaseException('Error loading file: ' + str(e))
 
@@ -118,10 +137,16 @@ class CueLoad(Cue):
       #  pass
 
     
-  # fade from current scene to new scene
-  # usage:
-  # fade <optional time in seconds> <filename>
 class CueFade(CueLoad):
+  """Fades from current scene to new scene. 
+  
+  Blocks during run() for the duration of the fade.
+  TODO: fix that fading can only be done for either DMX or LightArms.
+
+  usage:
+  fade <optional time in seconds> <filename>
+  """
+
   def __init__(self, line):
     Cue.__init__(self, line)    # ignore CueLoad's constructor so we can parse differently
 
@@ -210,8 +235,9 @@ class CueFade(CueLoad):
 
         # make sure we arrive at the target numbers, as rounding error may creep in
         #DMX.setAndSend(0, target)
-        for i in range(Arms.num()):
-          Arms.setLED(i, target[i])
+        Arms.load(self.armData)
+        #for i in range(Arms.num()):
+        #  Arms.setLED(i, target[i])
         
         print('DONE')
     #except:
@@ -219,16 +245,18 @@ class CueFade(CueLoad):
     # TODO other exceptions having to do with the fade math
 
 
-# instantiate a class and run it
 def cmdCue(line, CueClass):
-  #try:
+  """instantiate a type of cue and run it immediately"""
+  try:
     cue = CueClass(line)
     cue.run()
-  #except BaseException as e:
-  #  print(e)
+  except OSError as e:
+    print(e)
+    getchMsg()
 
-# save current OLA scene
+
 def cmdSave(tokens, line):
+  """save the current parameters in a cue file"""
   if len(tokens) < 2:
     raise BaseException('no filename')
 
@@ -244,6 +272,8 @@ def cmdSave(tokens, line):
     with openCueFile(filename, 'w') as f:
       f.write(text)
       f.write('\n')
-  except:
-    raise BaseException('Error saving file')
+  except OSError as e:
+    #raise BaseException('Error saving file')
+    print(e)
+    getchMsg()
 

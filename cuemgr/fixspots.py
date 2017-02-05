@@ -1,4 +1,4 @@
-# script to modify track spot settings in all cue files in scenes/ to make them more amenable to manual control during show
+"""script to modify track spot settings in all cue files in scenes/make them more amenable to manual control during show"""
 
 from trackspot import *
 import os, ast
