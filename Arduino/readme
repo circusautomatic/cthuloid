@@ -1,1 +1,3 @@
-Microcontroller firmware, mainly Arduino sketches. Note that many sketches require one or more modules in the 'library' folder.
+Microcontroller firmware, mainly Arduino sketches. 
+
+Note that many sketches require built-in Arduino libraries for PWM and networking, as well as modules in the library folder here.
