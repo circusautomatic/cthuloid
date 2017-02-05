@@ -4,7 +4,7 @@ The controller for this robot listens for TCP/IP connections on port 1337, suppo
 
 Blender is used as a modeling and simulation environment. The robot can be animated or controlled in real-time. To do this, you must put the IP address of the robot in the model name, run the robot_panel.py script, and then turn Animation mode.
 
-IP properties are settable and stored in EEPROM. Mac address is assigned based on the IP address. DHCP is not supported.
+IP properties are settable and stored in EEPROM. Mac address is assigned based on the IP address. DHCP is not supported only because of the difficulties of not using static IPs.
 
 In this repo:
 android - a simple android program to control movement of two LightArms
