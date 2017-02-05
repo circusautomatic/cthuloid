@@ -1,12 +1,14 @@
 // Arduino sketch for controlling multiple Dynamixel Servos over ethernet or serial.
 // Apologies this file is so large; the Arduino IDE doesn't handle includes and macros
-// very well, and I want to keep it easy for others to compile.
+// very well, and I want to keep it easy for others to compile. 
 // 
-// Send text commands via either ethernet or serial (see flag COMM_ETHERNET).
-// Set amount of response text with command plevel (see PrintLevel.h)
+// Accept text commands via either ethernet or serial (see flag COMM_ETHERNET).
+// Set amount of response text with command 'plevel' (see PrintLevel.h)
 // See SerialCommand::Entry CommandsList for list of commands.  Each command will reply 
 // with argument format when used incorrectly, unless plevel is set to "silent".
-
+//
+// Big TODO:
+// - move network methods (including updating network settings) and LED methods into a separate module
 //////////////////////////////////////////////////////////////////////////////////////
 
 #include <ax12.h>
@@ -17,7 +19,7 @@
 #include "eeprom.h"
 
 // Comment this out to read and write from Serial instead of Ethernet.
-// Arduino IDE is wigging out when selecting which ethernet library to use; see line 50.
+// Arduino IDE is wigging out when selecting which ethernet library to use; see line 59 (#ifdef COMM_ETHERNET).
 #define COMM_ETHERNET
 
 // Comment this in to allow greater range of movement for the first servo.
@@ -39,6 +41,7 @@
 #define INVERT_HIGH_AND_LOW
 
 #define MAX_PWM 65535
+#define PWM_FREQ 10000
 
 const int PWMPins[] = {11, 12, 13, 14, 15};
 const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
@@ -160,6 +163,10 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
     memcpyToEEPROM(0, &h, sizeof(h));
   }
   
+#else
+  void invalidateSettings() {}
+  boolean loadSettings() { return true; }
+  void saveSettings() {}
 #endif
 
 #include <PrintLevel.h>
@@ -168,7 +175,7 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
 // Servo globals
 /////////////////////////////////////////////////////////////////////////////////////
 
-const int MaxServos = 2;
+const int MaxServos = 32;
 BioloidController Servos(1000000);
 
 const int BroadcastID = 254;
@@ -874,12 +881,16 @@ void cmdSetID() {
   ax12write(newID);
   ax12write(checksum);
   setRX(0);
+
+  printlnInfo("Servo ID change message sent. Use r command to check.");
 }
 
 void restartNetwork() {
+#ifdef COMM_ETHERNET
   Client.flush();
   Client.stop();  // hopefully this closes the connection gracefully
   setupEthernet();
+#endif
 }
 
 void cmdClearSettings() {
@@ -1052,12 +1063,19 @@ void setup() {
   Serial.begin(38400);
   loadSettings();
 
-  // Initialize the high resolution PWM library.
+ // Initialize the high resolution PWM library.
   // Frequency: 10000 Hz
   // Run PWM.h example sketch to see all possible PWM settings for a given pin
   InitTimersSafe(); //initialize all timers except for 0, to save time keeping functions
-  Serial.print("setting PWM pin frequeny: ");
-  Serial.println(SetPinFrequency(PWMPins[0], 10000));    // TODO for all PWM pins on arduino mega
+  
+  for(int i = 0; i < NumPWMPins; i++) {
+    //pinMode(PWMPins[i], OUTPUT);
+    //analogWrite(PWMPins[i], 0);
+    Serial.print("setting PWM pin ");
+    Serial.print(PWMPins[i]);
+    Serial.print(" frequeny: ");
+    Serial.println(SetPinFrequency(PWMPins[i], PWM_FREQ));    // TODO for all PWM pins on arduino mega
+  }
 
   // query for and read in the position of each servo
   // TODO: mod Servos class to query for IDs, and store lowest ID that responds

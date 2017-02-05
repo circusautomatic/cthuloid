@@ -18,9 +18,10 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 // this flag will invert PWM output (255-output), for active-low devices
-//#define INVERT_HIGH_AND_LOW
+#define INVERT_HIGH_AND_LOW
 
 #define MAX_PWM 65535
+#define PWM_FREQ 10000
 
 const int PWMPins[] = {/*3, 5, 6, 9, 10,*/ 11, 12};
 const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
@@ -56,7 +57,7 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
 
   const uint16_t PORT = 1337;
   const uint8_t ID_IP = 10;
-  static uint8_t MAC[6] = {0x00,0x01,0x02,0x03,0xa4,ID_IP};
+  static uint8_t MAC[6] = {0x00,0x01,0x02,0x03,0xff,ID_IP};
 
   IPAddress IP(10,0,2,ID_IP);
   IPAddress GATEWAY(10,0,0,1);
@@ -262,7 +263,7 @@ void setup() {
   // TODO: assign static IP based on lowest present servo ID
   Serial.print("Starting ethernet server on address: ");
 
-  Ethernet.begin(MAC, IP);//, GATEWAY, SUBNET);
+  Ethernet.begin(MAC, IP, GATEWAY, GATEWAY, SUBNET);
     
   TCPserver.begin();
   Serial.println(Ethernet.localIP());
@@ -274,11 +275,12 @@ void setup() {
   InitTimersSafe(); //initialize all timers except for 0, to save time keeping functions
   
   for(int i = 0; i < NumPWMPins; i++) {
-    pinMode(PWMPins[i], OUTPUT);
+    //pinMode(PWMPins[i], OUTPUT);
+    //analogWrite(PWMPins[i], 0);
     Serial.print("setting PWM pin ");
     Serial.print(PWMPins[i]);
     Serial.print(" frequeny: ");
-    Serial.println(SetPinFrequency(PWMPins[i], 1));    // TODO for all PWM pins on arduino mega
+    Serial.println(SetPinFrequency(PWMPins[i], PWM_FREQ));
   }
 
   /*printAlways("PWM controller. PWM pins are expected to be ");

@@ -37,6 +37,8 @@ id - change an internal servo ID
 ip - change static IP address
 gateway - change gateway address
 port - change listening port
+restart - restart network module to use new settings
+clear - clear saved settings (just network settings for now)
 
 TODO:
 - support DHCP and figure out how to identify individual robots
