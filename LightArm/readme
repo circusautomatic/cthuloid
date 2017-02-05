@@ -1,6 +1,41 @@
-A spotlight robot made of servos and a 100 Watt LED.
+An ethernet-enabled LED spotlight robot with Dynamixel servos and 3D printed parts.
 
+The controller for this robot listens for TCP/IP connections on port 1337, supports multiple connections, and speaks a human-readable protocol with instructive error messages. It runs on an Arduino Mega and communicates with Dynamixel servos via USART.
+
+Blender is used as a modeling and simulation environment. The robot can be animated or controlled in real-time. To do this, you must put the IP address of the robot in the model name, run the robot_panel.py script, and then turn Animation mode.
+
+IP properties are settable and stored in EEPROM. Mac address is assigned based on the IP address. DHCP is not supported.
+
+In this repo:
 android - a simple android program to control movement of two LightArms
 blender - Blender models and python integration for controlling LightArms
 python - useful standalone scripts
+LED MOSFET board.fzz - a schematic of the LED driver
 
+Components:
+- 2 Dynamixel servos
+- 100 Watt LED, heatsink, and fan
+- custom LED driver
+- Arduino Mega and ethernet module
+- 12 Volt power supply (Wattage?)
+- step-up power converter (to 33 Volts)
+
+Commands:
+plevel - see or change the amount of text sent in response to a command
+pwm - change LED brightness
+v - check first servo voltage
+r - report servo positions
+s - change servo positions
+p - choose preset position of servos
+speed - see or change servo speed
+relax - relax servos so they can be manually positioned
+torq - un-relax some or all servos
+circle - perform a circle in the plane perpendicular to neutral
+id - change an internal servo ID
+ip - change static IP address
+gateway - change gateway address
+port - change listening port
+
+TODO:
+- support DHCP and figure out how to identify individual robots
+- add option for network security (so a person cannot just telnet into the robot)
