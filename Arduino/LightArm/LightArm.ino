@@ -3,6 +3,7 @@
 // very well, and I want to keep it easy for others to compile. 
 // 
 // Accept text commands via either ethernet or serial (see flag COMM_ETHERNET).
+// Commands are listed in /LightArm/readme; see the definition of CommandsList in this file.
 // Set amount of response text with command 'plevel' (see PrintLevel.h)
 // See SerialCommand::Entry CommandsList for list of commands.  Each command will reply 
 // with argument format when used incorrectly, unless plevel is set to "silent".
