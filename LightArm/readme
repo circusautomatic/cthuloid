@@ -1,0 +1,6 @@
+A spotlight robot made of servos and a 100 Watt LED.
+
+android - a simple android program to control movement of two LightArms
+blender - Blender models and python integration for controlling LightArms
+python - useful standalone scripts
+

@@ -1,7 +1,7 @@
 import SocketServer, thread, signal, time, socket, random
 
-starting_port = 10001 + random.randint(0, 5)
-num_sockets = 1
+starting_port = 1 + 1000 * random.randint(1, 9)
+num_sockets = 5
 
 class S(SocketServer.BaseRequestHandler):
   def handle(self):
@@ -24,14 +24,22 @@ def socket_serve(name, port):
   s = SocketServer.TCPServer(('', port), S)
   s.serve_forever()
 
+threads = []
+
 for port in range(starting_port, starting_port + num_sockets):
-  thread.start_new_thread(socket_serve, ('Thread Port ' + str(port), port))
+  threads.append(thread.start_new_thread(socket_serve, ('Thread Port ' + str(port), port)))
+
+#print(threads)
+#for thread in threads:
+time.sleep(100) 
+
+
 
 def sockopt(s):
   return s.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
 
 print 'finished\n'
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+'''s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.setblocking(0)
 print s.connect_ex(('10.0.0.123', starting_port))
 print 'connecting'
@@ -55,4 +63,4 @@ def send_sleep(s):
 send_sleep(s)
 
 #signal.pause()
-exit(0)
+exit(0)'''
