@@ -1,3 +1,17 @@
+"""Blender plugin for controlling LightArm (spotlight robots) and static LEDs.
+
+This script registers an Animation Handler routine so that Blender can act as a robot simulation environment.
+The routine only runs when Blender is in animation mode (Alt-A). On request, it opens a socket connection to
+each robot in the scene. IP address is derived from the name of the robot model in Blender, so model names must 
+follow a specific format, or the handler will ignore them. Because displaying errors in Blender is currently 
+messy, errors are printed to the console, so you must launch Blender from a terminal to see them.
+
+A LightArm's name must be of the form 'arm.<address>', ex: 'arm.10.0.0.2'
+A static LED's name must be of the form 'light.<address>'
+Gimbal lights are an experimental alternate spotlight robot.
+
+"""
+
 import bpy, socket, math, ast, threading, queue
 from enum import Enum
 from mathutils import *
@@ -8,19 +22,24 @@ LIGHT_NAME_PREFIX = 'light.'
 LIGHT_PWM_MAX = 65535
 LIGHT_LUM_MAX = 1.0
 
+################################################################################
+# network functionality
+
+ROBOT_PORT = 1337
+
 ConnState = Enum('ConnState', 'none connecting connected')
 class Connection:
   def __init__(self, socket, state=ConnState.none):
     self.socket = socket
     self.state = state
 
-# map from IP address to Connection
+# map from IP address to Connection object
 sockets = {}
 # ip addresses to be connected to and added to sockets dict
 sockets_queue = queue.Queue()
 
 # connect to address and store socket in persistent global map
-def connect_socket(ip, port = 1337):
+def connect_socket(ip, port = ROBOT_PORT):
   server_address = (ip, port)
   sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   sock.settimeout(1.0)
@@ -40,6 +59,7 @@ def connect_socket(ip, port = 1337):
   except OSError:
     print('error: network error reaching', ip)
 
+# A singleton thread to manage non-blocking socket connections
 class SocketThread(threading.Thread):
   def __init__(self, name):
     self.shouldExit = False
@@ -59,6 +79,9 @@ class SocketThread(threading.Thread):
       
 socket_thread = SocketThread('st')
 
+################################################################################
+# helpers
+
 # find the LAMP attached to this arm  
 def findLamp(arm):
   for child in arm.children:
@@ -70,38 +93,18 @@ def pwmFromLuminosity(lum):
     pwm = int(round(abs(lum) / LIGHT_LUM_MAX * LIGHT_PWM_MAX))
     return pwm
 
+# returns luminosity in Blender units, range [0.0-1.0]
 def luminosityFromPWM(pwm):
     lum = pwm * LIGHT_LUM_MAX / LIGHT_PWM_MAX
     return lum
 
-# expects [-135, +135]
+# converts to dynamixel angle units 
+# expects [-135, +135], returns approximately [50, 1000]
 def dynamixel_from_degrees(angle):
 #  return int(round(angle * 600.0/180 + 512))
   return int(round(angle * 1024.0/300 + 512))
 
-def getGimbalAngles(gimbal, direction):
-  #TODO subtract from  gimbal base or top of first bone
-  direction = direction.location - gimbal.location
-  
-  fo = gimbal.pose.bones['forearm']
-  up = gimbal.pose.bones['base']
-
-  fo_a = math.acos(direction.z / direction.length)
-  fo_a = min(math.pi/2, fo_a)
-  up_a = math.atan2(direction.y, direction.x) + math.pi/2
-  #if fo_a < 0: fo_a = 0
-  print(up_a, fo_a)
-  
-  up.rotation_mode = 'XYZ'
-  up.rotation_euler = Euler((0, up_a, 0))
-
-  fo.rotation_mode = 'XYZ'
-  fo.rotation_euler = Euler((fo_a, 0, 0))
-
-  angles = [dynamixel_from_degrees(a * 180/math.pi) for a in [up_a, fo_a]]
-  #print(angles)
-  return angles
-
+# calculates servo angles for LightArm robot
 # returns a list of arm angles, starting from the base
 # units are dynamixel units [200, 824]
 def getArmAngles(arm):    
@@ -136,6 +139,32 @@ def getArmAngles(arm):
   angles = [x * 600/math.pi + 512 for x in angles]
 '''
 
+# calculates servo angles for Gimbal robot 
+# returns a list of arm angles, starting from the base
+# units are dynamixel units [200, 824]
+def getGimbalAngles(gimbal, direction):
+  #TODO subtract from  gimbal base or top of first bone
+  direction = direction.location - gimbal.location
+  
+  fo = gimbal.pose.bones['forearm']
+  up = gimbal.pose.bones['base']
+
+  fo_a = math.acos(direction.z / direction.length)
+  fo_a = min(math.pi/2, fo_a)
+  up_a = math.atan2(direction.y, direction.x) + math.pi/2
+  #if fo_a < 0: fo_a = 0
+  print(up_a, fo_a)
+  
+  up.rotation_mode = 'XYZ'
+  up.rotation_euler = Euler((0, up_a, 0))
+
+  fo.rotation_mode = 'XYZ'
+  fo.rotation_euler = Euler((fo_a, 0, 0))
+
+  angles = [dynamixel_from_degrees(a * 180/math.pi) for a in [up_a, fo_a]]
+  #print(angles)
+  return angles
+
 def assembleLightServoString(angles, pwm):
   baseID = 1
   s = 's'
@@ -145,6 +174,9 @@ def assembleLightServoString(angles, pwm):
 
   s += '\npwm ' + str(pwm) + '\n'
   return s
+
+##############################################################################
+# animation handler
 
 def robot_anim_handler(scene):
   iktarget = bpy.data.objects['Cube']
@@ -196,6 +228,9 @@ def robot_anim_handler(scene):
         conn.state = ConnState.none
         sockets_queue.put(ip)
 
+#########################################################################################
+# load and save to file, not actually used
+
 def saveToFile(filepath):
   with open(filepath, 'w') as f:
     arms = {}
@@ -230,7 +265,8 @@ def loadFromFile(filepath):
       # TODO_set angles
   
 ###################################################################################
-#    Menu in toolprops region
+# menu in toolprops region
+
 class RobotPanel(bpy.types.Panel):
     bl_label = "Robot Scene"
     bl_space_type = "VIEW_3D"
@@ -275,6 +311,9 @@ class CircusLoader(bpy.types.Operator):
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
+
+#####################################################################################
+# main
 
 def unregister():
     bpy.utils.unregister_class(RobotPanel)

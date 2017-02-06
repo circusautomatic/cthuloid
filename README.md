@@ -1,4 +1,4 @@
-# ctulhoid
+# cthuloid
 
 Cthuloid is an autonomous theater umbrella project by Circus Automatic.
 
