@@ -1,6 +1,6 @@
 # cthuloid
 
-Cthuloid is an autonomous theater umbrella project by Circus Automatic.
+Cthuloid is an experimental autonomous theater umbrella project by Circus Automatic.
 
 Folders of note:
 - LightArm - ethernet-enabled spotlight robot project
