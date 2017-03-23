@@ -18,6 +18,8 @@ from mathutils import *
 
 ARM_NAME_PREFIX = 'arm.'
 GIMBAL_NAME_PREFIX = 'garm.'
+SERVO_SPEED = 200
+SERVO_COMPLIANCE = 63
 LIGHT_NAME_PREFIX = 'light.'
 LIGHT_PWM_MAX = 65535
 LIGHT_LUM_MAX = 1.0
@@ -49,7 +51,7 @@ def connect_socket(ip, port = ROBOT_PORT):
   try:
     sock.connect(server_address)
     print('connected to', server_address)
-    sock.sendall(b'speed 50\n')
+    sock.sendall(b'speed %d\ncompliance %d\n' % (SERVO_SPEED, SERVO_COMPLIANCE))
     sockets[ip].socket = sock
     sockets[ip].state = ConnState.connected
     return sock
