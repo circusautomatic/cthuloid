@@ -895,6 +895,7 @@ void restartNetwork() {
 }
 
 void cmdClearSettings() {
+#ifdef COMM_ETHERNET
   if(char *arg = CmdMgr.next()) {
     if(!strcmp(arg, "settings")) {
       invalidateSettings();
@@ -906,11 +907,13 @@ void cmdClearSettings() {
   }
 
   printlnError("Error: argument must be \'settings\'.");
+#endif
 }
 
 const char *RestartNetworkMessage = "Success. Type \"restart\" to restart network interface";
 
 void cmdSetIPAddress() {
+#ifdef COMM_ETHERNET
   char *arg = CmdMgr.next();
   if(arg == NULL) {
     printlnError("Error: expected IP address");
@@ -927,9 +930,11 @@ void cmdSetIPAddress() {
   memcpy(IP, &u, sizeof(IP));
   saveSettings();
   printlnAlways(RestartNetworkMessage);
+#endif
 }
 
 void cmdSetGatewayAddress() {
+#ifdef COMM_ETHERNET
   char *arg = CmdMgr.next();
   if(arg == NULL) {
     printlnError("Error: expected IP address");
@@ -946,9 +951,11 @@ void cmdSetGatewayAddress() {
   memcpy(GatewayAddress, &u, sizeof(GatewayAddress));
   saveSettings();
   printlnAlways(RestartNetworkMessage);
+#endif
 }
 
 void cmdSetPort() {
+#ifdef COMM_ETHERNET
   char *arg = CmdMgr.next();
   
   if (arg != NULL) {
@@ -964,6 +971,7 @@ void cmdSetPort() {
   }
 
   printlnError("Error: port number expected between 1 and 65535"); 
+#endif
 }
 
 // expects space-delimited ints 0-65535, or space delimited <index>:<pwm> pairs, where <index> is 1-based
