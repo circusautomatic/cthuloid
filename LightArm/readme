@@ -22,6 +22,12 @@ Components:
 - 12 Volt power supply (Wattage?)
 - step-up power converter (to 33 Volts)
 
+Getting Started:
+- telnet to the lightarm on port 1337. Default IPv4 address is 10.0.2.255 (see /Arduino/LightArm/LightArm.ino). There is no greeting upon connection. Once connected, type the following commands and hit enter after each one.
+- r
+- p <1-5>
+- pwm <0-65535>
+
 Commands:
 plevel - see or change the amount of text sent in response to a command
 pwm - change LED brightness
