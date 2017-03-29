@@ -23,7 +23,7 @@ Components:
 - step-up power converter (to 33 Volts)
 
 Getting Started:
-- telnet to the lightarm on port 1337. Default IPv4 address is 10.0.2.255 (see /Arduino/LightArm/LightArm.ino). There is no greeting upon connection. Once connected, type the following commands and hit enter after each one.
+- telnet to the lightarm on port 1337. Default IPv4 address is 10.0.2.255; see /Arduino/LightArm/LightArm.ino. There is no greeting upon connection, due to the nature of the Arduino ethernet library. Once connected, type the following commands and hit enter after each one.
 - r
 - p <1-5>
 - pwm <0-65535>
@@ -47,5 +47,6 @@ restart - restart network module to use new settings
 clear - clear saved settings (just network settings for now)
 
 TODO:
+- modify ethernet library to greet client upon connection
 - support DHCP and figure out how to identify individual robots
 - add option for network security (so a person cannot just telnet into the robot)
