@@ -42,7 +42,7 @@
 #define INVERT_HIGH_AND_LOW
 
 #define MAX_PWM 65535
-#define PWM_FREQ 10000
+#define PWM_FREQ 1000
 
 const int PWMPins[] = {11, 12, 13, 14, 15};
 const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
