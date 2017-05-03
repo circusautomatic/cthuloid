@@ -1,16 +1,17 @@
 #include <Conceptinetics.h>
 #include <PWM.h>
 
-// this flag will invert PWM output (255-output), for active-low devices
+// this flag will invert PWM output, for active-low devices
 #define INVERT_HIGH_AND_LOW
 
-int DMX_Address = 1;
+int DMX_Address = 1;  // The DMX address of the first channel (1-based indexing)
 
-const int PWM_Pins[] = {11, 12, 5, 6, 7, 8};
+// These pins will be mapped onto DMX channels in order (1-based indexing)
+const int PWM_Pins[] = {5, 6, 7, 8, 11, 12, 44, 45, 46};
 const int Num_PWM_Pins = sizeof(PWM_Pins)/sizeof(*PWM_Pins);
 
 const long PWM_Frequency = 1000;    // timer frequency for generating PWM
-const long HR_PWM_Off = 2600;       // High Resolution PWM value at which our LED turns on/off
+const long HR_PWM_Off = 2600;       // High Resolution PWM value at which our LED turns off
 
 // map a log function while converting from 8-bits to 16-bits
 // dmx: input [0-255]
@@ -50,7 +51,7 @@ long DMXtoPWM(long dmx) {
 
 
 // Create a DMX slave controller
-const int Num_DMX_Channels = PWM_Pins;
+const int Num_DMX_Channels = Num_PWM_Pins;
 DMX_Slave dmx_slave ( Num_DMX_Channels );
 
 // If you are using an IO pin to control the shields RXEN
@@ -85,8 +86,10 @@ void loop()
     long hr = DMXtoPWM(brightness);
     
     //invert high and low
+#ifdef INVERT_HIGH_AND_LOW
     hr = 65535 - hr;
-    
+#endif
+
     pwmWriteHR(PWM_Pins[i], hr);
   }
 }
