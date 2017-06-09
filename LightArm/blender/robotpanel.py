@@ -104,6 +104,8 @@ def luminosityFromPWM(pwm):
 # expects [-135, +135], returns approximately [50, 1000]
 def dynamixel_from_degrees(angle):
 #  return int(round(angle * 600.0/180 + 512))
+  while angle < -135: angle += 360
+  while angle > 135:  angle -= 360
   return int(round(angle * 1024.0/300 + 512))
 
 # calculates servo angles for LightArm robot
@@ -117,17 +119,19 @@ def getArmAngles(arm):
 
   up_q = up.matrix.to_quaternion()
   fo_q = fo.matrix.to_quaternion()
-  fo_q.rotate(up_q.inverted())
   
-  # TODO get local orientation somehow instead of adding 180 and 90
-  up_a = up.matrix.to_euler().x * rad_to_deg + 90
+  # find the orientation of the forearm relative to the upper arm
+  fo_q.rotate(up_q.inverted())
+  #print(up_q, fo_q)
+  
+  # one joint angle is [0,180], the other is [-90,90]
+  # convert both to [-90, 90]
+  up_a = up.matrix.to_euler().x * rad_to_deg - 90
   fo_a = fo_q.to_euler().z * rad_to_deg
-  #up_a = 0 if up_a < 0 else up_a
-  #print(fo_q.to_euler(), fo_a)
+  #print(up_a, fo_a)
 
   # convert to dynamixel units
   angles = [dynamixel_from_degrees(a) for a in [up_a, fo_a]]
-  #print(angles)
   return angles
 
   '''upperarm_angles = upperarm.matrix.to_euler()

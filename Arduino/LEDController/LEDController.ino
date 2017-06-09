@@ -21,7 +21,7 @@
 #define INVERT_HIGH_AND_LOW
 
 #define MAX_PWM 65535
-#define PWM_FREQ 10000
+#define PWM_FREQ 1000
 
 const int PWMPins[] = {/*3, 5, 6, 9, 10,*/ 11, 12};
 const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
@@ -56,7 +56,7 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
   #include <Ethernet.h>
 
   const uint16_t PORT = 1337;
-  const uint8_t ID_IP = 10;
+  const uint8_t ID_IP = 255;
   static uint8_t MAC[6] = {0x00,0x01,0x02,0x03,0xff,ID_IP};
 
   IPAddress IP(10,0,2,ID_IP);
