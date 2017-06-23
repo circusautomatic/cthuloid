@@ -4,10 +4,10 @@
 // this flag will invert PWM output, for active-low devices
 #define INVERT_HIGH_AND_LOW
 
-int DMX_Address = 1;  // The DMX address of the first channel (1-based indexing)
+int DMX_Address = 5;  // The DMX address of the first channel (using 1-based indexing)
 
 // These pins will be mapped onto DMX channels in order (1-based indexing)
-const int PWM_Pins[] = {11, 12, 7, 8};//5, 6, 7, 8, 11, 12, 44, 45};
+const int PWM_Pins[] = {11, 12, 44, 45};
 const int Num_PWM_Pins = sizeof(PWM_Pins)/sizeof(*PWM_Pins);
 
 const long PWM_Frequency = 1000;    // timer frequency for generating PWM
@@ -61,18 +61,30 @@ DMX_Slave dmx_slave ( Num_DMX_Channels );
 void setup() {             
   Serial.begin(38400);
 
+  Serial.print("DMX starting address: ");
+  Serial.println(DMX_Address);
+  dmx_slave.enable();  
+  dmx_slave.setStartAddress(DMX_Address);
+
   // For high-resolution PWM, initialize all timers except for 0, to save time keeping functions
   InitTimersSafe(); 
-  
-  for(int i = 0; i < Num_PWM_Pins; i++) {
+
+  // initialize the first two pins
+  for(int i = 0; i < Num_PWM_Pins - 2; i++) {
     Serial.print("setting PWM pin ");
     Serial.print(PWM_Pins[i]);
     Serial.print(" frequeny: ");
     Serial.println(SetPinFrequency(PWM_Pins[i], PWM_Frequency));
   }
-    
-  dmx_slave.enable();  
-  dmx_slave.setStartAddress(DMX_Address);
+
+  // the high resolution PWM library doesn't work for pins 44-45
+  Serial.println("Setting pins 44-45 by different method");
+  pinMode(44, OUTPUT);  // select Pin as ch-B
+  pinMode(45, OUTPUT);  // select Pin as ch-C
+ 
+  TCCR5A = B00101001; // Phase and frequency correct PWM change at OCRA
+  TCCR5B = B10001;  // System clock
+  OCR5A = 0xffff;   // max pwm value
 }
 
 void loop() 
@@ -90,6 +102,8 @@ void loop()
     hr = 65535 - hr;
 #endif
 
-    pwmWriteHR(PWM_Pins[i], hr);
+    if(i < 2) pwmWriteHR(PWM_Pins[i], hr);
+    if(i == 2) OCR5C = hr;    // mega pin 44
+    if(i == 3) OCR5B = hr;    // mega pin 45
   }
 }
