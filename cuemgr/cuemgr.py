@@ -20,6 +20,7 @@ from console import *
 from cue import *
 from cueengine import CueEngine
 from trackspot import TrackSpot
+from serialthread import *
 
 CuesFilename = 'cuesheet.txt'   #initial cuesheet automatically loaded
 MaxPWM = 999
@@ -53,6 +54,107 @@ class View:
   def display(self): pass
   def handleChar(self): pass
 
+import socket, os, errno, select, threading, time, random, signal, sys, struct
+
+class Motors(SerialThread):
+  def __init__(self, path='/dev/motors'):
+    SerialThread.__init__(self, path)
+    self.speed = 0  # denotes number of L/Rs we will send to the arduino 
+    self.STOP = ' '
+    self.direction = self.STOP
+    sendSpeed()
+    
+  def sendSpeed(self):
+    s = self.STOP # initial character must reset the uc's internal counter to zero
+    
+    if self.direction != self.STOP:
+      # append a number of l and r's
+      for i in range(self.speed): s += self.direction
+    self.send(s)
+
+  def stop(self):
+    self.direction = self.STOP 
+    sendSpeed()
+
+  def turnLeft(self):
+    self.speed = 'r' 
+    sendSpeed()
+
+  def turnRight(self):
+    self.speed = 'r' 
+    sendSpeed()
+
+  def forward(self):
+    self.speed = 'lr' 
+    sendSpeed()
+
+  def backward(self):
+    self.speed = 'LR' 
+    sendSpeed()
+    
+
+class LimbServos(SerialThread):
+    def __init__(self, path='/dev/limbs'):
+        SerialThread.__init__(self, path)
+        self.anglesDict = {}
+
+    def getAngle(self, id): return self.anglesDict[id]
+
+    def setAngle(self, idOrDict, angle=None):
+      if isinstance(idOrDict, int):
+        self.anglesDict[idOrDict] = angle
+      elif isinstance(idOrDict, dict) and angle == None:
+        for id,a in idOrDict.items(): self.anglesDict[id] = a
+      elif isinstance(idOrDict, list) and angle == None: 
+        id = 1
+        for a in idOrDict: 
+          self.anglesDict[id] = a
+          id += 1
+      else: raise TypeError('bad argument to Servos.setAngle')
+
+      self.setServoPos()
+
+    def __str__(self): return str({'limbs':self.anglesDict})
+
+    # argument is a dictionary of id:angle
+    # angles are 0-1023; center is 512; safe angle range is 200-824
+    def setServoPos(self):
+        print(self.anglesDict)
+        if not self.valid(): return
+
+        # text protocol of id:angle pairs
+        cmd = 's'
+        for id,angle in self.anglesDict.items():
+            cmd += ' ' + str(id) + ':' + str(angle)
+
+        cmd += '\n'
+        #print(cmd)
+        self.write(str.encode(cmd))
+
+    def handleLine(self, line): 
+        # read the positions of all servos, which is given in a json/python dict format
+        preamble ='Servo Readings:' 
+        if line.startswith(preamble):
+            readingstext = line[preamble.len:] 
+            readings = ast.literal_eval(readings_text)
+            print(readings_text)
+            if not isintance(readings, dict): 
+                print('error reading servos')
+                return
+            self.setAngles(readings)
+            
+        else: print(line)
+
+    # takes one or a list of IDs
+    # relaxes all if IDs is None
+    def moveAllServos(self, pos, binary=False):
+        anglesDict = {}
+        for i in range(numServos):
+            anglesDict[i+1] = pos
+        self.setServoPos(binary)
+
+    def readServos(self):
+        self.write(b'r\n')
 
 class LightArmView(View):
   """View that controls spotlight robots"""
@@ -343,9 +445,7 @@ class CueView(View):
 
     # hack for manually adjusting track spotlights during the show, specific the Great Star Theater
     self.spots = [
-      TrackSpot(DMX, 161, 'w', 's', 'a', 'd', 'e', 'q'),
-      TrackSpot(DMX, 170, '8', '5', '6', '4', '9', '7'),
-      TrackSpot(DMX, 193, 'g', 'b', 'v', 'n', 'h', 'f')]
+      ]
 
     CueMgr.loadCueSheet(CuesFilename)
 
@@ -376,16 +476,20 @@ class CueView(View):
     elif ch == ',' or ch == '<':
       CueMgr.prevScene()
 
-    # the rest of this function is a hack to manually adjust DMX spotlights during the show
-    elif ch == 't':
-      for spot in self.spots:
-        DMX.set(spot.strobe, 255) 
-        DMX.set(spot.speed, 255) 
-      DMX.send()
-    elif ch == 'y':
-      for spot in self.spots:
-        DMX.set(spot.intensity, 0)
-      DMX.send()
+    elif ch == '+':
+      Motors.incSpeed()
+    elif ch == '-':
+      Motors.decSpeed()
+    elif ch == '0':
+      Motors.stop()
+    elif ch == 'f':
+      Motors.forward()
+    elif ch == 'back':
+      Motors.backward()
+    elif ch == 'left':
+      Motors.turnLeft()
+    elif ch == 'right':
+      Motors.turnRight()
 
     else:
       for spot in self.spots: spot.onKey(ch)
@@ -407,10 +511,15 @@ def signal_handler(signal, frame):
 def programExit(): 
   signal_handler(None, None)
 
-views = [CueView(), LightArmView(), SliderView()]
-currentView = views[0]
 
 if __name__ == '__main__':
+  if len(sys.argv) > 0 and sys.argv[1] == 'prinboo':
+    views = [CueView(), ] #PrinbooView]
+  else: #default is dmx mode
+    views = [CueView(), SliderView()]
+
+  currentView = views[0]
+
   signal.signal(signal.SIGINT, signal_handler)
   clearScreen()
   currentView.onFocus()
@@ -425,8 +534,8 @@ if __name__ == '__main__':
       programExit()
 
     # change view
-    elif len(ch) == 1 and ch >= '1' and ch <= '3': 
-      currentView = views[ord(ch) - ord('1')] 
+    elif len(ch) == 1 and ord(ch) >= ord('1') and ord(ch) < (ord('1') + len(views)): 
+      currentView = views[ord(ch) - ord('1')]
       currentView.onFocus()
 
     # every view can have a separate key to enter a command line of text

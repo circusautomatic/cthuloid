@@ -102,28 +102,22 @@ void loop() {
     //stopMotors();
   }
   
-  // commands are 3 bytes long
-  if (Serial.available()) {
+  // process a limited number of characters at once
+  for (int i = 0; i < 25 && Serial.available(); i++) {
     char cmd = Serial.read();
-    char val = 0;//Serial.read();    //only used in L and R
-    //char newline = Serial.read();
-    //Serial.println(cmd);
     
     switch(cmd) {
       case '~': heartBeatReceived(); break;
       case ' ': stopMotors(); break;
 
-      case 'L': speedLeft  += INC_LEFT;  updateMotors(); break;
-      case 'l': speedLeft  -= INC_LEFT;  updateMotors(); break;
-      case 'R': speedRight += INC_RIGHT; updateMotors(); break;
-      case 'r': speedRight -= INC_RIGHT; updateMotors(); break;
-  
-      //case 'L': speedLeft = val;         updateMotors(); break;
-      //case 'R': speedRight = val;        updateMotors(); break;
-  
-      default: return;
+      case 'L': speedLeft  += INC_LEFT;  break;
+      case 'l': speedLeft  -= INC_LEFT;  break;
+      case 'R': speedRight += INC_RIGHT; break;
+      case 'r': speedRight -= INC_RIGHT; break;
     }
   }
+
+  updateMotors();
 }
 
 

@@ -161,6 +161,8 @@ class CueEngine:
                 thisNode = CueLoad(line)
               elif cmd == 'fade':
                 thisNode = CueFade(line)
+              elif cmd == 'video':
+                thisNode = CueVideo(line)
               else:
                 print('Error unrecognized command on line', lineNum)
                 print('Text:', line)
