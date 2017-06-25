@@ -55,7 +55,7 @@ class View:
   def handleChar(self): pass
 
 
-class LightArmView(View):
+'''class LightArmView(View):
   """View that controls spotlight robots"""
   def __init__(self):
     super().__init__()
@@ -219,7 +219,7 @@ class LightArmView(View):
     print('')
 
     printHSep(False)
-
+'''
 
 class SliderView(View):
   """View for controling DMX lights"""
@@ -335,6 +335,127 @@ class SliderView(View):
           getch() # eat trailing ~
           self.ixCursor = max(0, ixPageStart - self.PageWidth)
 
+class PrinbooView(View):
+  """View for controling DMX lights"""
+
+  def __init__(self): 
+    super().__init__()
+    self.ixCursor = 0
+    self.NumChannels = 11 #get from limbs
+    self.MinValue = 0
+    self.MaxValue = 180
+
+    self.PageWidth = 11
+ 
+  def onFocus(self):
+    pass
+
+  def display(self):
+      clearScreen()
+      ixCursorInPage = self.ixCursor % self.PageWidth
+      ixPageStart = self.ixCursor - ixCursorInPage
+
+      print('                         Prinboo View')
+      for i in range(self.PageWidth): print('----', end='')
+      print('')
+
+      # channel values
+      for i in range(ixPageStart, ixPageStart + self.PageWidth):
+        try:
+          angle = limbs.getAngle(i + 1)
+        except(KeyError):
+          angle = 'XXX'
+        print('{0:^4}'.format(angle), end='')
+      print('')
+
+      # separator and cursor
+      for i in range(ixCursorInPage): print('----', end='')
+      print('===-', end='')
+      for i in range(self.PageWidth - ixCursorInPage - 1): print('----', end='')
+      print('')
+      
+      # channel numbers
+      for i in range(ixPageStart + 1, ixPageStart + self.PageWidth + 1):
+        print('{0:^4}'.format(i), end='')
+      print('')
+
+  def handleLineInput(self, line):
+    tokens = line.split()
+    if len(tokens) == 0: return
+    cmd = tokens[0]
+
+    try:
+      # set a channel or a range of channels (inclusive) to a value
+      # channels are 1-based index, so must subtract 1 before indexing
+      # usage: (can take multiple arguments)
+      # set<value> <channel>
+      # set<value> <channel-channel>
+      if cmd.startswith('set'):
+        value = int(cmd[3:])
+        print(value)
+        if value < self.MinValue or value > self.MaxValue:
+          print('Value', value, ' out of range [0, 255]')
+          return
+
+        if len(tokens) == 1:
+          v = [value] * self.NumChannels 
+          #DMX.setAndSend(0, v)
+          return
+
+        # handle space-delimited arguments: index or inclusive range (index-index)
+        for token in tokens[1:]:
+          indices = token.split('-')
+
+          # a single channel index
+          if len(indices) == 1:
+            pass#DMX.setAndSend(int(indices[0]) - 1, value)
+          # argument is a range of channel indices, inclusive, ex: 56-102
+          elif len(indices) == 2:
+            lower = int(indices[0]) - 1
+            upper = int(indices[1])     # inclusive range, so -1 to correct to 0-based index but +1 to include it
+            #DMX.setAndSend(lower, [value] * (upper - lower))
+          else:
+            raise BaseException('too many arguments')
+
+      else: print('Unrecognized command')
+
+    except BaseException as e:
+      print(e)
+
+  # keyboard input
+  def handleChar(self, ch):
+    try:
+      ixCursorInPage = self.ixCursor % self.PageWidth
+      ixPageStart = self.ixCursor - ixCursorInPage
+      id = self.ixCursor + 1    # IDs start at 1
+
+      ch = ch.lower()
+
+      if ch == '0':
+        limbs.setAngle(id, self.MinValue)
+      elif ch == '8':
+        limbs.setAngle(id, self.MaxValue//2)
+      elif ch == '9':
+        limbs.setAngle(id, self.MaxValue)
+      
+      elif ch == '\x1b':
+        seq = getch() + getch()
+        if seq == '[A': # up arrow
+          limbs.setAngle(id, min(self.MaxValue, limbs.getAngle(id) + 1))
+        elif seq == '[B': # down arrow
+          limbs.setAngle(id, max(self.MinValue, limbs.getAngle(id) - 1))
+        elif seq == '[C': # left arrow
+          self.ixCursor = min(self.NumChannels-1, self.ixCursor + 1)
+        elif seq == '[D': # right arrow
+          self.ixCursor = max(0, self.ixCursor - 1)
+        elif seq == '[5': # page up
+          getch() # eat trailing ~
+          self.ixCursor = min(self.NumChannels-1, ixPageStart + self.PageWidth)
+        elif seq == '[6': # page down
+          getch() # eat trailing ~
+          self.ixCursor = max(0, ixPageStart - self.PageWidth)
+    except(KeyError):
+      pass
 
 class CueView(View):
   """View for running cues from currently loaded cuesheet"""
@@ -415,7 +536,7 @@ def programExit():
 
 if __name__ == '__main__':
   if len(sys.argv) > 1 and sys.argv[1] == 'prinboo':
-    views = [CueView(), ] #PrinbooView]
+    views = [CueView(), PrinbooView()]
   else: #default is dmx mode
     views = [CueView(), SliderView()]
 
