@@ -14,11 +14,11 @@ We unfortunately use the word 'cue' in two different ways:
 
 import sys, os, threading, ast, time, subprocess
 from console import *
-#from dmx import DmxChannels
-from lightarm import Arms
+from dmx import DmxChannels
+#from lightarm import Arms
 
 #Arms = LightArms()
-#DMX = DmxChannels()
+DMX = DmxChannels()
 
 #########################################################################################################
 # helpers
@@ -112,16 +112,16 @@ class CueLoad(Cue):
       data = loadCueFile(self.filename)
     
       self.targetDMX = None
-#      if 'DMX' in data:
-#        self.targetDMX = data['DMX']
-#        if not isinstance(self.targetDMX, list) or not isinstance(sum(self.targetDMX), int):
-#          raise BaseException('error in DMX portion')
+      if 'DMX' in data:
+        self.targetDMX = data['DMX']
+        if not isinstance(self.targetDMX, list) or not isinstance(sum(self.targetDMX), int):
+          raise BaseException('error in DMX portion')
 
       # Light Arms - may be absent
-      try:
-        self.armData = data['LightArm']
-      except:
-        self.armData = None
+#      try:
+#        self.armData = data['LightArm']
+#      except:
+#        self.armData = None
       #except BaseException as e:
     #  raise BaseException('Error loading file: ' + str(e))
 

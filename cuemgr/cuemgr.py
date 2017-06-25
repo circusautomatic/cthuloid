@@ -23,7 +23,7 @@ from trackspot import TrackSpot
 from serialthread import *
 
 CuesFilename = 'cuesheet.txt'   #initial cuesheet automatically loaded
-MaxPWM = 999
+#MaxPWM = 999
 
 CueMgr = CueEngine()
 
@@ -229,7 +229,7 @@ class SliderView(View):
     self.ixCursor = 0
     self.NumChannels = DMX.NumChannels
     self.MinValue = 0
-    self.MaxValue = MaxPWM
+    self.MaxValue = 255
 
     self.PageWidth = 16
  
@@ -406,7 +406,7 @@ def cmdLoadCueSheet(line):
 def signal_handler(signal, frame):
   print('\nexiting...')
   DMX.exit()
-  Arms.exit()
+  #Arms.exit()
   exit()
 
 def programExit(): 
@@ -414,7 +414,7 @@ def programExit():
 
 
 if __name__ == '__main__':
-  if len(sys.argv) > 0 and sys.argv[1] == 'prinboo':
+  if len(sys.argv) > 1 and sys.argv[1] == 'prinboo':
     views = [CueView(), ] #PrinbooView]
   else: #default is dmx mode
     views = [CueView(), SliderView()]
