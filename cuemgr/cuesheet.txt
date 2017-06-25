@@ -1,3 +1,3 @@
 scene Start
 	load off
-
+	load prinboo_test
