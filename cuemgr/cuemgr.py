@@ -20,7 +20,6 @@ from console import *
 from cue import *
 from cueengine import CueEngine
 from trackspot import TrackSpot
-from prinboo import *
 
 CuesFilename = 'cuesheet.txt'   #initial cuesheet automatically loaded
 #MaxPWM = 999

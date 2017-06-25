@@ -14,11 +14,12 @@ We unfortunately use the word 'cue' in two different ways:
 
 import sys, os, threading, ast, time, subprocess
 from console import *
-from dmx import DmxChannels
+from prinboo import *
+#from dmx import DmxChannels
 #from lightarm import Arms
 
 #Arms = LightArms()
-DMX = DmxChannels()
+#DMX = DmxChannels()
 
 #########################################################################################################
 # helpers
@@ -112,16 +113,21 @@ class CueLoad(Cue):
       data = loadCueFile(self.filename)
     
       self.targetDMX = None
-      if 'DMX' in data:
+      if 'DMX' in data and data['DMX']:
         self.targetDMX = data['DMX']
         if not isinstance(self.targetDMX, list) or not isinstance(sum(self.targetDMX), int):
           raise BaseException('error in DMX portion')
 
+      try:
+        self.limbs = data['Limbs']
+      except:
+        self.limbs = None
+
       # Light Arms - may be absent
-#      try:
-#        self.armData = data['LightArm']
-#      except:
-#        self.armData = None
+      try:
+        self.armData = data['LightArm']
+      except:
+        self.armData = None
       #except BaseException as e:
     #  raise BaseException('Error loading file: ' + str(e))
 
@@ -131,6 +137,9 @@ class CueLoad(Cue):
 
       if self.targetDMX:
         DMX.setAndSend(0, self.targetDMX)
+
+      if self.limbs:
+        limbs.setAngle(self.limbs)
 
       # Light Arms - may be absent
       #try:
@@ -361,8 +370,9 @@ def cmdSave(tokens, line):
 
   filename = restAfterWord(tokens[0], line)
   dmx = 'None' #str(DMX.get())
-  arms = str(Arms)
-  text = "{\n 'version': 0,\n 'DMX': " + dmx + ",\n 'LightArm': " + arms + "\n}"
+  #arms = str(Arms)
+  angles = str(limbs)
+  text = "{\n 'version': 0,\n 'DMX': " + dmx + ",\n 'Limbs': " + angles + "\n}"
   #text = "{\n 'version': 0,\n 'DMX': " + dmx + ",\n 'LightArm': {\n  'Servos': " + str(ucServos) + ",\n  'LEDs': " + str(ucLEDs) + "\n }\n}"
   #text = "{'version': 0, 'DMX': " + dmx + ", 'LightArm': {'Servos': " + str(ucServos) + ", 'LEDs': " + str(ucLEDs) + "}}"
   
