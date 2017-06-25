@@ -1,17 +1,15 @@
-import socket, os, errno
-
-motors = Motors()
-limbs = Limbs()
+import socket, os, errno, ast
+from serialthread import SerialThread
 
 class Motors(SerialThread):
-""" Serial connection to arduino controlling Prinboo wheelchair motors"""
+  """ Serial connection to arduino controlling Prinboo wheelchair motors"""
 
   def __init__(self, path='/dev/motors'):
     SerialThread.__init__(self, path)
     self.speed = 0  # denotes number of L/Rs we will send to the arduino 
     self.STOP = ' '
     self.direction = self.STOP
-    sendSpeed()
+    self.sendSpeed()
     
   def sendSpeed(self):
     s = self.STOP # initial character must reset the uc's internal counter to zero
@@ -19,31 +17,39 @@ class Motors(SerialThread):
     if self.direction != self.STOP:
       # append a number of l and r's
       for i in range(self.speed): s += self.direction
-    self.send(s)
+    self.write(str.encode(s))
+
+  def incSpeed(self):
+    self.speed += 1
+    self.sendSpeed()
+
+  def decSpeed(self): 
+    self.speed -= 1
+    self.sendSpeed()
 
   def stop(self):
     self.direction = self.STOP 
-    sendSpeed()
+    self.sendSpeed()
 
   def turnLeft(self):
-    self.speed = 'r' 
-    sendSpeed()
+    self.direction = 'r' 
+    self.sendSpeed()
 
   def turnRight(self):
-    self.speed = 'r' 
-    sendSpeed()
+    self.direction = 'l' 
+    self.sendSpeed()
 
   def forward(self):
-    self.speed = 'lr' 
-    sendSpeed()
+    self.direction = 'lr' 
+    self.sendSpeed()
 
   def backward(self):
-    self.speed = 'LR' 
-    sendSpeed()
+    self.direction = 'LR' 
+    self.sendSpeed()
     
 
 class LimbServos(SerialThread):
-""" Serial connection to arduino controlling Prinboo limb and head servos"""
+    """ Serial connection to arduino controlling Prinboo limb and head servos"""
 
     def __init__(self, path='/dev/limbs'):
         SerialThread.__init__(self, path)
@@ -51,7 +57,7 @@ class LimbServos(SerialThread):
 
     def getAngle(self, id): return self.anglesDict[id]
 
-    def setAngle(self, idOrDict, angle=None):
+    def setAngle(self, idOrDict, angle=None, sendUpdate=True):
       if isinstance(idOrDict, int):
         self.anglesDict[idOrDict] = angle
       elif isinstance(idOrDict, dict) and angle == None:
@@ -63,7 +69,7 @@ class LimbServos(SerialThread):
           id += 1
       else: raise TypeError('bad argument to Servos.setAngle')
 
-      self.sendServoPos()
+      if sendUpdate: self.sendServoPos()
 
     def __str__(self): return str(self.anglesDict)
 
@@ -86,16 +92,19 @@ class LimbServos(SerialThread):
         # read the positions of all servos, which is given in a json/python dict format
         preamble ='Servo Readings:' 
         if line.startswith(preamble):
-            readingstext = line[preamble.len:] 
+            readings_text = line[len(preamble):].strip() 
             readings = ast.literal_eval(readings_text)
             print(readings_text)
-            if not isintance(readings, dict): 
+            if not isinstance(readings, dict): 
                 print('error reading servos')
                 return
-            self.setAngles(readings)
+            self.setAngle(readings, sendUpdate=False)
             
         else: print(line)
 
     def readServos(self):
         self.write(b'r\n')
+
+motors = Motors()
+limbs = LimbServos()
 
