@@ -7,7 +7,7 @@ A spotlight robot:
 - speaks a human-readable protocol.
 
 """
-
+raise BaseError()
 import socket, os, errno, select, threading, time, random, signal, sys, struct
 
 #######################################################################

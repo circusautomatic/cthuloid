@@ -105,7 +105,7 @@ class LimbServos(SerialThread):
     def readServos(self):
         self.write(b'r\n')
 
-#if __name__ == '__main__':
-motors = Motors()
-limbs = LimbServos()
+if __name__ == '__main__':
+  motors = Motors()
+  limbs = LimbServos()
 

@@ -21,6 +21,9 @@ from cue import *
 from cueengine import CueEngine
 from trackspot import TrackSpot
 
+import prinboo
+PrinbooMotors = prinboo.Motors()
+
 CuesFilename = 'cuesheet.txt'   #initial cuesheet automatically loaded
 #MaxPWM = 999
 
@@ -54,7 +57,7 @@ class View:
   def handleChar(self): pass
 
 
-'''class LightArmView(View):
+class LightArmView(View):
   """View that controls spotlight robots"""
   def __init__(self):
     super().__init__()
@@ -218,7 +221,7 @@ class View:
     print('')
 
     printHSep(False)
-'''
+
 
 class SliderView(View):
   """View for controling DMX lights"""
@@ -335,16 +338,16 @@ class SliderView(View):
           self.ixCursor = max(0, ixPageStart - self.PageWidth)
 
 class PrinbooView(View):
-  """View for controling DMX lights"""
+  """View for controling Prinboo servos"""
 
   def __init__(self): 
     super().__init__()
     self.ixCursor = 0
-    self.NumChannels = 11 #get from limbs
+    self.NumChannels = 11 #TODO get from PrinbooLimbs, but they may not have loaded yet?
     self.MinValue = 0
     self.MaxValue = 180
 
-    self.PageWidth = 11
+    self.PageWidth = self.NumChannels
  
   def onFocus(self):
     pass
@@ -361,7 +364,7 @@ class PrinbooView(View):
       # channel values
       for i in range(ixPageStart, ixPageStart + self.PageWidth):
         try:
-          angle = limbs.getAngle(i + 1)
+          angle = PrinbooLimbs.getAngle(i + 1)
         except(KeyError):
           angle = 'XXX'
         print('{0:^4}'.format(angle), end='')
@@ -431,18 +434,18 @@ class PrinbooView(View):
       ch = ch.lower()
 
       if ch == '0':
-        limbs.setAngle(id, self.MinValue)
+        PrinbooLimbs.setAngle(id, self.MinValue)
       elif ch == '8':
-        limbs.setAngle(id, self.MaxValue//2)
+        PrinbooLimbs.setAngle(id, self.MaxValue//2)
       elif ch == '9':
-        limbs.setAngle(id, self.MaxValue)
+        PrinbooLimbs.setAngle(id, self.MaxValue)
       
       elif ch == '\x1b':
         seq = getch() + getch()
         if seq == '[A': # up arrow
-          limbs.setAngle(id, min(self.MaxValue, limbs.getAngle(id) + 1))
+          PrinbooLimbs.setAngle(id, min(self.MaxValue, PrinbooLimbs.getAngle(id) + 1))
         elif seq == '[B': # down arrow
-          limbs.setAngle(id, max(self.MinValue, limbs.getAngle(id) - 1))
+          PrinbooLimbs.setAngle(id, max(self.MinValue, PrinbooLimbs.getAngle(id) - 1))
         elif seq == '[C': # left arrow
           self.ixCursor = min(self.NumChannels-1, self.ixCursor + 1)
         elif seq == '[D': # right arrow
@@ -525,8 +528,8 @@ def cmdLoadCueSheet(line):
  
 def signal_handler(signal, frame):
   print('\nexiting...')
-  #DMX.exit()
-  #Arms.exit()
+  if DMX: DMX.exit()
+  if Arms: Arms.exit()
   exit()
 
 def programExit(): 
@@ -537,8 +540,9 @@ if __name__ == '__main__':
   if len(sys.argv) > 1 and sys.argv[1] == 'prinboo':
     views = [CueView(), PrinbooView()]
   else: #default is dmx mode
-    views = [CueView(), SliderView()]
-
+    views = [CueView()]
+    if DMX: views.append(SliderView())
+  print('Arms: ', Arms)
   currentView = views[0]
 
   signal.signal(signal.SIGINT, signal_handler)

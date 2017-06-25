@@ -14,12 +14,25 @@ We unfortunately use the word 'cue' in two different ways:
 
 import sys, os, threading, ast, time, subprocess
 from console import *
-from prinboo import *
-#from dmx import DmxChannels
-#from lightarm import Arms
 
-#Arms = LightArms()
-#DMX = DmxChannels()
+#try:
+import prinboo 
+PrinbooLimbs = prinboo.LimbServos()
+#  if not PrinbooLimbs.valid(): PrinbooLimbs = None
+#except:
+#  PrinbooLimbs = None
+
+try:
+  import lightarm
+  Arms = lightarm.LightArms()
+except:
+  Arms = None
+
+try: 
+  import dmx
+  DMX = dmx.DmxChannels()
+except ImportError:
+  DMX = None
 
 #########################################################################################################
 # helpers
@@ -109,27 +122,16 @@ class CueLoad(Cue):
     self.load()
 
   def load(self):
-    #try:
       data = loadCueFile(self.filename)
     
       self.targetDMX = None
-      if 'DMX' in data and data['DMX']:
+      if DMX and 'DMX' in data and data['DMX']:
         self.targetDMX = data['DMX']
         if not isinstance(self.targetDMX, list) or not isinstance(sum(self.targetDMX), int):
-          raise BaseException('error in DMX portion')
+          raise BaseException('error in DMX portion of cue file')
 
-      try:
-        self.limbs = data['Limbs']
-      except:
-        self.limbs = None
-
-      # Light Arms - may be absent
-      try:
-        self.armData = data['LightArm']
-      except:
-        self.armData = None
-      #except BaseException as e:
-    #  raise BaseException('Error loading file: ' + str(e))
+      self.limbs = PrinbooLimbs and data.get('Limbs')
+      self.armData = Arms and data.get('LightArm')
 
   def run(self, immediate=False):
       # load the file again in case it has changed since the cuesheet was loading
@@ -138,14 +140,11 @@ class CueLoad(Cue):
       if self.targetDMX:
         DMX.setAndSend(0, self.targetDMX)
 
-      if self.limbs:
-        limbs.setAngle(self.limbs)
+      if self.limbs: #TODO figure out if we have a pose or an animation
+        PrinbooLimbs.setAngle(self.limbs)
 
-      # Light Arms - may be absent
-      #try:
-      if self.armData: Arms.load(self.armData)
-      #except:
-      #  pass
+      if self.armData:
+        Arms.load(self.armData)
 
 
 class CueFade(CueLoad):
@@ -177,6 +176,7 @@ class CueFade(CueLoad):
     # instead of during a run through
     self.load()
 
+  # TODO make this code not block
   def run(self, immediate=False):
     #try:
       # load the file again in case it has changed since the cuesheet was loading
@@ -186,32 +186,18 @@ class CueFade(CueLoad):
       printPeriodPeriod = .25
       printPeriodTimestepCount = printPeriodPeriod / timestep
 
-      # Light Arms
+      # Light Arms - may be absent
       # TODO fade light arms!
-      #try:
-        #  if self.armData: Arms.load(self.armData)
-      #except:
-        #  # pass
+      try:
+        if self.armData: Arms.load(self.armData)
+      except:
+        pass
 
       # DMX
-      #if self.targetDMX:
-      if self.armData:
-        #target = self.targetDMX
-        #current = DMX.get()
-        target = [0] * Arms.num()
-        current = [0] * Arms.num()
-        vel = [0] * Arms.num()
-        
-        # map each address to an index
-        for address, data in self.armData.items():
-          try:
-            i = Arms.arms.index(Arms.findArm(address))
-            target[i] = data['intensity']
-          except ValueError as e:
-            pass
-
-        for i in range(Arms.num()):
-          current[i] = Arms.getLED(i)
+      if self.targetDMX:
+        target = self.targetDMX
+        current = DMX.get()
+        vel = [0] * len(current)
 
         # calculate delta for each timestep
         # -1 means don't change
@@ -228,10 +214,8 @@ class CueFade(CueLoad):
         while 1:
           # calculate new channel values and transmit
           for i in range(len(current)): current[i] += vel[i]
-          #channels = [round(x) for x in current] 
-          #DMX.setAndSend(0, channels)
-          for i in range(Arms.num()):
-            Arms.setLED(i, current[i])
+          channels = [round(x) for x in current] 
+          DMX.setAndSend(0, channels)
 
           now = time.time()
 
@@ -241,22 +225,64 @@ class CueFade(CueLoad):
             nextPrintTime += printPeriodPeriod
 
           if now > endTime: break
-          nextTime += timestep
+          nexTime += timestep
           time.sleep(nextTime - time.time())
 
         # make sure we arrive at the target numbers, as rounding error may creep in
-        #DMX.setAndSend(0, target)
-        Arms.load(self.armData)
-        #for i in range(Arms.num()):
-        #  Arms.setLED(i, target[i])
-        
+        DMX.setAndSend(0, target)
         print('DONE')
     #except:
     #  raise BaseException('Error talking to OLA DMX server')
     # TODO other exceptions having to do with the fade math
 
+# blocking code for fading arm light intensities
+#      if self.armData:
+#        target = [0] * Arms.num()
+#        current = [0] * Arms.num()
+#        vel = [0] * Arms.num()
+#        
+#        # map each address to an index
+#        for address, data in self.armData.items():
+#          i = Arms.arms.index(Arms.findArm(address))
+#          target[i] = data.get('intensity', 0)
+#
+#        for i in range(Arms.num()):
+#          current[i] = Arms.getLED(i)
+#
+#        # calculate delta for each timestep
+#        # -1 means don't change
+#        for i in range(len(target)):
+#          if target[i] >= 0:
+#            vel[i] = (target[i] - current[i]) * (timestep / self.period)
+#
+#        print('                 fading for', self.period, 'seconds..', end='', flush=True)
+#        startTime = time.time()
+#        endTime = startTime + self.period
+#        nextTime = startTime + timestep
+#        nextPrintTime = startTime + printPeriodPeriod
+#
+#        while 1:
+#          # calculate new channel values and transmit
+#          for i in range(len(current)): 
+#            current[i] += vel[i]
+#            Arms.setLED(i, current[i])
+#
+#          now = time.time()
+#
+#          # print a period every so often
+#          if now >= nextPrintTime:
+#            print('.', end='', flush=True)
+#            nextPrintTime += printPeriodPeriod
+#
+#          if now > endTime: break
+#          nextTime += timestep
+#          time.sleep(nextTime - time.time())
+#
+#        # make sure we arrive at the target numbers, as rounding error may creep in
+#        Arms.load(self.armData)
 
-class CuePrinboo(CueLoad):
+
+'''class CuePrinboo(CueLoad):
   """Launches a thread to animate Prinboo with frames defined in a cuefile
   
   """
@@ -265,12 +291,12 @@ class CuePrinboo(CueLoad):
   def __init__(self, line):
     CueLoad.__init__(self, line)
     self.frames = None
+    self.framerate = data['framerate']
     
   def load(self):
-    data = loadCueFile(self.filename)
+    CueLoad.load(data = loadCueFile(self.filename)
     try:
       self.frames = data['limbs']
-      self.framerate = data['framerate']
     except: pass
 
   def run(self, immediate=False):
@@ -338,7 +364,7 @@ class CuePrinboo(CueLoad):
         print('DONE')
     #except:
     # TODO other exceptions having to do with the fade math
-
+'''
 
 class CueVideo(CueLoad):
   """Play a video by running a shell command"""
