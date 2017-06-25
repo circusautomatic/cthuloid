@@ -233,8 +233,8 @@ void cmdUnrecognized(const char *cmd) {
 }
 
 void readServoPositions() {
-  printAck("Servo Readings:");
-  printlnAck(NumServos);
+  printAck("Servo Readings: ");
+  /*printlnAck(NumServos);
   
   //Servos.readPose();
 
