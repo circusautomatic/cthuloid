@@ -20,7 +20,7 @@ from console import *
 from cue import *
 from cueengine import CueEngine
 from trackspot import TrackSpot
-from serialthread import *
+from prinboo import *
 
 CuesFilename = 'cuesheet.txt'   #initial cuesheet automatically loaded
 MaxPWM = 999
@@ -376,11 +376,11 @@ class CueView(View):
       CueMgr.prevScene()
 
     elif ch == 'a':
-      Motors.incSpeed()
+      motors.incSpeed()
     elif ch == 'd':
-      Motors.decSpeed()
+      motors.decSpeed()
     elif ch == 's':
-      Motors.stop()
+      motors.stop()
     elif ch == '\x1b':
       seq = getch() + getch()
       if seq == '[A': # up arrow
@@ -390,7 +390,7 @@ class CueView(View):
       elif seq == '[C': # left arrow
         motors.turnLeft() 
       elif seq == '[D': # right arrow
-        Motors.turnRight()
+        motors.turnRight()
 
     else:
       for spot in self.spots: spot.onKey(ch)
@@ -405,8 +405,8 @@ def cmdLoadCueSheet(line):
  
 def signal_handler(signal, frame):
   print('\nexiting...')
-  DMX.exit()
-  Arms.exit()
+  #DMX.exit()
+  #Arms.exit()
   exit()
 
 def programExit(): 
@@ -414,7 +414,7 @@ def programExit():
 
 
 if __name__ == '__main__':
-  if len(sys.argv) > 0 and sys.argv[1] == 'prinboo':
+  if len(sys.argv) > 1 and sys.argv[1] == 'prinboo':
     views = [CueView(), ] #PrinbooView]
   else: #default is dmx mode
     views = [CueView(), SliderView()]

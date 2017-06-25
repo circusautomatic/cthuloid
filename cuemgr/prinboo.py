@@ -32,19 +32,19 @@ class Motors(SerialThread):
     self.sendSpeed()
 
   def turnLeft(self):
-    self.direction = 'r' 
+    self.direction = 'R' 
     self.sendSpeed()
 
   def turnRight(self):
-    self.direction = 'l' 
+    self.direction = 'L' 
     self.sendSpeed()
 
   def forward(self):
-    self.direction = 'lr' 
+    self.direction = 'LR' 
     self.sendSpeed()
 
   def backward(self):
-    self.direction = 'LR' 
+    self.direction = 'lr' 
     self.sendSpeed()
     
 
@@ -105,6 +105,7 @@ class LimbServos(SerialThread):
     def readServos(self):
         self.write(b'r\n')
 
-motors = Motors()
-limbs = LimbServos()
+if __name__ == '__main__':
+  motors = Motors()
+  limbs = LimbServos()
 
