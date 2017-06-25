@@ -5,9 +5,9 @@ See readme for an overview.
 The program automatically loads 'cuesheet.txt'. Cues are assumed to be in the folder 'scenes'.
 See cue.py and cueengine.py for more information on cues and cuesheets.
 See lightarm.py for info on spotlight robots.
-See dmx.py for 
+See dmx.py for DMX using Open Lighting Architecture bindings for the local web server.
 
-This file contains definitions of the 3 program views and and an input loop.
+This file contains definitions of the 3 program views and and a keyboard input loop.
 
 TODO:
   - move to curses

@@ -240,7 +240,7 @@ class NetworkArm:
     #print(string)
     try:
       self.socket.send((string + '\n').encode())
-    except (BrokenPipeError, BlockingIOError) as e:
+    except (BrokenPipeError, BlockingIOError, OSError) as e:
       print(self.address, '-', str(e))
 
 
