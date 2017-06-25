@@ -20,6 +20,7 @@ from console import *
 from cue import *
 from cueengine import CueEngine
 from trackspot import TrackSpot
+from serialthread import *
 
 CuesFilename = 'cuesheet.txt'   #initial cuesheet automatically loaded
 MaxPWM = 999
@@ -343,9 +344,7 @@ class CueView(View):
 
     # hack for manually adjusting track spotlights during the show, specific the Great Star Theater
     self.spots = [
-      TrackSpot(DMX, 161, 'w', 's', 'a', 'd', 'e', 'q'),
-      TrackSpot(DMX, 170, '8', '5', '6', '4', '9', '7'),
-      TrackSpot(DMX, 193, 'g', 'b', 'v', 'n', 'h', 'f')]
+      ]
 
     CueMgr.loadCueSheet(CuesFilename)
 
@@ -376,16 +375,22 @@ class CueView(View):
     elif ch == ',' or ch == '<':
       CueMgr.prevScene()
 
-    # the rest of this function is a hack to manually adjust DMX spotlights during the show
-    elif ch == 't':
-      for spot in self.spots:
-        DMX.set(spot.strobe, 255) 
-        DMX.set(spot.speed, 255) 
-      DMX.send()
-    elif ch == 'y':
-      for spot in self.spots:
-        DMX.set(spot.intensity, 0)
-      DMX.send()
+    elif ch == 'a':
+      Motors.incSpeed()
+    elif ch == 'd':
+      Motors.decSpeed()
+    elif ch == 's':
+      Motors.stop()
+    elif ch == '\x1b':
+      seq = getch() + getch()
+      if seq == '[A': # up arrow
+        motors.forward() 
+      elif seq == '[B': # down arrow
+        motors.backward() 
+      elif seq == '[C': # left arrow
+        motors.turnLeft() 
+      elif seq == '[D': # right arrow
+        Motors.turnRight()
 
     else:
       for spot in self.spots: spot.onKey(ch)
@@ -407,10 +412,15 @@ def signal_handler(signal, frame):
 def programExit(): 
   signal_handler(None, None)
 
-views = [CueView(), LightArmView(), SliderView()]
-currentView = views[0]
 
 if __name__ == '__main__':
+  if len(sys.argv) > 0 and sys.argv[1] == 'prinboo':
+    views = [CueView(), ] #PrinbooView]
+  else: #default is dmx mode
+    views = [CueView(), SliderView()]
+
+  currentView = views[0]
+
   signal.signal(signal.SIGINT, signal_handler)
   clearScreen()
   currentView.onFocus()
@@ -425,8 +435,8 @@ if __name__ == '__main__':
       programExit()
 
     # change view
-    elif len(ch) == 1 and ch >= '1' and ch <= '3': 
-      currentView = views[ord(ch) - ord('1')] 
+    elif len(ch) == 1 and ord(ch) >= ord('1') and ord(ch) < (ord('1') + len(views)): 
+      currentView = views[ord(ch) - ord('1')]
       currentView.onFocus()
 
     # every view can have a separate key to enter a command line of text

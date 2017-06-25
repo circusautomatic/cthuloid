@@ -126,6 +126,11 @@ def getArmAngles(arm):
   
   # one joint angle is [0,180], the other is [-90,90]
   # convert both to [-90, 90]
+
+  print(up.matrix.to_quaternion())
+  #up_a = up.matrix.to_euler().x * rad_to_deg    # up.x in [0,180]
+  #fo_a = (fo_q.to_euler().z + 90) * rad_to_deg  # fo.z in [-90,90]
+  
   up_a = up.matrix.to_euler().x * rad_to_deg - 90
   fo_a = fo_q.to_euler().z * rad_to_deg
   #print(up_a, fo_a)

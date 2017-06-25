@@ -233,12 +233,12 @@ void cmdUnrecognized(const char *cmd) {
 }
 
 void readServoPositions() {
-  printAck("Servo Readings:");
-  printlnAck(NumServos);
+  printAck("Servo Readings: ");
+  /*printlnAck(NumServos);
   
   //Servos.readPose();
 
-  for(int i = 0; i < NumServos; i++) {
+  /*for(int i = 0; i < NumServos; i++) {
     int id = idFromIndex(i);
     int pos = getServo(id);
     //Serial.println(pos);
@@ -252,7 +252,7 @@ void readServoPositions() {
     printInfo(buf);
     printInfo(" pos:");
     printlnInfo(pos);
-  }
+  }*/
 
   // python dictionary notation;
   // allocate 3 for {}\0, and 8 for each pos, though (4 + comma) should be max digits
