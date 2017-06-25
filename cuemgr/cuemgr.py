@@ -5,9 +5,9 @@ See readme for an overview.
 The program automatically loads 'cuesheet.txt'. Cues are assumed to be in the folder 'scenes'.
 See cue.py and cueengine.py for more information on cues and cuesheets.
 See lightarm.py for info on spotlight robots.
-See dmx.py for 
+See dmx.py for DMX using Open Lighting Architecture bindings for the local web server.
 
-This file contains definitions of the 3 program views and and an input loop.
+This file contains definitions of the 3 program views and and a keyboard input loop.
 
 TODO:
   - move to curses
@@ -23,7 +23,7 @@ from trackspot import TrackSpot
 from prinboo import *
 
 CuesFilename = 'cuesheet.txt'   #initial cuesheet automatically loaded
-MaxPWM = 999
+#MaxPWM = 999
 
 CueMgr = CueEngine()
 
@@ -229,7 +229,7 @@ class SliderView(View):
     self.ixCursor = 0
     self.NumChannels = DMX.NumChannels
     self.MinValue = 0
-    self.MaxValue = MaxPWM
+    self.MaxValue = 255
 
     self.PageWidth = 16
  
