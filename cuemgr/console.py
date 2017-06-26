@@ -2,7 +2,7 @@
 
 def clearScreen():
     #os.system('clear')
-    print("\x1b[2J\x1b[H", end='')
+#    print("\x1b[2J\x1b[H", end='')
     return
 
 def _find_getch():

@@ -15,12 +15,8 @@ We unfortunately use the word 'cue' in two different ways:
 import sys, os, threading, ast, time, subprocess
 from console import *
 
-#try:
 import prinboo 
-PrinbooLimbs = prinboo.LimbServos()
-#  if not PrinbooLimbs.valid(): PrinbooLimbs = None
-#except:
-#  PrinbooLimbs = None
+Prinboo = prinboo.Prinboo('localhost')
 
 try:
   import lightarm
@@ -130,7 +126,7 @@ class CueLoad(Cue):
         if not isinstance(self.targetDMX, list) or not isinstance(sum(self.targetDMX), int):
           raise BaseException('error in DMX portion of cue file')
 
-      self.limbs = PrinbooLimbs and data.get('Limbs')
+      self.limbs = Prinboo.limbs and data.get('Limbs')
       self.armData = Arms and data.get('LightArm')
 
   def run(self, immediate=False):
@@ -141,7 +137,7 @@ class CueLoad(Cue):
         DMX.setAndSend(0, self.targetDMX)
 
       if self.limbs: #TODO figure out if we have a pose or an animation
-        PrinbooLimbs.setAngle(self.limbs)
+        Prinboo.limbs.setAngle(self.limbs)
 
       if self.armData:
         Arms.load(self.armData)

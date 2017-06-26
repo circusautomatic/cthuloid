@@ -21,9 +21,6 @@ from cue import *
 from cueengine import CueEngine
 from trackspot import TrackSpot
 
-import prinboo
-PrinbooMotors = prinboo.Motors()
-
 CuesFilename = 'cuesheet.txt'   #initial cuesheet automatically loaded
 #MaxPWM = 999
 
@@ -343,7 +340,7 @@ class PrinbooView(View):
   def __init__(self): 
     super().__init__()
     self.ixCursor = 0
-    self.NumChannels = 11 #TODO get from PrinbooLimbs, but they may not have loaded yet?
+    self.NumChannels = 11 #TODO get from Prinboo.limbs, but they may not have loaded yet?
     self.MinValue = 0
     self.MaxValue = 180
 
@@ -364,7 +361,7 @@ class PrinbooView(View):
       # channel values
       for i in range(ixPageStart, ixPageStart + self.PageWidth):
         try:
-          angle = PrinbooLimbs.getAngle(i + 1)
+          angle = Prinboo.limbs.getAngle(i + 1)
         except(KeyError):
           angle = 'XXX'
         print('{0:^4}'.format(angle), end='')
@@ -434,18 +431,18 @@ class PrinbooView(View):
       ch = ch.lower()
 
       if ch == '0':
-        PrinbooLimbs.setAngle(id, self.MinValue)
+        Prinboo.limbs.setAngle(id, self.MinValue)
       elif ch == '8':
-        PrinbooLimbs.setAngle(id, self.MaxValue//2)
+        Prinboo.limbs.setAngle(id, self.MaxValue//2)
       elif ch == '9':
-        PrinbooLimbs.setAngle(id, self.MaxValue)
+        Prinboo.limbs.setAngle(id, self.MaxValue)
       
       elif ch == '\x1b':
         seq = getch() + getch()
         if seq == '[A': # up arrow
-          PrinbooLimbs.setAngle(id, min(self.MaxValue, PrinbooLimbs.getAngle(id) + 1))
+          Prinboo.limbs.setAngle(id, min(self.MaxValue, Prinboo.limbs.getAngle(id) + 1))
         elif seq == '[B': # down arrow
-          PrinbooLimbs.setAngle(id, max(self.MinValue, PrinbooLimbs.getAngle(id) - 1))
+          Prinboo.limbs.setAngle(id, max(self.MinValue, Prinboo.limbs.getAngle(id) - 1))
         elif seq == '[C': # left arrow
           self.ixCursor = min(self.NumChannels-1, self.ixCursor + 1)
         elif seq == '[D': # right arrow
@@ -499,21 +496,21 @@ class CueView(View):
       CueMgr.prevScene()
 
     elif ch == 'a':
-      motors.incSpeed()
+      Prinboo.motors.incSpeed()
     elif ch == 'd':
-      motors.decSpeed()
+      Prinboo.motors.decSpeed()
     elif ch == 's':
-      motors.stop()
+      Prinboo.motors.stop()
     elif ch == '\x1b':
       seq = getch() + getch()
       if seq == '[A': # up arrow
-        motors.forward() 
+        Prinboo.motors.forward() 
       elif seq == '[B': # down arrow
-        motors.backward() 
+        Prinboo.motors.backward() 
       elif seq == '[C': # left arrow
-        motors.turnLeft() 
+        Prinboo.motors.turnLeft() 
       elif seq == '[D': # right arrow
-        motors.turnRight()
+        Prinboo.motors.turnRight()
 
     else:
       for spot in self.spots: spot.onKey(ch)
