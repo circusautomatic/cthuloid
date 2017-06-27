@@ -356,15 +356,15 @@ class PrinbooLimbsThread(threading.Thread):
 class CueVideo(CueLoad):
   """Play a video by running a shell command"""
 
-  player = "cvlc"
+  player = "/usr/bin/omxplayer"
 
   def __init__(self, line):
     CueLoad.__init__(self, line)
   def load(self):
     pass #maybe check file exists
   def run(self, immediate=False):
-    subprocess.call([self.player, self.filename])
-
+    #subprocess.call([self.player, self.filename])
+    Prinboo.screen.play(self.filename)
 
 def cmdCue(line, CueClass):
   """instantiate a type of cue and run it immediately"""

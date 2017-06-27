@@ -121,13 +121,14 @@ class Screen:
       ssh = paramiko.SSHClient()
       self.ssh = ssh
       ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-      #ssh.connect(address, username='pi', password='raspberry')
+      ssh.connect(address, username='pi', password='raspberry')
 
     def play(self, filename): 
       # remove special characters and append the video player name
       special = '$\\#!|<>;'
       for c in special: filename.replace(c, ' ')
-      filename = 'omxplayer -p hdmi ' + filename
+      filename = 'omxplayer --loop ' + filename
+      print(filename)
 
       stdin, stdout, stderr = self.ssh.exec_command(filename)
 
