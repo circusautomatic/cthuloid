@@ -35,24 +35,23 @@ class LinedSocketOwner(SocketOwner):
   ''' SocketOwner which assembles received data into delimited lines.
   '''
 
-  def readyForWriting(self): self.socket.send(b'r\n')
-  def handleLine(self, line): self.print('line received: ', line)
-
   def __init__(self, address, port, delim='\n'):
-    self.buffer = bytearray()
+    self.buffer = ''#bytearray()
     self.delim = delim
 
     SocketOwner.__init__(self, address, port)
 
+  def handleLine(self, line): self.print('line received: ', line)
+
   def dataReceived(self, data):
-    self.buffer += data
+    self.buffer += data.decode("utf-8")
             
-    ixNewline = b.find(self.delim)
+    ixNewline = self.buffer.find(self.delim)
     while ixNewline != -1:
-      v = b[:ixNewline].decode("utf-8")
+      v = self.buffer[:ixNewline]
       self.handleLine(v)
-      b = b[ixNewline+1:]
-      ixNewline = b.find(self.delim)
+      self.buffer = self.buffer[ixNewline+1:]
+      ixNewline = self.buffer.find(self.delim)
                 
 
 
@@ -103,7 +102,8 @@ class SocketsThread (threading.Thread):
         print('error:', s.getsockname())
 
       for s in w:
-        print('ready for writing:', s.getsockname())
+        o = self.sockets[s]
+        print('ready for writing:', o.port)
         self.sockets[s].readyForWriting()
         writers.remove(s)
         readers.append(s)

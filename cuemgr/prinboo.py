@@ -13,6 +13,7 @@ class Motors(SocketOwner):
   def readForWriting(self):
     self.sendSpeed()
     
+
   def sendSpeed(self):
     s = self.STOP # initial character must reset the uc's internal counter to zero
     
@@ -59,6 +60,9 @@ class LimbServos(LinedSocketOwner):
 
     def readyForWriting(self):
         self.readServos() # request current servo angles
+        self.socket.send(b'r\n')
+
+    #def dataReceived(self, data): pass
 
     def getAngle(self, id): return self.anglesDict[id]
 
@@ -82,7 +86,7 @@ class LimbServos(LinedSocketOwner):
     # angles are 0-1023; center is 512; safe angle range is 200-824
     def sendServoPos(self):
         print(self.anglesDict)
-        if not self.valid(): return
+        #if not self.valid(): return
 
         # text protocol of id:angle pairs
         cmd = 's'
@@ -142,6 +146,10 @@ class Prinboo:
 
     # keep only one of these threads running at a time
     self.limbsThread = None
+
+  def exit(self):
+    self.thread.exit()
+    if self.limbsThread: self.limbsThread.exit()
 
 if __name__ == '__main__':
   addr = 'localhost'

@@ -527,7 +527,7 @@ def signal_handler(signal, frame):
   print('\nexiting...')
   if DMX: DMX.exit()
   if Arms: Arms.exit()
-  if Prinboo.limbsThread: Prinboo.limbsThread.exit()
+  if Prinboo: Prinboo.exit()
   exit()
 
 def programExit(): 

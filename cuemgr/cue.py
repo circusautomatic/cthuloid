@@ -16,7 +16,7 @@ import sys, os, threading, ast, time, subprocess
 from console import *
 
 import prinboo 
-Prinboo = prinboo.Prinboo('localhost')
+Prinboo = prinboo.Prinboo('192.168.1.115')
 
 try:
   import lightarm
@@ -322,17 +322,17 @@ class PrinbooLimbsThread(threading.Thread):
         self.shouldExit = True
 
     def run(self):
-        startTime = time.time()
-        #endTime = startTime + self.period
-        nextTime = startTime + self.timestep
-
         # wait for previous thread to finish writing to the limbs socket
         if self.prevThread:
           while self.prevThread.isAlive():
              time.sleep(.01)
 
+        startTime = time.time()
+        #endTime = startTime + self.period
+        nextTime = startTime + self.timestep
+
         done = False
-        while not done:
+        while not self.shouldExit and not done:
           # start this iteration assuming done is true
           # set it to false if a servo hasn't reached its target yet
           done = True
@@ -343,13 +343,13 @@ class PrinbooLimbsThread(threading.Thread):
 
             if abs(diff) >= 1:
               done = False
-              inc = vel
+              inc = self.vel
               if diff < 0: inc = -inc
               Prinboo.limbs.setAngle(id, cur + inc)
 
           now = time.time()
           #if now > endTime: break
-          nextTime += timestep
+          nextTime += self.timestep
           time.sleep(nextTime - time.time())
 
 
@@ -384,7 +384,7 @@ def cmdSave(tokens, line):
   filename = restAfterWord(tokens[0], line)
   dmx = 'None' #str(DMX.get())
   #arms = str(Arms)
-  angles = str(limbs)
+  angles = str(Prinboo.limbs)
   text = "{\n 'version': 0,\n 'DMX': " + dmx + ",\n 'Limbs': " + angles + "\n}"
   #text = "{\n 'version': 0,\n 'DMX': " + dmx + ",\n 'LightArm': {\n  'Servos': " + str(ucServos) + ",\n  'LEDs': " + str(ucLEDs) + "\n }\n}"
   #text = "{'version': 0, 'DMX': " + dmx + ", 'LightArm': {'Servos': " + str(ucServos) + ", 'LEDs': " + str(ucLEDs) + "}}"
