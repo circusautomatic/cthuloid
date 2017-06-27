@@ -140,6 +140,9 @@ class Prinboo:
     self.thread = SocketsThread((self.limbs, self.motors), self.motors)
     self.thread.start()
 
+    # keep only one of these threads running at a time
+    self.limbsThread = None
+
 if __name__ == '__main__':
   addr = 'localhost'
   #p = Prinboo(addr, '')

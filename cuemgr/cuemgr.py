@@ -527,6 +527,7 @@ def signal_handler(signal, frame):
   print('\nexiting...')
   if DMX: DMX.exit()
   if Arms: Arms.exit()
+  if Prinboo.limbsThread: Prinboo.limbsThread.exit()
   exit()
 
 def programExit(): 
@@ -571,10 +572,12 @@ if __name__ == '__main__':
 
       # program-wide commands 
       if cmd ==   'exit': programExit()
+      elif cmd == 'cuesheet': cmdLoadCueSheet(line) # handled in view
       elif cmd == 'save': cmdSave(tokens, line)
       elif cmd == 'load': cmdCue(line, CueLoad)
       elif cmd == 'fade': cmdCue(line, CueFade)
-      elif cmd == 'cuesheet': cmdLoadCueSheet(line) # handled in cview
+      elif cmd == 'video': cmdCue(line, CueVideo)
+      elif cmd == 'prinboo': cmdCue(line, CuePrinboo)
       else: currentView.handleLineInput(line)
 
     else:

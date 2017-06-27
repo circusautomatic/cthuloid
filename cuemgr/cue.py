@@ -142,7 +142,6 @@ class CueLoad(Cue):
       if self.armData:
         Arms.load(self.armData)
 
-
 class CueFade(CueLoad):
   """Fades from current scene to new scene. 
   
@@ -205,7 +204,6 @@ class CueFade(CueLoad):
         startTime = time.time()
         endTime = startTime + self.period
         nextTime = startTime + timestep
-        nextPrintTime = startTime + printPeriodPeriod
 
         while 1:
           # calculate new channel values and transmit
@@ -278,89 +276,82 @@ class CueFade(CueLoad):
 #        Arms.load(self.armData)
 
 
-'''class CuePrinboo(CueLoad):
-  """Launches a thread to animate Prinboo with frames defined in a cuefile
+class CuePrinboo(CueLoad):
+  """Launches a thread to animate Prinboo's head and limbs with frames defined in a cuefile
   
   """
   framerate = 30 #per second
 
   def __init__(self, line):
-    CueLoad.__init__(self, line)
     self.frames = None
-    self.framerate = data['framerate']
+    CueLoad.__init__(self, line)
     
-  def load(self):
-    CueLoad.load(data = loadCueFile(self.filename)
-    try:
-      self.frames = data['limbs']
-    except: pass
+#  def load(self):
+#    self.frames = data['limbs']
+#    #self.framerate = data['framerate']
 
   def run(self, immediate=False):
-    #try:
       # load the file again in case it has changed since the cuesheet was loading
       self.load()
 
       timestep = 1. / self.framerate
+      vel = 1
 
-      # Light Arms
-      # TODO fade light arms!
-      #try:
-        #  if self.armData: Arms.load(self.armData)
-      #except:
-        #  # pass
+      # Signal the previous thread to exit, and hand it to the next thread
+      # so it can wait.
+      if Prinboo.limbsThread:
+        Prinboo.limbsThread.exit()
+      Prinboo.limbsThread = PrinbooLimbsThread(Prinboo.limbsThread, self.limbs, vel, timestep)
 
-      # DMX
-      #if self.targetDMX:
-      if self.armData:
-        #target = self.targetDMX
-        #current = DMX.get()
-        target = [0] * Arms.num()
-        current = [0] * Arms.num()
-        vel = [0] * Arms.num()
-        
-        # map each address to an index
-        for address, data in self.armData.items():
-          try:
-            i = Arms.arms.index(Arms.findArm(address))
-            target[i] = data['intensity']
-          except ValueError as e:
-            pass
 
-        for i in range(Arms.num()):
-          current[i] = Arms.getLED(i)
 
-        # calculate delta for each timestep
-        # -1 means don't change
-        for i in range(len(target)):
-          if target[i] >= 0:
-            vel[i] = (target[i] - current[i]) * (timestep / self.period)
+class PrinbooLimbsThread(threading.Thread):
+    # vel can only be integers until we save our own angles in a list
+    def __init__(self, prevThread, pose, vel=1, timestep=.0333):
+        self.prevThread = prevThread
+        self.pose = pose
+        self.vel = vel
+        self.timestep = timestep
 
+        self.shouldExit = False
+        threading.Thread.__init__(self)
+
+        self.start()
+
+    def exit(self):
+        self.shouldExit = True
+
+    def run(self):
         startTime = time.time()
-        endTime = startTime + self.period
-        nextTime = startTime + timestep
+        #endTime = startTime + self.period
+        nextTime = startTime + self.timestep
 
-        while 1:
-          # calculate new channel values and transmit
-          for i in range(len(current)): current[i] += vel[i]
-          #channels = [round(x) for x in current] 
-          for i in range(Arms.num()):
-            Arms.setLED(i, current[i])
+        # wait for previous thread to finish writing to the limbs socket
+        if self.prevThread:
+          while self.prevThread.isAlive():
+             time.sleep(.01)
+
+        done = False
+        while not done:
+          # start this iteration assuming done is true
+          # set it to false if a servo hasn't reached its target yet
+          done = True
+            
+          for id, target in self.pose.items():
+            cur = Prinboo.limbs.getAngle(id)
+            diff = target - cur
+
+            if abs(diff) >= 1:
+              done = False
+              inc = vel
+              if diff < 0: inc = -inc
+              Prinboo.limbs.setAngle(id, cur + inc)
 
           now = time.time()
-
-          if now > endTime: break
+          #if now > endTime: break
           nextTime += timestep
           time.sleep(nextTime - time.time())
 
-        # make sure we arrive at the target numbers, as rounding error may creep in
-        Arms.load(self.armData)
-        #for i in range(Arms.num()):
-        #  Arms.setLED(i, target[i])
-        
-        print('DONE')
-    #except:
-    # TODO other exceptions having to do with the fade math
-'''
 
 class CueVideo(CueLoad):
   """Play a video by running a shell command"""
