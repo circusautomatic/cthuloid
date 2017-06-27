@@ -5,9 +5,9 @@ See readme for an overview.
 The program automatically loads 'cuesheet.txt'. Cues are assumed to be in the folder 'scenes'.
 See cue.py and cueengine.py for more information on cues and cuesheets.
 See lightarm.py for info on spotlight robots.
-See dmx.py for 
+See dmx.py for DMX using Open Lighting Architecture bindings for the local web server.
 
-This file contains definitions of the 3 program views and and an input loop.
+This file contains definitions of the 3 program views and and a keyboard input loop.
 
 TODO:
   - move to curses
@@ -20,10 +20,9 @@ from console import *
 from cue import *
 from cueengine import CueEngine
 from trackspot import TrackSpot
-from serialthread import *
 
 CuesFilename = 'cuesheet.txt'   #initial cuesheet automatically loaded
-MaxPWM = 999
+#MaxPWM = 999
 
 CueMgr = CueEngine()
 
@@ -54,107 +53,6 @@ class View:
   def display(self): pass
   def handleChar(self): pass
 
-import socket, os, errno, select, threading, time, random, signal, sys, struct
-
-class Motors(SerialThread):
-  def __init__(self, path='/dev/motors'):
-    SerialThread.__init__(self, path)
-    self.speed = 0  # denotes number of L/Rs we will send to the arduino 
-    self.STOP = ' '
-    self.direction = self.STOP
-    sendSpeed()
-    
-  def sendSpeed(self):
-    s = self.STOP # initial character must reset the uc's internal counter to zero
-    
-    if self.direction != self.STOP:
-      # append a number of l and r's
-      for i in range(self.speed): s += self.direction
-    self.send(s)
-
-  def stop(self):
-    self.direction = self.STOP 
-    sendSpeed()
-
-  def turnLeft(self):
-    self.speed = 'r' 
-    sendSpeed()
-
-  def turnRight(self):
-    self.speed = 'r' 
-    sendSpeed()
-
-  def forward(self):
-    self.speed = 'lr' 
-    sendSpeed()
-
-  def backward(self):
-    self.speed = 'LR' 
-    sendSpeed()
-    
-
-class LimbServos(SerialThread):
-    def __init__(self, path='/dev/limbs'):
-        SerialThread.__init__(self, path)
-        self.anglesDict = {}
-
-    def getAngle(self, id): return self.anglesDict[id]
-
-    def setAngle(self, idOrDict, angle=None):
-      if isinstance(idOrDict, int):
-        self.anglesDict[idOrDict] = angle
-      elif isinstance(idOrDict, dict) and angle == None:
-        for id,a in idOrDict.items(): self.anglesDict[id] = a
-      elif isinstance(idOrDict, list) and angle == None: 
-        id = 1
-        for a in idOrDict: 
-          self.anglesDict[id] = a
-          id += 1
-      else: raise TypeError('bad argument to Servos.setAngle')
-
-      self.setServoPos()
-
-    def __str__(self): return str({'limbs':self.anglesDict})
-
-    # argument is a dictionary of id:angle
-    # angles are 0-1023; center is 512; safe angle range is 200-824
-    def setServoPos(self):
-        print(self.anglesDict)
-        if not self.valid(): return
-
-        # text protocol of id:angle pairs
-        cmd = 's'
-        for id,angle in self.anglesDict.items():
-            cmd += ' ' + str(id) + ':' + str(angle)
-
-        cmd += '\n'
-        #print(cmd)
-        self.write(str.encode(cmd))
-
-    def handleLine(self, line): 
-        # read the positions of all servos, which is given in a json/python dict format
-        preamble ='Servo Readings:' 
-        if line.startswith(preamble):
-            readingstext = line[preamble.len:] 
-            readings = ast.literal_eval(readings_text)
-            print(readings_text)
-            if not isintance(readings, dict): 
-                print('error reading servos')
-                return
-            self.setAngles(readings)
-            
-        else: print(line)
-
-    # takes one or a list of IDs
-    # relaxes all if IDs is None
-    def moveAllServos(self, pos, binary=False):
-        anglesDict = {}
-        for i in range(numServos):
-            anglesDict[i+1] = pos
-        self.setServoPos(binary)
-
-    def readServos(self):
-        self.write(b'r\n')
 
 class LightArmView(View):
   """View that controls spotlight robots"""
@@ -330,7 +228,7 @@ class SliderView(View):
     self.ixCursor = 0
     self.NumChannels = DMX.NumChannels
     self.MinValue = 0
-    self.MaxValue = MaxPWM
+    self.MaxValue = 255
 
     self.PageWidth = 16
  
@@ -436,6 +334,127 @@ class SliderView(View):
           getch() # eat trailing ~
           self.ixCursor = max(0, ixPageStart - self.PageWidth)
 
+class PrinbooView(View):
+  """View for controling Prinboo servos"""
+
+  def __init__(self): 
+    super().__init__()
+    self.ixCursor = 0
+    self.NumChannels = 11 #TODO get from Prinboo.limbs, but they may not have loaded yet?
+    self.MinValue = 0
+    self.MaxValue = 180
+
+    self.PageWidth = self.NumChannels
+ 
+  def onFocus(self):
+    pass
+
+  def display(self):
+      clearScreen()
+      ixCursorInPage = self.ixCursor % self.PageWidth
+      ixPageStart = self.ixCursor - ixCursorInPage
+
+      print('                         Prinboo View')
+      for i in range(self.PageWidth): print('----', end='')
+      print('')
+
+      # channel values
+      for i in range(ixPageStart, ixPageStart + self.PageWidth):
+        try:
+          angle = Prinboo.limbs.getAngle(i + 1)
+        except(KeyError):
+          angle = 'XXX'
+        print('{0:^4}'.format(angle), end='')
+      print('')
+
+      # separator and cursor
+      for i in range(ixCursorInPage): print('----', end='')
+      print('===-', end='')
+      for i in range(self.PageWidth - ixCursorInPage - 1): print('----', end='')
+      print('')
+      
+      # channel numbers
+      for i in range(ixPageStart + 1, ixPageStart + self.PageWidth + 1):
+        print('{0:^4}'.format(i), end='')
+      print('')
+
+  def handleLineInput(self, line):
+    tokens = line.split()
+    if len(tokens) == 0: return
+    cmd = tokens[0]
+
+    try:
+      # set a channel or a range of channels (inclusive) to a value
+      # channels are 1-based index, so must subtract 1 before indexing
+      # usage: (can take multiple arguments)
+      # set<value> <channel>
+      # set<value> <channel-channel>
+      if cmd.startswith('set'):
+        value = int(cmd[3:])
+        print(value)
+        if value < self.MinValue or value > self.MaxValue:
+          print('Value', value, ' out of range [0, 255]')
+          return
+
+        if len(tokens) == 1:
+          v = [value] * self.NumChannels 
+          #DMX.setAndSend(0, v)
+          return
+
+        # handle space-delimited arguments: index or inclusive range (index-index)
+        for token in tokens[1:]:
+          indices = token.split('-')
+
+          # a single channel index
+          if len(indices) == 1:
+            pass#DMX.setAndSend(int(indices[0]) - 1, value)
+          # argument is a range of channel indices, inclusive, ex: 56-102
+          elif len(indices) == 2:
+            lower = int(indices[0]) - 1
+            upper = int(indices[1])     # inclusive range, so -1 to correct to 0-based index but +1 to include it
+            #DMX.setAndSend(lower, [value] * (upper - lower))
+          else:
+            raise BaseException('too many arguments')
+
+      else: print('Unrecognized command')
+
+    except BaseException as e:
+      print(e)
+
+  # keyboard input
+  def handleChar(self, ch):
+    try:
+      ixCursorInPage = self.ixCursor % self.PageWidth
+      ixPageStart = self.ixCursor - ixCursorInPage
+      id = self.ixCursor + 1    # IDs start at 1
+
+      ch = ch.lower()
+
+      if ch == '0':
+        Prinboo.limbs.setAngle(id, self.MinValue)
+      elif ch == '8':
+        Prinboo.limbs.setAngle(id, self.MaxValue//2)
+      elif ch == '9':
+        Prinboo.limbs.setAngle(id, self.MaxValue)
+      
+      elif ch == '\x1b':
+        seq = getch() + getch()
+        if seq == '[A': # up arrow
+          Prinboo.limbs.setAngle(id, min(self.MaxValue, Prinboo.limbs.getAngle(id) + 1))
+        elif seq == '[B': # down arrow
+          Prinboo.limbs.setAngle(id, max(self.MinValue, Prinboo.limbs.getAngle(id) - 1))
+        elif seq == '[C': # left arrow
+          self.ixCursor = min(self.NumChannels-1, self.ixCursor + 1)
+        elif seq == '[D': # right arrow
+          self.ixCursor = max(0, self.ixCursor - 1)
+        elif seq == '[5': # page up
+          getch() # eat trailing ~
+          self.ixCursor = min(self.NumChannels-1, ixPageStart + self.PageWidth)
+        elif seq == '[6': # page down
+          getch() # eat trailing ~
+          self.ixCursor = max(0, ixPageStart - self.PageWidth)
+    except(KeyError):
+      pass
 
 class CueView(View):
   """View for running cues from currently loaded cuesheet"""
@@ -476,20 +495,22 @@ class CueView(View):
     elif ch == ',' or ch == '<':
       CueMgr.prevScene()
 
-    elif ch == '+':
-      Motors.incSpeed()
-    elif ch == '-':
-      Motors.decSpeed()
-    elif ch == '0':
-      Motors.stop()
-    elif ch == 'f':
-      Motors.forward()
-    elif ch == 'back':
-      Motors.backward()
-    elif ch == 'left':
-      Motors.turnLeft()
-    elif ch == 'right':
-      Motors.turnRight()
+    elif ch == 'a':
+      Prinboo.motors.incSpeed()
+    elif ch == 'd':
+      Prinboo.motors.decSpeed()
+    elif ch == 's':
+      Prinboo.motors.stop()
+    elif ch == '\x1b':
+      seq = getch() + getch()
+      if seq == '[A': # up arrow
+        Prinboo.motors.forward() 
+      elif seq == '[B': # down arrow
+        Prinboo.motors.backward() 
+      elif seq == '[C': # left arrow
+        Prinboo.motors.turnLeft() 
+      elif seq == '[D': # right arrow
+        Prinboo.motors.turnRight()
 
     else:
       for spot in self.spots: spot.onKey(ch)
@@ -504,8 +525,9 @@ def cmdLoadCueSheet(line):
  
 def signal_handler(signal, frame):
   print('\nexiting...')
-  DMX.exit()
-  Arms.exit()
+  if DMX: DMX.exit()
+  if Arms: Arms.exit()
+  if Prinboo.limbsThread: Prinboo.limbsThread.exit()
   exit()
 
 def programExit(): 
@@ -513,11 +535,12 @@ def programExit():
 
 
 if __name__ == '__main__':
-  if len(sys.argv) > 0 and sys.argv[1] == 'prinboo':
-    views = [CueView(), ] #PrinbooView]
+  if len(sys.argv) > 1 and sys.argv[1] == 'prinboo':
+    views = [CueView(), PrinbooView()]
   else: #default is dmx mode
-    views = [CueView(), SliderView()]
-
+    views = [CueView()]
+    if DMX: views.append(SliderView())
+  print('Arms: ', Arms)
   currentView = views[0]
 
   signal.signal(signal.SIGINT, signal_handler)
@@ -549,10 +572,12 @@ if __name__ == '__main__':
 
       # program-wide commands 
       if cmd ==   'exit': programExit()
+      elif cmd == 'cuesheet': cmdLoadCueSheet(line) # handled in view
       elif cmd == 'save': cmdSave(tokens, line)
       elif cmd == 'load': cmdCue(line, CueLoad)
       elif cmd == 'fade': cmdCue(line, CueFade)
-      elif cmd == 'cuesheet': cmdLoadCueSheet(line) # handled in cview
+      elif cmd == 'video': cmdCue(line, CueVideo)
+      elif cmd == 'prinboo': cmdCue(line, CuePrinboo)
       else: currentView.handleLineInput(line)
 
     else:

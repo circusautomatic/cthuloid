@@ -1,17 +1,17 @@
-import socket, os, errno
+import socket, os, errno, ast, paramiko
+from socketsthread import *
 
-motors = Motors()
-limbs = Limbs()
+class Motors(SocketOwner):
+  """ Serial connection to arduino controlling Prinboo wheelchair motors"""
 
-class Motors(SerialThread):
-""" Serial connection to arduino controlling Prinboo wheelchair motors"""
-
-  def __init__(self, path='/dev/motors'):
-    SerialThread.__init__(self, path)
+  def __init__(self, address):
+    SocketOwner.__init__(self, address, 1339)
     self.speed = 0  # denotes number of L/Rs we will send to the arduino 
     self.STOP = ' '
     self.direction = self.STOP
-    sendSpeed()
+
+  def readForWriting(self):
+    self.sendSpeed()
     
   def sendSpeed(self):
     s = self.STOP # initial character must reset the uc's internal counter to zero
@@ -19,39 +19,50 @@ class Motors(SerialThread):
     if self.direction != self.STOP:
       # append a number of l and r's
       for i in range(self.speed): s += self.direction
-    self.send(s)
+    self.write(s)
+
+  def incSpeed(self):
+    self.speed += 1
+    self.sendSpeed()
+
+  def decSpeed(self): 
+    self.speed -= 1
+    self.sendSpeed()
 
   def stop(self):
     self.direction = self.STOP 
-    sendSpeed()
+    self.sendSpeed()
 
   def turnLeft(self):
-    self.speed = 'r' 
-    sendSpeed()
+    self.direction = 'R' 
+    self.sendSpeed()
 
   def turnRight(self):
-    self.speed = 'r' 
-    sendSpeed()
+    self.direction = 'L' 
+    self.sendSpeed()
 
   def forward(self):
-    self.speed = 'lr' 
-    sendSpeed()
+    self.direction = 'LR' 
+    self.sendSpeed()
 
   def backward(self):
-    self.speed = 'LR' 
-    sendSpeed()
+    self.direction = 'lr' 
+    self.sendSpeed()
     
 
-class LimbServos(SerialThread):
-""" Serial connection to arduino controlling Prinboo limb and head servos"""
+class LimbServos(LinedSocketOwner):
+    """ Serial connection to arduino controlling Prinboo limb and head servos"""
 
-    def __init__(self, path='/dev/limbs'):
-        SerialThread.__init__(self, path)
+    def __init__(self, address):
+        LinedSocketOwner.__init__(self, address, 1338)
         self.anglesDict = {}
+
+    def readyForWriting(self):
+        self.readServos() # request current servo angles
 
     def getAngle(self, id): return self.anglesDict[id]
 
-    def setAngle(self, idOrDict, angle=None):
+    def setAngle(self, idOrDict, angle=None, sendUpdate=True):
       if isinstance(idOrDict, int):
         self.anglesDict[idOrDict] = angle
       elif isinstance(idOrDict, dict) and angle == None:
@@ -63,7 +74,7 @@ class LimbServos(SerialThread):
           id += 1
       else: raise TypeError('bad argument to Servos.setAngle')
 
-      self.sendServoPos()
+      if sendUpdate: self.sendServoPos()
 
     def __str__(self): return str(self.anglesDict)
 
@@ -80,22 +91,62 @@ class LimbServos(SerialThread):
 
         cmd += '\n'
         #print(cmd)
-        self.write(str.encode(cmd))
+        self.write(cmd)
 
     def handleLine(self, line): 
         # read the positions of all servos, which is given in a json/python dict format
         preamble ='Servo Readings:' 
         if line.startswith(preamble):
-            readingstext = line[preamble.len:] 
+            readings_text = line[len(preamble):].strip() 
             readings = ast.literal_eval(readings_text)
             print(readings_text)
-            if not isintance(readings, dict): 
+            if not isinstance(readings, dict): 
                 print('error reading servos')
                 return
-            self.setAngles(readings)
+            self.setAngle(readings, sendUpdate=False)
             
         else: print(line)
 
     def readServos(self):
-        self.write(b'r\n')
+        self.write('r\n')
+
+class Screen:
+    '''Play videos on Prinboo's raspi via SSH connection.
+    '''
+    def __init__(self, address): 
+      ssh = paramiko.SSHClient()
+      self.ssh = ssh
+      ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+      #ssh.connect(address, username='pi', password='raspberry')
+
+    def play(self, filename): 
+      # remove special characters and append the video player name
+      special = '$\\#!|<>;'
+      for c in special: filename.replace(c, ' ')
+      filename = 'omxplayer -p hdmi ' + filename
+
+      stdin, stdout, stderr = self.ssh.exec_command(filename)
+
+    def readyForWriting(self):
+      # give password
+      self.write(self.pw + '\n')
+      super().readyForWriting()
+      
+class Prinboo:
+  def __init__(self, address):
+    self.limbs = LimbServos(address)
+    self.motors = Motors(address)
+    self.screen = Screen(address)
+    self.thread = SocketsThread((self.limbs, self.motors), self.motors)
+    self.thread.start()
+
+    # keep only one of these threads running at a time
+    self.limbsThread = None
+
+if __name__ == '__main__':
+  addr = 'localhost'
+  #p = Prinboo(addr, '')
+  s = Screen(addr)
+  s.play('vlc ~/circusautomatic/cthuloid/ghettopticon/blender/prinboo0001-1000.mp4')
+  import time; time.sleep(10)
 

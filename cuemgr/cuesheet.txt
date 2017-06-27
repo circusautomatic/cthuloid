@@ -1,11 +1,3 @@
 scene Start
 	load off
-
-scene speaker01
-	seq intro
-		fade 2 full lights
-
-	seq outro
-		load half lights
-		fade 5 off
-
+	load prinboo_test

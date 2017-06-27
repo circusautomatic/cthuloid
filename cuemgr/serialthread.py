@@ -21,6 +21,7 @@ class SerialThread (threading.Thread):
             print('opened', self.uc.name)
         else:
             print('Error:', path, 'not opened')
+            self.exit() # thread shouldn't have started, but just in case
           
     def valid(self):
         return self.uc and not self.shouldExit

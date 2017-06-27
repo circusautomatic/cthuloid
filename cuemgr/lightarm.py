@@ -7,7 +7,7 @@ A spotlight robot:
 - speaks a human-readable protocol.
 
 """
-
+raise BaseError('Not using Lightarms at the moment')
 import socket, os, errno, select, threading, time, random, signal, sys, struct
 
 #######################################################################
@@ -240,7 +240,7 @@ class NetworkArm:
     #print(string)
     try:
       self.socket.send((string + '\n').encode())
-    except (BrokenPipeError, BlockingIOError) as e:
+    except (BrokenPipeError, BlockingIOError, OSError) as e:
       print(self.address, '-', str(e))
 
 
