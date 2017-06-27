@@ -22,8 +22,8 @@ const int lBLI = 10;
 
 const int MAX_SPEED = 100;
 //const int MOTOR_INC = 10;  // motor speed increment for interactive control
-#define INC_LEFT 10
-#define INC_RIGHT 8.7
+#define INC_LEFT 7.5
+#define INC_RIGHT 10
 
 // left and right motor pin values
 // positive is forward, negative is backwards

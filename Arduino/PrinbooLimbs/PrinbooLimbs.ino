@@ -11,7 +11,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 // Depending on your servo make, the pulse width min and max may vary, you 
 // want these to be as small/large as possible without hitting the hard stop
 // for max range. You'll have to tweak them as necessary to match the servos you
-// have!
+// have!  
 #define SERVO_MIN_PULSE 150 // this is the 'minimum' pulse length count (out of 4096)
 #define SERVO_MAX_PULSE 560 // this is the 'maximum' pulse length count (out of 4096)
 #define SERVO_MAX_ANGLE 180
@@ -19,8 +19,8 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 //angle for each servo in degrees
 volatile int16_t servoAngles[] =   {
   90, 90, 180,         // neck turn, neck nod, face twist
-  0, 0, 0, 90,         // left shoulder, upperarm, forearm, hand
-  180, 180, 180, 90    // right shoulder, upperarm, forearm, hand
+  0, 0, 20, 90,         // left shoulder, upperarm, forearm, hand
+  180, 180, 150, 90    // right shoulder, upperarm, forearm, hand
 };
 const int NumServos = sizeof(servoAngles) / sizeof(servoAngles[0]);
 
