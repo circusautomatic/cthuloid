@@ -86,7 +86,7 @@ class SocketsThread (threading.Thread):
       if self.sockets[s].error != errno.EINPROGRESS:
         print('socket failed to connect')
         continue
-      print('adding socket:', s.getsockname())
+      #print('adding socket:', s.getsockname())
       writers.append(s)
       errors.append(s)
 
@@ -103,7 +103,7 @@ class SocketsThread (threading.Thread):
 
       for s in w:
         o = self.sockets[s]
-        print('ready for writing:', o.port)
+        #print('ready for writing:', o.port)
         self.sockets[s].readyForWriting()
         writers.remove(s)
         readers.append(s)

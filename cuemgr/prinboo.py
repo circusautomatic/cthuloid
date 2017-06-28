@@ -35,11 +35,11 @@ class Motors(SocketOwner):
     self.sendSpeed()
 
   def turnLeft(self):
-    self.direction = 'R' 
+    self.direction = 'L' 
     self.sendSpeed()
 
   def turnRight(self):
-    self.direction = 'L' 
+    self.direction = 'R' 
     self.sendSpeed()
 
   def forward(self):
@@ -59,6 +59,7 @@ class LimbServos(LinedSocketOwner):
         self.anglesDict = {}
 
     def readyForWriting(self):
+        super().readyForWriting()
         self.readServos() # request current servo angles
         self.socket.send(b'r\n')
 
@@ -132,11 +133,6 @@ class Screen:
 
       stdin, stdout, stderr = self.ssh.exec_command(filename)
 
-    def readyForWriting(self):
-      # give password
-      self.write(self.pw + '\n')
-      super().readyForWriting()
-      
 class Prinboo:
   def __init__(self, address):
     self.limbs = LimbServos(address)
