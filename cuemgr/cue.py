@@ -15,20 +15,26 @@ We unfortunately use the word 'cue' in two different ways:
 import sys, os, threading, ast, time, subprocess
 from console import *
 
-import prinboo 
-Prinboo = prinboo.Prinboo('192.168.1.115')
+try:
+  import prinboo 
+  Prinboo = prinboo.Prinboo('192.168.1.115')
+except ImportError:
+  Prinboo = None
+  print('No Prinboo')
 
 try:
   import lightarm
   Arms = lightarm.LightArms()
 except:
   Arms = None
+  print('No LightArms')
 
 try: 
   import dmx
   DMX = dmx.DmxChannels()
 except ImportError:
   DMX = None
+  print('No DMX')
 
 #########################################################################################################
 # helpers
@@ -399,3 +405,9 @@ def cmdSave(tokens, line):
     print(e)
     getchMsg()
 
+CueClassMap = {
+  'load':CueLoad,
+  'fade':CueFade,
+  'limbs':CuePrinboo,
+  'video':CueVideo,
+}
