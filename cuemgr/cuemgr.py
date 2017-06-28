@@ -490,6 +490,27 @@ class CueView(View):
     elif ch == ',' or ch == '<':
       CueMgr.prevScene()
 
+    # Prinboo live controls
+    elif ch == 'w':
+      Prinboo.screen.togglePlayback()
+    elif ch == 'a':
+      Prinboo.motors.incSpeed()
+    elif ch == 'd':
+      Prinboo.motors.decSpeed()
+    elif ch == 's':
+      Prinboo.motors.stop()
+    elif ch == '\x1b':
+      seq = getch() + getch()
+      if seq == '[A': # up arrow
+        Prinboo.motors.forward() 
+      elif seq == '[B': # down arrow
+        Prinboo.motors.backward() 
+      elif seq == '[C': # left arrow
+        Prinboo.motors.turnLeft() 
+      elif seq == '[D': # right arrow
+        Prinboo.motors.turnRight()
+
+
 
   def handleLineInput(self, line):
     pass
@@ -535,26 +556,6 @@ if __name__ == '__main__':
     elif len(ch) == 1 and ord(ch) >= ord('1') and ord(ch) < (ord('1') + len(views)): 
       currentView = views[ord(ch) - ord('1')]
       currentView.onFocus()
-
-    # Prinboo live controls
-    if ch == 'w':
-      Prinboo.screen.togglePlayback()
-    elif ch == 'a':
-      Prinboo.motors.incSpeed()
-    elif ch == 'd':
-      Prinboo.motors.decSpeed()
-    elif ch == 's':
-      Prinboo.motors.stop()
-    elif ch == '\x1b':
-      seq = getch() + getch()
-      if seq == '[A': # up arrow
-        Prinboo.motors.forward() 
-      elif seq == '[B': # down arrow
-        Prinboo.motors.backward() 
-      elif seq == '[C': # left arrow
-        Prinboo.motors.turnLeft() 
-      elif seq == '[D': # right arrow
-        Prinboo.motors.turnRight()
 
     # every view can have a separate key to enter a command line of text
     elif ch == currentView.lineInputKey:
