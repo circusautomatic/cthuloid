@@ -85,7 +85,7 @@ class LimbServos(LinedSocketOwner):
     # argument is a dictionary of id:angle
     # angles are 0-1023; center is 512; safe angle range is 200-824
     def sendServoPos(self):
-        print(self.anglesDict)
+        #print(self.anglesDict)
         #if not self.valid(): return
 
         # text protocol of id:angle pairs
@@ -103,13 +103,13 @@ class LimbServos(LinedSocketOwner):
         if line.startswith(preamble):
             readings_text = line[len(preamble):].strip() 
             readings = ast.literal_eval(readings_text)
-            print(readings_text)
+            #print(readings_text)
             if not isinstance(readings, dict): 
                 print('error reading servos')
                 return
             self.setAngle(readings, sendUpdate=False)
             
-        else: print(line)
+        #else: print(line)
 
     def readServos(self):
         self.write('r\n')
@@ -128,7 +128,7 @@ class Screen:
       special = '$\\#!|<>;'
       for c in special: filename.replace(c, ' ')
       filename = 'omxplayer --loop ' + filename
-      print(filename)
+      #print(filename)
 
       stdin, stdout, stderr = self.ssh.exec_command(filename)
 
@@ -157,5 +157,5 @@ if __name__ == '__main__':
   #p = Prinboo(addr, '')
   s = Screen(addr)
   s.play('vlc ~/circusautomatic/cthuloid/ghettopticon/blender/prinboo0001-1000.mp4')
-  import time; time.sleep(10)
+
 
