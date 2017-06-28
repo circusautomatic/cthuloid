@@ -454,5 +454,5 @@ CueClassMap = {
   'load':CueLoad,
   'fade':CueFade,
   'limbs':CuePrinboo,
-  'video':CueVideo,
+#  'video':CueVideo,
 }

@@ -1,4 +1,4 @@
-import socket, os, errno, ast, paramiko
+import socket, os, errno, ast, paramiko, time
 from socketsthread import *
 
 class Motors(SocketOwner):
@@ -123,15 +123,26 @@ class Screen:
       self.ssh = ssh
       ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
       ssh.connect(address, username='pi', password='raspberry')
+      # start playing immediately
+      self.play('~/cthuloid/ghettopticon/blender/prinboo-talking.mp4')
 
     def play(self, filename): 
-      # remove special characters and append the video player name
+      # remove special characters and append it to the video player name
       special = '$\\#!|<>;'
       for c in special: filename.replace(c, ' ')
-      filename = 'omxplayer --loop ' + filename
-      #print(filename)
 
-      stdin, stdout, stderr = self.ssh.exec_command(filename)
+      # play video file continuously and hang onto stdin so we can control playback
+      filename = 'omxplayer --loop --orientation 180 ' + filename
+      self.stdin, stdout, stderr = self.ssh.exec_command(filename)
+
+    def togglePlayback(self):
+      self.stdin.write('i')
+      time.sleep(.2)
+      self.stdin.write(' ')
+
+    def exit(self):
+      self.stdin.write('q')
+      #ssh.close()
 
 class Prinboo:
   def __init__(self, address):
@@ -145,6 +156,7 @@ class Prinboo:
     self.limbsThread = None
 
   def exit(self):
+    self.screen.exit()
     self.thread.exit()
     if self.limbsThread: self.limbsThread.exit()
 
