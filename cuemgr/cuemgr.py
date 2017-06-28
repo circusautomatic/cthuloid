@@ -48,7 +48,7 @@ class View:
   """Abstract base class for a program view"""
   def __init__(self):
     self.lineInputKey = 'c'
-    print(self.__class__)
+    #print(self.__class__)
   def onFocus(self): pass
   def display(self): pass
   def handleChar(self): pass

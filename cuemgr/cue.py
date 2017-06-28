@@ -12,7 +12,7 @@ We unfortunately use the word 'cue' in two different ways:
 
 """
 
-import sys, os, threading, ast, time, subprocess
+import sys, os, threading, ast, time, subprocess, random
 from console import *
 
 try:
@@ -316,8 +316,8 @@ class PrinbooLimbsThread(threading.Thread):
     def __init__(self, prevThread, pose, vel=1, timestep=.0333):
         self.prevThread = prevThread
         self.pose = pose
-        self.vel = vel
-        self.timestep = timestep
+        self.vel = 5#vel
+        self.timestep = .05#timestep
 
         self.shouldExit = False
         threading.Thread.__init__(self)
@@ -337,26 +337,71 @@ class PrinbooLimbsThread(threading.Thread):
         #endTime = startTime + self.period
         nextTime = startTime + self.timestep
 
+        allIds = [id for id, target in self.pose.items()]
+        
+        # pick two ids
+        def popRandom(li):
+          i = random.randint(0, len(li)-1)
+          x = li.pop(i)
+          return x
+        ids = []
+        for i in range(2): ids.append(popRandom(allIds))
+
         done = False
-        while not self.shouldExit and not done:
-          # start this iteration assuming done is true
-          # set it to false if a servo hasn't reached its target yet
-          done = True
-            
-          for id, target in self.pose.items():
+        while not self.shouldExit:
+          
+          #if numInRow == 0: inc = self.vel * random.randint(1, 5)
+          #numInRow = (numInRow + 1) % 5
+
+          for id in ids:
+            target = self.pose[id]
             cur = Prinboo.limbs.getAngle(id)
             diff = target - cur
-
             if abs(diff) >= 1:
-              done = False
-              inc = self.vel
-              if diff < 0: inc = -inc
+              inc = self.vel if diff > 0 else -self.vel
+              if abs(inc) > abs(diff): inc = diff          # don't overshoot
               Prinboo.limbs.setAngle(id, cur + inc)
+            else:
+              ids.remove(id)
+              if allIds: ids.append(popRandom(allIds))
 
           now = time.time()
           #if now > endTime: break
           nextTime += self.timestep
           time.sleep(nextTime - time.time())
+#    def run(self):
+#        # wait for previous thread to finish writing to the limbs socket
+#        if self.prevThread:
+#          while self.prevThread.isAlive():
+#             time.sleep(.01)
+#
+#        startTime = time.time()
+#        #endTime = startTime + self.period
+#        nextTime = startTime + self.timestep
+#
+#        ids = [id for id, target in self.pose.items()]
+#
+#        done = False
+#        while not self.shouldExit and ids:
+#          id = ids[random.randint(0, len(ids)-1)]
+#          
+#          #if numInRow == 0: inc = self.vel * random.randint(1, 5)
+#          #numInRow = (numInRow + 1) % 5
+#
+#          target = self.pose[id]
+#          cur = Prinboo.limbs.getAngle(id)
+#          diff = target - cur
+#          if abs(diff) >= 1:
+#            inc = self.vel if diff > 0 else -self.vel
+#            if abs(inc) > abs(diff): inc = diff          # don't overshoot
+#            Prinboo.limbs.setAngle(id, cur + inc)
+#          else:
+#            ids.remove(id)
+#
+#          now = time.time()
+#          #if now > endTime: break
+#          nextTime += self.timestep
+#          time.sleep(nextTime - time.time())
 
 
 class CueVideo(CueLoad):
