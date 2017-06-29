@@ -18,7 +18,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 //angle for each servo in degrees
 volatile int16_t servoAngles[] =   {
-  90, 90, 180,         // neck turn, neck nod, face twist
+  90, 90, 80,         // neck turn, neck nod, face twist
   0, 0, 20, 90,         // left shoulder, upperarm, forearm, hand
   180, 180, 150, 90    // right shoulder, upperarm, forearm, hand
 };

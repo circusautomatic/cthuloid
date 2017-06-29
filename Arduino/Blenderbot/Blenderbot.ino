@@ -99,7 +99,7 @@ void loop() {
   // check failsafe and stop motors if we haven't received a heart beat recently enough
   unsigned long now = millis();
   if (now > lastHeatBeatReceived + HEART_BEAT_TIMEOUT) {
-    //stopMotors();
+    stopMotors();
   }
   
   // process a limited number of characters at once
