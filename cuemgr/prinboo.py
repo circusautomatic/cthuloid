@@ -119,12 +119,15 @@ class Screen:
     '''Play videos on Prinboo's raspi via SSH connection.
     '''
     def __init__(self, address): 
-      ssh = paramiko.SSHClient()
-      self.ssh = ssh
-      ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-      ssh.connect(address, username='pi', password='raspberry')
-      # start playing immediately
-      self.play('~/cthuloid/ghettopticon/blender/prinboo-talking.mp4')
+      #try:
+        ssh = paramiko.SSHClient()
+        self.ssh = ssh
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(address, username='pi', password='raspberry')
+        # start playing immediately
+        self.play('~/cthuloid/ghettopticon/blender/prinboo-talking.mp4')
+      #except paramiko.ssh_exception.NoValidConnectionsError:
+      #  self.ssh = None
 
     def play(self, filename): 
       # remove special characters and append it to the video player name

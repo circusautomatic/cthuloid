@@ -17,11 +17,11 @@ from console import *
 
 try:
   import prinboo 
-  Prinboo = prinboo.Prinboo('192.168.1.115')
+  Prinboo = prinboo.Prinboo('192.168.1.106')
 except ImportError:
   Prinboo = None
   print('No Prinboo')
-
+  
 try:
   import lightarm
   Arms = lightarm.LightArms()
@@ -313,9 +313,10 @@ class CuePrinboo(CueLoad):
 
 class PrinbooLimbsThread(threading.Thread):
     # vel can only be integers until we save our own angles in a list
-    def __init__(self, prevThread, pose, vel=1, timestep=.0333):
+    def __init__(self, prevThread, poses, vel=1, timestep=.0333):
         self.prevThread = prevThread
-        self.pose = pose
+        if isinstance(poses, dict): poses = [poses] # convert one frame into a list of frames
+        self.poses = poses
         self.vel = 5#vel
         self.timestep = .05#timestep
 
@@ -337,38 +338,58 @@ class PrinbooLimbsThread(threading.Thread):
         #endTime = startTime + self.period
         nextTime = startTime + self.timestep
 
-        allIds = [id for id, target in self.pose.items()]
-        
-        # pick two ids
+        NumIds = 2
+
         def popRandom(li):
           i = random.randint(0, len(li)-1)
           x = li.pop(i)
           return x
-        ids = []
-        for i in range(2): ids.append(popRandom(allIds))
 
-        done = False
+        def nextPose():
+            if not self.poses: return None, None, None
+            pose = self.poses.pop(0)
+            allIds = [id for id, target in pose.items()]
+            ids = []
+            # pick two ids
+            for i in range(NumIds): ids.append(popRandom(allIds))
+#            print('pose:', pose)
+            return pose, allIds, ids
+
+        pose, allIds, ids = nextPose()
+
         while not self.shouldExit:
-          
-          #if numInRow == 0: inc = self.vel * random.randint(1, 5)
-          #numInRow = (numInRow + 1) % 5
+              #if numInRow == 0: inc = self.vel * random.randint(1, 5)
+              #numInRow = (numInRow + 1) % 5
 
-          for id in ids:
-            target = self.pose[id]
-            cur = Prinboo.limbs.getAngle(id)
-            diff = target - cur
-            if abs(diff) >= 1:
-              inc = self.vel if diff > 0 else -self.vel
-              if abs(inc) > abs(diff): inc = diff          # don't overshoot
-              Prinboo.limbs.setAngle(id, cur + inc)
-            else:
-              ids.remove(id)
-              if allIds: ids.append(popRandom(allIds))
+              if not ids and not allIds:
+                if not self.poses:
+                    print('exiting')
+                    return
+#                print('pose:', pose)
+                pose, allIds, ids = nextPose()
 
-          now = time.time()
-          #if now > endTime: break
-          nextTime += self.timestep
-          time.sleep(nextTime - time.time())
+              while len(ids) < NumIds and allIds:
+                ids.append(popRandom(allIds))
+
+              #print(ids)
+              for id in ids:
+                target = pose[id]
+                cur = Prinboo.limbs.getAngle(id)
+                diff = target - cur
+                if abs(diff) >= 1:
+                  inc = self.vel if diff > 0 else -self.vel
+                  if abs(inc) > abs(diff): inc = diff          # don't overshoot
+                  Prinboo.limbs.setAngle(id, cur + inc)
+                else:
+#                  print('removing id', id)
+                  ids.remove(id) # might mess with for loop
+
+              # wait an amount based on when the next movement should occur
+              now = time.time()
+              nextTime += self.timestep
+              delta = nextTime - now
+              if delta > 0: time.sleep(delta) # we might be late enough that the next step has arrived
+        print('exiting')
 #    def run(self):
 #        # wait for previous thread to finish writing to the limbs socket
 #        if self.prevThread:
@@ -454,5 +475,6 @@ CueClassMap = {
   'load':CueLoad,
   'fade':CueFade,
   'limbs':CuePrinboo,
+  'c':CuePrinboo,
 #  'video':CueVideo,
 }
