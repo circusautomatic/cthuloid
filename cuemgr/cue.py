@@ -349,6 +349,8 @@ class PrinbooLimbsThread(threading.Thread):
             if not self.poses: return None, None, None
             pose = self.poses.pop(0)
             allIds = [id for id, target in pose.items()]
+            # TODO hack to remove servos that are broken or whose motion isn't visible
+            allIds.remove(5); allIds.remove(11)
             ids = []
             # pick two ids
             for i in range(NumIds): ids.append(popRandom(allIds))
@@ -363,7 +365,7 @@ class PrinbooLimbsThread(threading.Thread):
 
               if not ids and not allIds:
                 if not self.poses:
-                    print('exiting')
+#                    print('exiting')
                     return
 #                print('pose:', pose)
                 pose, allIds, ids = nextPose()

@@ -92,6 +92,7 @@ class LimbServos(LinedSocketOwner):
         # text protocol of id:angle pairs
         cmd = 's'
         for id,angle in self.anglesDict.items():
+            if id == 5: continue # TODO servo 5 broke
             cmd += ' ' + str(id) + ':' + str(angle)
 
         cmd += '\n'
