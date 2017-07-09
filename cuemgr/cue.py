@@ -391,7 +391,7 @@ class PrinbooLimbsThread(threading.Thread):
               nextTime += self.timestep
               delta = nextTime - now
               if delta > 0: time.sleep(delta) # we might be late enough that the next step has arrived
-        print('exiting')
+#        print('exiting')
 #    def run(self):
 #        # wait for previous thread to finish writing to the limbs socket
 #        if self.prevThread:
