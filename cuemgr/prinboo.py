@@ -1,23 +1,26 @@
-import socket, os, errno, ast
-from serialthread import SerialThread
+import socket, os, errno, ast, paramiko, time
+from socketsthread import *
 
-class Motors(SerialThread):
+class Motors(SocketOwner):
   """ Serial connection to arduino controlling Prinboo wheelchair motors"""
 
-  def __init__(self, path='/dev/motors'):
-    SerialThread.__init__(self, path)
+  def __init__(self, address):
+    SocketOwner.__init__(self, address, 1339)
     self.speed = 0  # denotes number of L/Rs we will send to the arduino 
     self.STOP = ' '
     self.direction = self.STOP
+
+  def readForWriting(self):
     self.sendSpeed()
     
+
   def sendSpeed(self):
     s = self.STOP # initial character must reset the uc's internal counter to zero
     
     if self.direction != self.STOP:
       # append a number of l and r's
       for i in range(self.speed): s += self.direction
-    self.write(str.encode(s))
+    self.write(s)
 
   def incSpeed(self):
     self.speed += 1
@@ -32,11 +35,11 @@ class Motors(SerialThread):
     self.sendSpeed()
 
   def turnLeft(self):
-    self.direction = 'R' 
+    self.direction = 'L' 
     self.sendSpeed()
 
   def turnRight(self):
-    self.direction = 'L' 
+    self.direction = 'R' 
     self.sendSpeed()
 
   def forward(self):
@@ -48,12 +51,19 @@ class Motors(SerialThread):
     self.sendSpeed()
     
 
-class LimbServos(SerialThread):
+class LimbServos(LinedSocketOwner):
     """ Serial connection to arduino controlling Prinboo limb and head servos"""
 
-    def __init__(self, path='/dev/limbs'):
-        SerialThread.__init__(self, path)
+    def __init__(self, address):
+        LinedSocketOwner.__init__(self, address, 1338)
         self.anglesDict = {}
+
+    def readyForWriting(self):
+        super().readyForWriting()
+        self.readServos() # request current servo angles
+        self.socket.send(b'r\n')
+
+    #def dataReceived(self, data): pass
 
     def getAngle(self, id): return self.anglesDict[id]
 
@@ -76,17 +86,18 @@ class LimbServos(SerialThread):
     # argument is a dictionary of id:angle
     # angles are 0-1023; center is 512; safe angle range is 200-824
     def sendServoPos(self):
-        print(self.anglesDict)
-        if not self.valid(): return
+        #print(self.anglesDict)
+        #if not self.valid(): return
 
         # text protocol of id:angle pairs
         cmd = 's'
         for id,angle in self.anglesDict.items():
+            if id == 5: continue # TODO servo 5 broke
             cmd += ' ' + str(id) + ':' + str(angle)
 
         cmd += '\n'
         #print(cmd)
-        self.write(str.encode(cmd))
+        self.write(cmd)
 
     def handleLine(self, line): 
         # read the positions of all servos, which is given in a json/python dict format
@@ -94,18 +105,69 @@ class LimbServos(SerialThread):
         if line.startswith(preamble):
             readings_text = line[len(preamble):].strip() 
             readings = ast.literal_eval(readings_text)
-            print(readings_text)
+            #print(readings_text)
             if not isinstance(readings, dict): 
                 print('error reading servos')
                 return
             self.setAngle(readings, sendUpdate=False)
             
-        else: print(line)
+        #else: print(line)
 
     def readServos(self):
-        self.write(b'r\n')
+        self.write('r\n')
+
+class Screen:
+    '''Play videos on Prinboo's raspi via SSH connection.
+    '''
+    def __init__(self, address): 
+      #try:
+        ssh = paramiko.SSHClient()
+        self.ssh = ssh
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(address, username='pi', password='raspberry')
+        # start playing immediately
+        self.play('~/cthuloid/ghettopticon/blender/prinboo-talking.mp4')
+      #except paramiko.ssh_exception.NoValidConnectionsError:
+      #  self.ssh = None
+
+    def play(self, filename): 
+      # remove special characters and append it to the video player name
+      special = '$\\#!|<>;'
+      for c in special: filename.replace(c, ' ')
+
+      # play video file continuously and hang onto stdin so we can control playback
+      filename = 'omxplayer --loop --orientation 180 ' + filename
+      self.stdin, stdout, stderr = self.ssh.exec_command(filename)
+
+    def togglePlayback(self):
+      self.stdin.write('i')
+      time.sleep(.2)
+      self.stdin.write(' ')
+
+    def exit(self):
+      self.stdin.write('q')
+      #ssh.close()
+
+class Prinboo:
+  def __init__(self, address):
+    self.limbs = LimbServos(address)
+    self.motors = Motors(address)
+    self.screen = Screen(address)
+    self.thread = SocketsThread((self.limbs, self.motors), self.motors)
+    self.thread.start()
+
+    # keep only one of these threads running at a time
+    self.limbsThread = None
+
+  def exit(self):
+    self.screen.exit()
+    self.thread.exit()
+    if self.limbsThread: self.limbsThread.exit()
 
 if __name__ == '__main__':
-  motors = Motors()
-  limbs = LimbServos()
+  addr = 'localhost'
+  #p = Prinboo(addr, '')
+  s = Screen(addr)
+  s.play('vlc ~/circusautomatic/cthuloid/ghettopticon/blender/prinboo0001-1000.mp4')
+
 

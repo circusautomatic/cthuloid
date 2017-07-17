@@ -12,27 +12,29 @@ We unfortunately use the word 'cue' in two different ways:
 
 """
 
-import sys, os, threading, ast, time, subprocess
+import sys, os, threading, ast, time, subprocess, random
 from console import *
 
-#try:
-import prinboo 
-PrinbooLimbs = prinboo.LimbServos()
-#  if not PrinbooLimbs.valid(): PrinbooLimbs = None
-#except:
-#  PrinbooLimbs = None
-
+try:
+  import prinboo 
+  Prinboo = prinboo.Prinboo('192.168.1.106')
+except ImportError:
+  Prinboo = None
+  print('No Prinboo')
+  
 try:
   import lightarm
   Arms = lightarm.LightArms()
 except:
   Arms = None
+  print('No LightArms')
 
 try: 
   import dmx
   DMX = dmx.DmxChannels()
 except ImportError:
   DMX = None
+  print('No DMX')
 
 #########################################################################################################
 # helpers
@@ -130,7 +132,7 @@ class CueLoad(Cue):
         if not isinstance(self.targetDMX, list) or not isinstance(sum(self.targetDMX), int):
           raise BaseException('error in DMX portion of cue file')
 
-      self.limbs = PrinbooLimbs and data.get('Limbs')
+      self.limbs = Prinboo.limbs and data.get('Limbs')
       self.armData = Arms and data.get('LightArm')
 
   def run(self, immediate=False):
@@ -141,11 +143,10 @@ class CueLoad(Cue):
         DMX.setAndSend(0, self.targetDMX)
 
       if self.limbs: #TODO figure out if we have a pose or an animation
-        PrinbooLimbs.setAngle(self.limbs)
+        Prinboo.limbs.setAngle(self.limbs)
 
       if self.armData:
         Arms.load(self.armData)
-
 
 class CueFade(CueLoad):
   """Fades from current scene to new scene. 
@@ -209,7 +210,6 @@ class CueFade(CueLoad):
         startTime = time.time()
         endTime = startTime + self.period
         nextTime = startTime + timestep
-        nextPrintTime = startTime + printPeriodPeriod
 
         while 1:
           # calculate new channel values and transmit
@@ -282,102 +282,163 @@ class CueFade(CueLoad):
 #        Arms.load(self.armData)
 
 
-'''class CuePrinboo(CueLoad):
-  """Launches a thread to animate Prinboo with frames defined in a cuefile
+class CuePrinboo(CueLoad):
+  """Launches a thread to animate Prinboo's head and limbs with frames defined in a cuefile
   
   """
   framerate = 30 #per second
 
   def __init__(self, line):
-    CueLoad.__init__(self, line)
     self.frames = None
-    self.framerate = data['framerate']
+    CueLoad.__init__(self, line)
     
-  def load(self):
-    CueLoad.load(data = loadCueFile(self.filename)
-    try:
-      self.frames = data['limbs']
-    except: pass
+#  def load(self):
+#    self.frames = data['limbs']
+#    #self.framerate = data['framerate']
 
   def run(self, immediate=False):
-    #try:
       # load the file again in case it has changed since the cuesheet was loading
       self.load()
 
       timestep = 1. / self.framerate
+      vel = 1
 
-      # Light Arms
-      # TODO fade light arms!
-      #try:
-        #  if self.armData: Arms.load(self.armData)
-      #except:
-        #  # pass
+      # Signal the previous thread to exit, and hand it to the next thread
+      # so it can wait.
+      if Prinboo.limbsThread:
+        Prinboo.limbsThread.exit()
+      Prinboo.limbsThread = PrinbooLimbsThread(Prinboo.limbsThread, self.limbs, vel, timestep)
 
-      # DMX
-      #if self.targetDMX:
-      if self.armData:
-        #target = self.targetDMX
-        #current = DMX.get()
-        target = [0] * Arms.num()
-        current = [0] * Arms.num()
-        vel = [0] * Arms.num()
-        
-        # map each address to an index
-        for address, data in self.armData.items():
-          try:
-            i = Arms.arms.index(Arms.findArm(address))
-            target[i] = data['intensity']
-          except ValueError as e:
-            pass
 
-        for i in range(Arms.num()):
-          current[i] = Arms.getLED(i)
 
-        # calculate delta for each timestep
-        # -1 means don't change
-        for i in range(len(target)):
-          if target[i] >= 0:
-            vel[i] = (target[i] - current[i]) * (timestep / self.period)
+class PrinbooLimbsThread(threading.Thread):
+    # vel can only be integers until we save our own angles in a list
+    def __init__(self, prevThread, poses, vel=1, timestep=.0333):
+        self.prevThread = prevThread
+        if isinstance(poses, dict): poses = [poses] # convert one frame into a list of frames
+        self.poses = poses
+        self.vel = 5#vel
+        self.timestep = .05#timestep
+
+        self.shouldExit = False
+        threading.Thread.__init__(self)
+
+        self.start()
+
+    def exit(self):
+        self.shouldExit = True
+
+    def run(self):
+        # wait for previous thread to finish writing to the limbs socket
+        if self.prevThread:
+          while self.prevThread.isAlive():
+             time.sleep(.01)
 
         startTime = time.time()
-        endTime = startTime + self.period
-        nextTime = startTime + timestep
+        #endTime = startTime + self.period
+        nextTime = startTime + self.timestep
 
-        while 1:
-          # calculate new channel values and transmit
-          for i in range(len(current)): current[i] += vel[i]
-          #channels = [round(x) for x in current] 
-          for i in range(Arms.num()):
-            Arms.setLED(i, current[i])
+        NumIds = 2
 
-          now = time.time()
+        def popRandom(li):
+          i = random.randint(0, len(li)-1)
+          x = li.pop(i)
+          return x
 
-          if now > endTime: break
-          nextTime += timestep
-          time.sleep(nextTime - time.time())
+        def nextPose():
+            if not self.poses: return None, None, None
+            pose = self.poses.pop(0)
+            allIds = [id for id, target in pose.items()]
+            # TODO hack to remove servos that are broken or whose motion isn't visible
+            allIds.remove(5); allIds.remove(11)
+            ids = []
+            # pick two ids
+            for i in range(NumIds): ids.append(popRandom(allIds))
+#            print('pose:', pose)
+            return pose, allIds, ids
 
-        # make sure we arrive at the target numbers, as rounding error may creep in
-        Arms.load(self.armData)
-        #for i in range(Arms.num()):
-        #  Arms.setLED(i, target[i])
-        
-        print('DONE')
-    #except:
-    # TODO other exceptions having to do with the fade math
-'''
+        pose, allIds, ids = nextPose()
+
+        while not self.shouldExit:
+              #if numInRow == 0: inc = self.vel * random.randint(1, 5)
+              #numInRow = (numInRow + 1) % 5
+
+              if not ids and not allIds:
+                if not self.poses:
+#                    print('exiting')
+                    return
+#                print('pose:', pose)
+                pose, allIds, ids = nextPose()
+
+              while len(ids) < NumIds and allIds:
+                ids.append(popRandom(allIds))
+
+              #print(ids)
+              for id in ids:
+                target = pose[id]
+                cur = Prinboo.limbs.getAngle(id)
+                diff = target - cur
+                if abs(diff) >= 1:
+                  inc = self.vel if diff > 0 else -self.vel
+                  if abs(inc) > abs(diff): inc = diff          # don't overshoot
+                  Prinboo.limbs.setAngle(id, cur + inc)
+                else:
+#                  print('removing id', id)
+                  ids.remove(id) # might mess with for loop
+
+              # wait an amount based on when the next movement should occur
+              now = time.time()
+              nextTime += self.timestep
+              delta = nextTime - now
+              if delta > 0: time.sleep(delta) # we might be late enough that the next step has arrived
+#        print('exiting')
+#    def run(self):
+#        # wait for previous thread to finish writing to the limbs socket
+#        if self.prevThread:
+#          while self.prevThread.isAlive():
+#             time.sleep(.01)
+#
+#        startTime = time.time()
+#        #endTime = startTime + self.period
+#        nextTime = startTime + self.timestep
+#
+#        ids = [id for id, target in self.pose.items()]
+#
+#        done = False
+#        while not self.shouldExit and ids:
+#          id = ids[random.randint(0, len(ids)-1)]
+#          
+#          #if numInRow == 0: inc = self.vel * random.randint(1, 5)
+#          #numInRow = (numInRow + 1) % 5
+#
+#          target = self.pose[id]
+#          cur = Prinboo.limbs.getAngle(id)
+#          diff = target - cur
+#          if abs(diff) >= 1:
+#            inc = self.vel if diff > 0 else -self.vel
+#            if abs(inc) > abs(diff): inc = diff          # don't overshoot
+#            Prinboo.limbs.setAngle(id, cur + inc)
+#          else:
+#            ids.remove(id)
+#
+#          now = time.time()
+#          #if now > endTime: break
+#          nextTime += self.timestep
+#          time.sleep(nextTime - time.time())
+
 
 class CueVideo(CueLoad):
   """Play a video by running a shell command"""
 
-  player = "cvlc"
+  player = "/usr/bin/omxplayer"
 
   def __init__(self, line):
     CueLoad.__init__(self, line)
   def load(self):
     pass #maybe check file exists
   def run(self, immediate=False):
-    subprocess.call([self.player, self.filename])
-
+    #subprocess.call([self.player, self.filename])
+    Prinboo.screen.play(self.filename)
 
 def cmdCue(line, CueClass):
   """instantiate a type of cue and run it immediately"""
@@ -397,7 +458,7 @@ def cmdSave(tokens, line):
   filename = restAfterWord(tokens[0], line)
   dmx = 'None' #str(DMX.get())
   #arms = str(Arms)
-  angles = str(limbs)
+  angles = str(Prinboo.limbs)
   text = "{\n 'version': 0,\n 'DMX': " + dmx + ",\n 'Limbs': " + angles + "\n}"
   #text = "{\n 'version': 0,\n 'DMX': " + dmx + ",\n 'LightArm': {\n  'Servos': " + str(ucServos) + ",\n  'LEDs': " + str(ucLEDs) + "\n }\n}"
   #text = "{'version': 0, 'DMX': " + dmx + ", 'LightArm': {'Servos': " + str(ucServos) + ", 'LEDs': " + str(ucLEDs) + "}}"
@@ -412,3 +473,10 @@ def cmdSave(tokens, line):
     print(e)
     getchMsg()
 
+CueClassMap = {
+  'load':CueLoad,
+  'fade':CueFade,
+  'limbs':CuePrinboo,
+  'c':CuePrinboo,
+#  'video':CueVideo,
+}

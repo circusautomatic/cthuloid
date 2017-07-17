@@ -21,9 +21,6 @@ from cue import *
 from cueengine import CueEngine
 from trackspot import TrackSpot
 
-import prinboo
-PrinbooMotors = prinboo.Motors()
-
 CuesFilename = 'cuesheet.txt'   #initial cuesheet automatically loaded
 #MaxPWM = 999
 
@@ -51,7 +48,7 @@ class View:
   """Abstract base class for a program view"""
   def __init__(self):
     self.lineInputKey = 'c'
-    print(self.__class__)
+    #print(self.__class__)
   def onFocus(self): pass
   def display(self): pass
   def handleChar(self): pass
@@ -343,7 +340,7 @@ class PrinbooView(View):
   def __init__(self): 
     super().__init__()
     self.ixCursor = 0
-    self.NumChannels = 11 #TODO get from PrinbooLimbs, but they may not have loaded yet?
+    self.NumChannels = 11 #TODO get from Prinboo.limbs, but they may not have loaded yet?
     self.MinValue = 0
     self.MaxValue = 180
 
@@ -364,7 +361,7 @@ class PrinbooView(View):
       # channel values
       for i in range(ixPageStart, ixPageStart + self.PageWidth):
         try:
-          angle = PrinbooLimbs.getAngle(i + 1)
+          angle = Prinboo.limbs.getAngle(i + 1)
         except(KeyError):
           angle = 'XXX'
         print('{0:^4}'.format(angle), end='')
@@ -392,11 +389,11 @@ class PrinbooView(View):
       # usage: (can take multiple arguments)
       # set<value> <channel>
       # set<value> <channel-channel>
-      if cmd.startswith('set'):
+      '''if cmd.startswith('set'):
         value = int(cmd[3:])
         print(value)
         if value < self.MinValue or value > self.MaxValue:
-          print('Value', value, ' out of range [0, 255]')
+          print('Value', value, 'out of range', self.MinValue, '-', self.MaxValue)
           return
 
         if len(tokens) == 1:
@@ -419,7 +416,8 @@ class PrinbooView(View):
           else:
             raise BaseException('too many arguments')
 
-      else: print('Unrecognized command')
+      else:'''
+      print('Unrecognized command')
 
     except BaseException as e:
       print(e)
@@ -434,28 +432,22 @@ class PrinbooView(View):
       ch = ch.lower()
 
       if ch == '0':
-        PrinbooLimbs.setAngle(id, self.MinValue)
+        Prinboo.limbs.setAngle(id, self.MinValue)
       elif ch == '8':
-        PrinbooLimbs.setAngle(id, self.MaxValue//2)
+        Prinboo.limbs.setAngle(id, self.MaxValue//2)
       elif ch == '9':
-        PrinbooLimbs.setAngle(id, self.MaxValue)
+        Prinboo.limbs.setAngle(id, self.MaxValue)
       
       elif ch == '\x1b':
         seq = getch() + getch()
         if seq == '[A': # up arrow
-          PrinbooLimbs.setAngle(id, min(self.MaxValue, PrinbooLimbs.getAngle(id) + 1))
+          Prinboo.limbs.setAngle(id, min(self.MaxValue, Prinboo.limbs.getAngle(id) + 1))
         elif seq == '[B': # down arrow
-          PrinbooLimbs.setAngle(id, max(self.MinValue, PrinbooLimbs.getAngle(id) - 1))
+          Prinboo.limbs.setAngle(id, max(self.MinValue, Prinboo.limbs.getAngle(id) - 1))
         elif seq == '[C': # left arrow
           self.ixCursor = min(self.NumChannels-1, self.ixCursor + 1)
         elif seq == '[D': # right arrow
           self.ixCursor = max(0, self.ixCursor - 1)
-        elif seq == '[5': # page up
-          getch() # eat trailing ~
-          self.ixCursor = min(self.NumChannels-1, ixPageStart + self.PageWidth)
-        elif seq == '[6': # page down
-          getch() # eat trailing ~
-          self.ixCursor = max(0, ixPageStart - self.PageWidth)
     except(KeyError):
       pass
 
@@ -498,25 +490,27 @@ class CueView(View):
     elif ch == ',' or ch == '<':
       CueMgr.prevScene()
 
+    # Prinboo live controls
+    elif ch == 'w':
+      Prinboo.screen.togglePlayback()
     elif ch == 'a':
-      motors.incSpeed()
+      Prinboo.motors.incSpeed()
     elif ch == 'd':
-      motors.decSpeed()
+      Prinboo.motors.decSpeed()
     elif ch == 's':
-      motors.stop()
+      Prinboo.motors.stop()
     elif ch == '\x1b':
       seq = getch() + getch()
       if seq == '[A': # up arrow
-        motors.forward() 
+        Prinboo.motors.forward() 
       elif seq == '[B': # down arrow
-        motors.backward() 
+        Prinboo.motors.backward() 
       elif seq == '[C': # left arrow
-        motors.turnLeft() 
+        Prinboo.motors.turnLeft() 
       elif seq == '[D': # right arrow
-        motors.turnRight()
+        Prinboo.motors.turnRight()
 
-    else:
-      for spot in self.spots: spot.onKey(ch)
+
 
   def handleLineInput(self, line):
     pass
@@ -530,6 +524,7 @@ def signal_handler(signal, frame):
   print('\nexiting...')
   if DMX: DMX.exit()
   if Arms: Arms.exit()
+  if Prinboo: Prinboo.exit()
   exit()
 
 def programExit(): 
@@ -542,7 +537,6 @@ if __name__ == '__main__':
   else: #default is dmx mode
     views = [CueView()]
     if DMX: views.append(SliderView())
-  print('Arms: ', Arms)
   currentView = views[0]
 
   signal.signal(signal.SIGINT, signal_handler)
@@ -574,10 +568,9 @@ if __name__ == '__main__':
 
       # program-wide commands 
       if cmd ==   'exit': programExit()
+      elif cmd == 'cuesheet': cmdLoadCueSheet(line) # handled in view
       elif cmd == 'save': cmdSave(tokens, line)
-      elif cmd == 'load': cmdCue(line, CueLoad)
-      elif cmd == 'fade': cmdCue(line, CueFade)
-      elif cmd == 'cuesheet': cmdLoadCueSheet(line) # handled in cview
+      elif cmd in CueClassMap: cmdCue(line, CueClassMap[cmd])
       else: currentView.handleLineInput(line)
 
     else:

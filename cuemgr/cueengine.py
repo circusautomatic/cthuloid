@@ -157,14 +157,8 @@ class CueEngine:
                 thisNode = Scene(restAfterWord(cmd, line))
               elif cmd == 'seq':
                 thisNode = CueSequence(line)
-              elif cmd == 'load':
-                thisNode = CueLoad(line)
-              elif cmd == 'fade':
-                thisNode = CueFade(line)
-              elif cmd == 'video':
-                thisNode = CueVideo(line)
-              elif cmd == 'prinboo':
-                thisNode = CuePrinboo(line)
+              elif cmd in CueClassMap:
+                thisNode = CueClassMap[cmd](line)
               else:
                 print('Error unrecognized command on line', lineNum)
                 print('Text:', line)
