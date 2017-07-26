@@ -4,7 +4,7 @@
 // this flag will invert PWM output, for active-low devices
 #define INVERT_HIGH_AND_LOW
 
-int DMX_Address = 5;  // The DMX address of the first channel (using 1-based indexing)
+int DMX_Address = 9;  // The DMX address of the first channel (using 1-based indexing)
 
 // These pins will be mapped onto DMX channels in order (1-based indexing)
 const int PWM_Pins[] = {7, 8, 44, 45};
@@ -15,7 +15,7 @@ const long HR_PWM_Off = 300;       // High Resolution PWM value at which our LED
 
 // map a log function while converting from 8-bits to 16-bits
 // dmx: input [0-255]
-// output: [2600-65535]
+// output: [HR_PWM_Off-65535]
 long DMXtoPWM(long dmx) {
   const float bottom = HR_PWM_Off;
   static const float coeff = log(65535.0 / bottom) / log(exp(1)) / 255;
@@ -103,8 +103,9 @@ long get_HR_DMX(int index) {
 
 void loop()
 {
-    OCR4C = get_HR_DMX(0);    // mega pin 7
-    OCR4B = get_HR_DMX(1);    // mega pin 8
+    // might need to put OCR4B first
+    OCR4B = get_HR_DMX(0);    // mega pin 7
+    OCR4C = get_HR_DMX(1);    // mega pin 8
     OCR5C = get_HR_DMX(2);    // mega pin 44
     OCR5B = get_HR_DMX(3);    // mega pin 45
 }
