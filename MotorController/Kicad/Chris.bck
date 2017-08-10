@@ -1,7 +1,0 @@
-EESchema-DOCLIB  Version 2.0  Date: Sat 22 Jul 2017 09:12:52 AM PDT
-#
-$CMP ESP32_DEV
-D Adafruit ESP32 Development Board
-$ENDCMP
-#
-#End Doc Library
