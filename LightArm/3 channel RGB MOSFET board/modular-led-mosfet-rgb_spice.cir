@@ -1,0 +1,11 @@
+modular-led-mosfet-rgb
+R4 6 0 33
+R5 4 5 33
+R3 16 10 500
+R1 17 15 500
+R6 8 5 33
+R2 14 9 500
+
+.TRAN 1ms 100ms
+* .AC DEC 100 100 1MEG
+.END

@@ -69,7 +69,7 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
   #include <Ethernet.h>
 
   uint16_t Port             = 1337;
-  uint8_t  IP[]             = {10, 0, 2, 255};    // also used in MAC address
+  uint8_t  IP[]             = {10, 0, 2, 254};    // also used in MAC address
   uint8_t  GatewayAddress[] = {10, 0, 0, 1};
   uint8_t  SubnetMask[]     = {255, 255, 0, 0};
   //uint8_t  MacAddress[6]    = {0x00, 0x01, IP[0], IP[1], IP[2], IP[3]};

@@ -63,11 +63,11 @@ DMX_Slave dmx_slave ( DMX_SLAVE_CHANNELS );
 // the use the following line instead
 ///// DMX_Slave dmx_slave ( DMX_SLAVE_CHANNELS , RXEN_PIN );
 
-const int ledPin = 13;
+const int ledPin = 11;
 
 // the setup routine runs once when you press reset:
 void setup() {             
-  
+  Serial.begin(38400);
   // Enable DMX slave interface and start recording
   // DMX data
   dmx_slave.enable ();  
@@ -91,10 +91,12 @@ void loop()
   
   // NOTE:
   // getChannelValue is relative to the configured startaddress
-  if ( dmx_slave.getChannelValue (1) > 127 )
+  if ( dmx_slave.getChannelValue (1) > 127 ) {
+    Serial.println("high");
     digitalWrite ( ledPin, HIGH );
-  else
+  }
+  else {
     digitalWrite ( ledPin, LOW );
-    
-  
+    Serial.println("low");
+    }
 }

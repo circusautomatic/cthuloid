@@ -1,0 +1,108 @@
+Cmp-Mod V01 Created by CvPcb (2013-jul-07)-stable date = Fri 28 Jul 2017 12:48:37 PM PDT
+
+BeginCmp
+TimeStamp = /597B707A;
+Reference = C1;
+ValeurCmp = C;
+IdModule  = C1;
+EndCmp
+
+BeginCmp
+TimeStamp = /597B6FFD;
+Reference = H1;
+ValeurCmp = HIP4080A;
+IdModule  = DIP-20__300;
+EndCmp
+
+BeginCmp
+TimeStamp = /597B7135;
+Reference = J1;
+ValeurCmp = RJ45;
+IdModule  = RJ45_8;
+EndCmp
+
+BeginCmp
+TimeStamp = /597B824F;
+Reference = K1;
+ValeurCmp = CONN_3;
+IdModule  = PIN_ARRAY_3X1;
+EndCmp
+
+BeginCmp
+TimeStamp = /597B7027;
+Reference = M1;
+ValeurCmp = MOTOR;
+IdModule  = 2PIN_6mm;
+EndCmp
+
+BeginCmp
+TimeStamp = /597B94E5;
+Reference = P1;
+ValeurCmp = CONN_2;
+IdModule  = 2PIN_6mm;
+EndCmp
+
+BeginCmp
+TimeStamp = /597B7E99;
+Reference = Q1;
+ValeurCmp = C_MOSF;
+IdModule  = PIN_ARRAY_3X1;
+EndCmp
+
+BeginCmp
+TimeStamp = /597B7EC6;
+Reference = Q2;
+ValeurCmp = C_MOSF;
+IdModule  = PIN_ARRAY_3X1;
+EndCmp
+
+BeginCmp
+TimeStamp = /597B7EA8;
+Reference = Q3;
+ValeurCmp = C_MOSF;
+IdModule  = PIN_ARRAY_3X1;
+EndCmp
+
+BeginCmp
+TimeStamp = /597B7EB7;
+Reference = Q4;
+ValeurCmp = C_MOSF;
+IdModule  = PIN_ARRAY_3X1;
+EndCmp
+
+BeginCmp
+TimeStamp = /597B773E;
+Reference = R1;
+ValeurCmp = 20K;
+IdModule  = R5;
+EndCmp
+
+BeginCmp
+TimeStamp = /597B774D;
+Reference = R2;
+ValeurCmp = 20K;
+IdModule  = R5;
+EndCmp
+
+BeginCmp
+TimeStamp = /597B7074;
+Reference = R3;
+ValeurCmp = R;
+IdModule  = R5;
+EndCmp
+
+BeginCmp
+TimeStamp = /597B705D;
+Reference = R4;
+ValeurCmp = R;
+IdModule  = R5;
+EndCmp
+
+BeginCmp
+TimeStamp = /597B7057;
+Reference = R5;
+ValeurCmp = R;
+IdModule  = R5;
+EndCmp
+
+EndListe

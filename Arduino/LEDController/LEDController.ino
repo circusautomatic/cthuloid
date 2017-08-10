@@ -23,9 +23,10 @@
 #define MAX_PWM 65535
 #define PWM_FREQ 1000
 
-const int PWMPins[] = {/*3, 5, 6, 9, 10,*/ 11, 12};
+const int PWMPins[] = {12};
+//const int PWMPins[] = {3, 5, 6, 13, 10 11, 12};
 const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
-
+const int fanPin = 6;
 
 // Ethernet via ENC28J60 
 // Library: https://github.com/ntruchsess/arduino_uip
@@ -54,12 +55,13 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
   // For Arduino Ethernet Shield
   #include <SPI.h>
   #include <Ethernet.h>
-
+  //For Arduino Nano + nano ethernet shield
+  //#include <UIPEthernet.h>
   const uint16_t PORT = 1337;
-  const uint8_t ID_IP = 255;
+  const uint8_t ID_IP = 250;
   static uint8_t MAC[6] = {0x00,0x01,0x02,0x03,0xff,ID_IP};
 
-  IPAddress IP(10,0,2,ID_IP);
+  IPAddress IP(10,0,0,ID_IP);
   IPAddress GATEWAY(10,0,0,1);
   IPAddress SUBNET(255, 255, 255, 0);
 
@@ -101,6 +103,8 @@ SerialCommand CmdMgr(CommandsList, cmdUnrecognized);
 /////////////////////////////////////////////////////////////////////////////////////////////
 // helpers
 /////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 // Takes a string of an integer (numeric chars only). Returns the integer on success.
 // Prints error and returns 0 if there is a parse error or the ID is out of range.
@@ -146,7 +150,7 @@ boolean parsePWMTuple(char *s, IDTuple *out) {
   char *sPWM = strtok(NULL, ":");
   if(sPWM == NULL) {
     printlnError(MsgPWMTupleFormatError);
-    return false;
+    return false; 
   }
   
   long pwm = parsePWM(sPWM);
@@ -222,11 +226,15 @@ void cmdPWMPins() {
   
   for(int i = 0; i < count; i++) {
     long c = channelValues[i];
+    
 #ifdef INVERT_HIGH_AND_LOW
+
+
     c = MAX_PWM - c;
 #endif
     //analogWrite(PWMPins[i], c);
     pwmWriteHR(PWMPins[i], c);
+    
   }
   
   printAck("OK set ");

@@ -1,0 +1,143 @@
+Cmp-Mod V01 Created by CvPcb (2013-jul-07)-stable date = Tue 18 Jul 2017 07:10:15 PM PDT
+
+BeginCmp
+TimeStamp = /596E6432;
+Reference = C1;
+ValeurCmp = ECA;
+IdModule  = CAPPR500-800X1150;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E644B;
+Reference = C2;
+ValeurCmp = ECA;
+IdModule  = CAPPR500-800X1150;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E645A;
+Reference = C3;
+ValeurCmp = ECA;
+IdModule  = CAPPR500-800X1150;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E53C5;
+Reference = IC1;
+ValeurCmp = MOC3010M;
+IdModule  = OPTORESISTOR_NSL-32;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E53D4;
+Reference = IC2;
+ValeurCmp = MOC3010M;
+IdModule  = OPTORESISTOR_NSL-32;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E53E3;
+Reference = IC3;
+ValeurCmp = MOC3010M;
+IdModule  = OPTORESISTOR_NSL-32;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E55C1;
+Reference = K1;
+ValeurCmp = CONN_3;
+IdModule  = 3PIN_6mm;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E5404;
+Reference = P1;
+ValeurCmp = PWM;
+IdModule  = PIN_ARRAY_4x1;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E55DF;
+Reference = P2;
+ValeurCmp = CONN_2;
+IdModule  = 3PIN_6mm;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E55D0;
+Reference = P3;
+ValeurCmp = CONN_2;
+IdModule  = 3PIN_6mm;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E55EE;
+Reference = P4;
+ValeurCmp = CONN_2;
+IdModule  = 3PIN_6mm;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E558A;
+Reference = Q1;
+ValeurCmp = MOSFET_N;
+IdModule  = TO220;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E55A3;
+Reference = Q2;
+ValeurCmp = MOSFET_N;
+IdModule  = TO220;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E55B2;
+Reference = Q3;
+ValeurCmp = MOSFET_N;
+IdModule  = TO220;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E543C;
+Reference = R1;
+ValeurCmp = R500;
+IdModule  = R4;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E544B;
+Reference = R2;
+ValeurCmp = R500;
+IdModule  = R4;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E545A;
+Reference = R3;
+ValeurCmp = R500;
+IdModule  = R4;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E5521;
+Reference = R4;
+ValeurCmp = R33;
+IdModule  = R4;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E5530;
+Reference = R5;
+ValeurCmp = R33;
+IdModule  = R4;
+EndCmp
+
+BeginCmp
+TimeStamp = /596E553F;
+Reference = R6;
+ValeurCmp = R33;
+IdModule  = R4;
+EndCmp
+
+EndListe

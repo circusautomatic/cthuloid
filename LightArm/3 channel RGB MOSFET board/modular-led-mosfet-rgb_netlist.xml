@@ -1,0 +1,316 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Fritzing (http://www.fritzing.org/) -->
+<netlist sketch="modular-led-mosfet-rgb.fzz" date="Tue Jul 18 11:14:54 2017">
+ <net>
+  <connector id="connector0" name="pin1">
+   <part title="Camdenboss CTB0158-3" label="RedFET" id="854127810"/>
+  </connector>
+  <connector id="connector0" name="pin1">
+   <part title="Camdenboss CTB0158-3" label="RedFET" id="854127811"/>
+  </connector>
+  <connector id="connector0" name="Pin 0">
+   <part title="33Ω Resistor" label="R4" id="854136370"/>
+  </connector>
+  <connector id="connector0" name="Pin 0">
+   <part title="33 Ω Resistor" label="R4" id="854136371"/>
+  </connector>
+  <connector id="connector3" name="Pin 4">
+   <part title="Sharp PC817" label="U1" id="854118910"/>
+  </connector>
+  <connector id="connector3" name="Pin 4">
+   <part title="Sharp PC817" label="U1" id="854118911"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector2" name="pin3">
+   <part title="Camdenboss CTB0158-3" label="GreenFet" id="854129910"/>
+  </connector>
+  <connector id="connector2" name="pin3">
+   <part title="Camdenboss CTB0158-3" label="GreenFet" id="854129911"/>
+  </connector>
+  <connector id="connector5" name="Pin 3">
+   <part title="Sharp PC817" label="U2" id="854118940"/>
+  </connector>
+  <connector id="connector5" name="Pin 3">
+   <part title="Sharp PC817" label="U2" id="854118941"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector0" name="pin1">
+   <part title="Camdenboss CTB0158-3" label="GreenFet" id="854129910"/>
+  </connector>
+  <connector id="connector0" name="pin1">
+   <part title="Camdenboss CTB0158-3" label="GreenFet" id="854129911"/>
+  </connector>
+  <connector id="connector0" name="Pin 0">
+   <part title="33Ω Resistor" label="R5" id="854136740"/>
+  </connector>
+  <connector id="connector0" name="Pin 0">
+   <part title="33 Ω Resistor" label="R5" id="854136741"/>
+  </connector>
+  <connector id="connector3" name="Pin 4">
+   <part title="Sharp PC817" label="U2" id="854118940"/>
+  </connector>
+  <connector id="connector3" name="Pin 4">
+   <part title="Sharp PC817" label="U2" id="854118941"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector0" name="pin1">
+   <part title="Camdenboss CTB0158-2" label="BlueOut" id="854127340"/>
+  </connector>
+  <connector id="connector0" name="pin1">
+   <part title="Camdenboss CTB0158-2" label="BlueOut" id="854127341"/>
+  </connector>
+  <connector id="connector1" name="Pin 1">
+   <part title="33Ω Resistor" label="R6" id="854137150"/>
+  </connector>
+  <connector id="connector1" name="Pin 1">
+   <part title="33 Ω Resistor" label="R6" id="854137151"/>
+  </connector>
+  <connector id="connector1" name="Pin 1">
+   <part title="33 Ω Resistor" label="R5" id="854136741"/>
+  </connector>
+  <connector id="connector1" name="Pin 1">
+   <part title="33Ω Resistor" label="R5" id="854136740"/>
+  </connector>
+  <connector id="connector1" name="pin2">
+   <part title="Camdenboss CTB0158-3" label="HighPower" id="854126791"/>
+  </connector>
+  <connector id="connector1" name="pin2">
+   <part title="Camdenboss CTB0158-3" label="HighPower" id="854126790"/>
+  </connector>
+  <connector id="connector0" name="pin1">
+   <part title="Camdenboss CTB0158-2" label="GreenOut" id="854126921"/>
+  </connector>
+  <connector id="connector0" name="pin1">
+   <part title="Camdenboss CTB0158-2" label="GreenOut" id="854126920"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector0" name="pin1">
+   <part title="Camdenboss CTB0158-3" label="BlueFet" id="854131480"/>
+  </connector>
+  <connector id="connector0" name="pin1">
+   <part title="Camdenboss CTB0158-3" label="BlueFet" id="854131481"/>
+  </connector>
+  <connector id="connector0" name="Pin 0">
+   <part title="33Ω Resistor" label="R6" id="854137150"/>
+  </connector>
+  <connector id="connector0" name="Pin 0">
+   <part title="33 Ω Resistor" label="R6" id="854137151"/>
+  </connector>
+  <connector id="connector3" name="Pin 4">
+   <part title="Sharp PC817" label="U3" id="854118970"/>
+  </connector>
+  <connector id="connector3" name="Pin 4">
+   <part title="Sharp PC817" label="U3" id="854118971"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector1" name="Pin 1">
+   <part title="500Ω Resistor" label="R2" id="854123820"/>
+  </connector>
+  <connector id="connector1" name="Pin 1">
+   <part title="500 Ω Resistor" label="R2" id="854123821"/>
+  </connector>
+  <connector id="connector0" name="Pin 1">
+   <part title="Sharp PC817" label="U2" id="854118940"/>
+  </connector>
+  <connector id="connector0" name="Pin 1">
+   <part title="Sharp PC817" label="U2" id="854118941"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector0" name="Pin 1">
+   <part title="Sharp PC817" label="U3" id="854118970"/>
+  </connector>
+  <connector id="connector0" name="Pin 1">
+   <part title="Sharp PC817" label="U3" id="854118971"/>
+  </connector>
+  <connector id="connector1" name="Pin 1">
+   <part title="500Ω Resistor" label="R3" id="854123850"/>
+  </connector>
+  <connector id="connector1" name="Pin 1">
+   <part title="500 Ω Resistor" label="R3" id="854123851"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector1" name="pin2">
+   <part title="Camdenboss CTB0158-3" label="RedFET" id="854127810"/>
+  </connector>
+  <connector id="connector1" name="pin2">
+   <part title="Camdenboss CTB0158-3" label="RedFET" id="854127811"/>
+  </connector>
+  <connector id="connector1" name="pin2">
+   <part title="Camdenboss CTB0158-2" label="RedOut" id="854127500"/>
+  </connector>
+  <connector id="connector1" name="pin2">
+   <part title="Camdenboss CTB0158-2" label="RedOut" id="854127501"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector1" name="pin2">
+   <part title="Camdenboss CTB0158-2" label="BlueOut" id="854127340"/>
+  </connector>
+  <connector id="connector1" name="pin2">
+   <part title="Camdenboss CTB0158-2" label="BlueOut" id="854127341"/>
+  </connector>
+  <connector id="connector1" name="pin2">
+   <part title="Camdenboss CTB0158-3" label="BlueFet" id="854131480"/>
+  </connector>
+  <connector id="connector1" name="pin2">
+   <part title="Camdenboss CTB0158-3" label="BlueFet" id="854131481"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector1" name="pin2">
+   <part title="Camdenboss CTB0158-2" label="GreenOut" id="854126920"/>
+  </connector>
+  <connector id="connector1" name="pin2">
+   <part title="Camdenboss CTB0158-2" label="GreenOut" id="854126921"/>
+  </connector>
+  <connector id="connector1" name="pin2">
+   <part title="Camdenboss CTB0158-3" label="GreenFet" id="854129910"/>
+  </connector>
+  <connector id="connector1" name="pin2">
+   <part title="Camdenboss CTB0158-3" label="GreenFet" id="854129911"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector0" name="Pin 1">
+   <part title="Sharp PC817" label="U1" id="854118910"/>
+  </connector>
+  <connector id="connector0" name="Pin 1">
+   <part title="Sharp PC817" label="U1" id="854118911"/>
+  </connector>
+  <connector id="connector1" name="Pin 1">
+   <part title="500Ω Resistor" label="R1" id="854123790"/>
+  </connector>
+  <connector id="connector1" name="Pin 1">
+   <part title="500 Ω Resistor" label="R1" id="854123791"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector0" name="Pin 0">
+   <part title="500 Ω Resistor" label="R2" id="854123821"/>
+  </connector>
+  <connector id="connector0" name="Pin 0">
+   <part title="500Ω Resistor" label="R2" id="854123820"/>
+  </connector>
+  <connector id="connector2" name="pin3">
+   <part title="Camdenboss CTB0158-4" label="PWM" id="854125640"/>
+  </connector>
+  <connector id="connector2" name="pin3">
+   <part title="Camdenboss CTB0158-4" label="PWM" id="854125641"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector3" name="pin4">
+   <part title="Camdenboss CTB0158-4" label="PWM" id="854125640"/>
+  </connector>
+  <connector id="connector3" name="pin4">
+   <part title="Camdenboss CTB0158-4" label="PWM" id="854125641"/>
+  </connector>
+  <connector id="connector0" name="Pin 0">
+   <part title="500Ω Resistor" label="R1" id="854123790"/>
+  </connector>
+  <connector id="connector0" name="Pin 0">
+   <part title="500 Ω Resistor" label="R1" id="854123791"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector1" name="pin2">
+   <part title="Camdenboss CTB0158-4" label="PWM" id="854125640"/>
+  </connector>
+  <connector id="connector1" name="pin2">
+   <part title="Camdenboss CTB0158-4" label="PWM" id="854125641"/>
+  </connector>
+  <connector id="connector0" name="Pin 0">
+   <part title="500Ω Resistor" label="R3" id="854123850"/>
+  </connector>
+  <connector id="connector0" name="Pin 0">
+   <part title="500 Ω Resistor" label="R3" id="854123851"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector1" name="Pin 1">
+   <part title="33Ω Resistor" label="R4" id="854136370"/>
+  </connector>
+  <connector id="connector1" name="Pin 1">
+   <part title="33 Ω Resistor" label="R4" id="854136371"/>
+  </connector>
+  <connector id="connector0" name="pin1">
+   <part title="Camdenboss CTB0158-3" label="HighPower" id="854126791"/>
+  </connector>
+  <connector id="connector0" name="pin1">
+   <part title="Camdenboss CTB0158-3" label="HighPower" id="854126790"/>
+  </connector>
+  <connector id="connector0" name="pin1">
+   <part title="Camdenboss CTB0158-2" label="RedOut" id="854127501"/>
+  </connector>
+  <connector id="connector0" name="pin1">
+   <part title="Camdenboss CTB0158-2" label="RedOut" id="854127500"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector2" name="pin3">
+   <part title="Camdenboss CTB0158-3" label="BlueFet" id="854131480"/>
+  </connector>
+  <connector id="connector2" name="pin3">
+   <part title="Camdenboss CTB0158-3" label="BlueFet" id="854131481"/>
+  </connector>
+  <connector id="connector5" name="Pin 3">
+   <part title="Sharp PC817" label="U3" id="854118971"/>
+  </connector>
+  <connector id="connector5" name="Pin 3">
+   <part title="Sharp PC817" label="U3" id="854118970"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector2" name="pin3">
+   <part title="Camdenboss CTB0158-3" label="RedFET" id="854127810"/>
+  </connector>
+  <connector id="connector2" name="pin3">
+   <part title="Camdenboss CTB0158-3" label="RedFET" id="854127811"/>
+  </connector>
+  <connector id="connector5" name="Pin 3">
+   <part title="Sharp PC817" label="U1" id="854118911"/>
+  </connector>
+  <connector id="connector5" name="Pin 3">
+   <part title="Sharp PC817" label="U1" id="854118910"/>
+  </connector>
+  <connector id="connector2" name="pin3">
+   <part title="Camdenboss CTB0158-3" label="HighPower" id="854126791"/>
+  </connector>
+  <connector id="connector2" name="pin3">
+   <part title="Camdenboss CTB0158-3" label="HighPower" id="854126790"/>
+  </connector>
+ </net>
+ <net>
+  <connector id="connector0" name="pin1">
+   <part title="Camdenboss CTB0158-4" label="PWM" id="854125640"/>
+  </connector>
+  <connector id="connector0" name="pin1">
+   <part title="Camdenboss CTB0158-4" label="PWM" id="854125641"/>
+  </connector>
+  <connector id="connector1" name="Pin 2">
+   <part title="Sharp PC817" label="U3" id="854118971"/>
+  </connector>
+  <connector id="connector1" name="Pin 2">
+   <part title="Sharp PC817" label="U3" id="854118970"/>
+  </connector>
+  <connector id="connector1" name="Pin 2">
+   <part title="Sharp PC817" label="U2" id="854118941"/>
+  </connector>
+  <connector id="connector1" name="Pin 2">
+   <part title="Sharp PC817" label="U2" id="854118940"/>
+  </connector>
+  <connector id="connector1" name="Pin 2">
+   <part title="Sharp PC817" label="U1" id="854118911"/>
+  </connector>
+  <connector id="connector1" name="Pin 2">
+   <part title="Sharp PC817" label="U1" id="854118910"/>
+  </connector>
+ </net>
+</netlist>
