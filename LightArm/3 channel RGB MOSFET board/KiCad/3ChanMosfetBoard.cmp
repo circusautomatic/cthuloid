@@ -1,4 +1,4 @@
-Cmp-Mod V01 Created by CvPcb (2013-jul-07)-stable date = Wed 09 Aug 2017 03:22:57 PM PDT
+Cmp-Mod V01 Created by CvPcb (2013-jul-07)-stable date = Fri 18 Aug 2017 03:51:21 PM PDT
 
 BeginCmp
 TimeStamp = /596E6432;
@@ -22,24 +22,24 @@ IdModule  = CAPPR750-1800X4000;
 EndCmp
 
 BeginCmp
-TimeStamp = /59724009;
+TimeStamp = /59976F4D;
 Reference = IC1;
-ValeurCmp = MOC3010M;
-IdModule  = OPTORESISTOR_NSL-32;
+ValeurCmp = CPMOC;
+IdModule  = CPDIP4;
 EndCmp
 
 BeginCmp
-TimeStamp = /59724018;
+TimeStamp = /59976F5C;
 Reference = IC2;
-ValeurCmp = MOC3010M;
-IdModule  = OPTORESISTOR_NSL-32;
+ValeurCmp = CPMOC;
+IdModule  = CPDIP4;
 EndCmp
 
 BeginCmp
-TimeStamp = /59724027;
+TimeStamp = /59976F6B;
 Reference = IC3;
-ValeurCmp = MOC3010M;
-IdModule  = OPTORESISTOR_NSL-32;
+ValeurCmp = CPMOC;
+IdModule  = CPDIP4;
 EndCmp
 
 BeginCmp

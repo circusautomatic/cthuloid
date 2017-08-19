@@ -1,11 +1,17 @@
-EESchema-DOCLIB  Version 2.0  Date: Fri 28 Jul 2017 11:03:50 AM PDT
+EESchema-DOCLIB  Version 2.0  Date: Fri 18 Aug 2017 03:49:32 PM PDT
 #
 $CMP C_MOS
 F transistors/mos/*.*
 $ENDCMP
 #
-$CMP C_mosf
+$CMP C_MOSF
 F transistors/mos/*.*
+$ENDCMP
+#
+$CMP CPMOC
+D cp, DIP6, Random Phase Opto-Triac, Vdrm 250V, Ift 15mA
+K Opto-Triac Opto Triac Random Phase
+F http://www.fairchildsemi.com/ds/MO/MOC3020M.pdf
 $ENDCMP
 #
 $CMP MOC3010M

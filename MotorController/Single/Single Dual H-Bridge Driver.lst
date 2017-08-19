@@ -1,0 +1,38 @@
+eeschema (2013-jul-07)-stable  >> Creation date: Fri 28 Jul 2017 12:26:14 PM PDT
+#Cmp ( order = Reference )
+| C1         C           
+| H1         HIP4080A    
+| J1         RJ45        
+| K1         CONN_3      
+| K2         XLR3        
+| M1         MOTOR       
+| Q1         C_MOSF      
+| Q2         C_MOSF      
+| Q3         C_MOSF      
+| Q4         C_MOSF      
+| R1         20K         
+| R2         20K         
+| R3         R           
+| R4         R           
+| R5         R           
+#End Cmp
+
+#Cmp ( order = Value )
+| C            C1        
+| HIP4080A     H1        
+| RJ45         J1        
+| CONN_3       K1        
+| XLR3         K2        
+| MOTOR        M1        
+| C_MOSF       Q1        
+| C_MOSF       Q2        
+| C_MOSF       Q3        
+| C_MOSF       Q4        
+| 20K          R1        
+| 20K          R2        
+| R            R3        
+| R            R4        
+| R            R5        
+#End Cmp
+
+#End List
