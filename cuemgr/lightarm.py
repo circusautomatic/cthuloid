@@ -7,7 +7,7 @@ A spotlight robot:
 - speaks a human-readable protocol.
 
 """
-raise BaseError('Not using Lightarms at the moment')
+#raise BaseError('Not using Lightarms at the moment')
 import socket, os, errno, select, threading, time, random, signal, sys, struct
 
 #######################################################################
@@ -144,6 +144,14 @@ class NetworkArm:
   """
   
   NumServos = 2
+  NumLEDs = 3
+
+  # this class doesn't limit the LED values
+  MinLEDValue = 0
+  MaxLEDValue = 999
+
+  def fitServoRange(v): return max(212, min(812, v))
+  def fitLEDRange(v): return max(0, min(NetworkArm.MaxLEDValue, v))
   
   def __init__(self, id=None, addr=None, port=1337, inverted=None):
     '''
@@ -154,7 +162,7 @@ class NetworkArm:
     
     '''
     self.address = addr
-    if self.address == None: self.address = '10.0.2.' + str(id)
+    if self.address == None: self.address = '10.0.0.' + str(id)
     self.port = port
     self.socket = None
 
@@ -163,9 +171,7 @@ class NetworkArm:
     self.relaxed = False
 
     # LEDs
-    self.MinValue = 0
-    self.MaxValue = 999
-    self.intensity = self.MaxValue
+    self.intensities = [int(self.MaxLEDValue/2)] * self.NumLEDs
 
     self.createSocket()
     #for i in range(1, self.NumServos+1):
@@ -183,18 +189,23 @@ class NetworkArm:
   def exit(self): 
     self.socket.close()
 
-  def getLED(self): return self.intensity
+  def getLED(self, channel): return self.intensities[channel]
 
   # input range is 0-999
   # output range is 0-65535
   def toHighFreq(self, pwm):
-    return int(10535 + pwm / 999 * 55000)
+    #return int(10535 + pwm / 999 * 55000)
+    return int(pwm / 999 * 65535)
 
   # argument is PWM value 0-999
-  def setLED(self, intensity):
-    self.intensity = intensity
-    pwm = str(self.toHighFreq(intensity))
-    cmd = 'pwm ' + pwm
+  def setLED(self, channel, intensity):
+    self.intensities[channel] = intensity
+    self.sendPWM()
+
+  def sendPWM(self):
+    cmd = 'pwm '
+    for i in self.intensities:
+      cmd += str(self.toHighFreq(i)) + ' '
     self.send(cmd)
 
   def relax(self):
@@ -310,15 +321,19 @@ class LightArms:
   
   """
 
+  NumLEDs = NetworkArm.NumLEDs
+  def fitServoRange(self, x): return NetworkArm.fitServoRange(x)
+  def fitLEDRange(self, x): return NetworkArm.fitLEDRange(x)
+
   def __init__(self):
     # 
     self.arms = [
       #NetworkArm(8)#, inverted=[True, False]),  # stage right side
-      NetworkArm(3, inverted=[True, False]), # stage right front
-      NetworkArm(6),                         # stage right back
-      NetworkArm(2),                         # stage left back
-      NetworkArm(4, inverted=[False, True]), # stage left front
-      NetworkArm(5, inverted=[True, False]), # stage left side
+      NetworkArm(84, inverted=[True, False]), # stage right front
+#      NetworkArm(85),                         # stage right back
+#      NetworkArm(2),                         # stage left back
+#      NetworkArm(4, inverted=[False, True]), # stage left front
+#      NetworkArm(5, inverted=[True, False]), # stage left side
       #NetworkArm(10),                        # aerial overhead
     ]
     #for i in range(5): self.arms.append(NetworkArm(addr='localhost', port=3001+i))
@@ -343,12 +358,12 @@ class LightArms:
         if socketOrIP == arm.socket: return arm
     return None
 
-  def getLED(self, index):
+  def getLED(self, index, channel):
     route = self.arms[index]
-    return route.getLED()
-  def setLED(self, index, value):
+    return route.getLED(channel)
+  def setLED(self, index, channel, value):
     route = self.arms[index]
-    route.setLED(value)
+    route.setLED(channel, value)
 
   def getAngle(self, index, dim):
     arm = self.arms[index]
@@ -382,7 +397,9 @@ class LightArms:
   def __str__(self):
     d = {}
     for arm in self.arms:
-      led = arm.getLED()
+      led = []
+      for channel in range(arm.NumLEDs):
+        led.append(arm.getLED(channel))
       angles = []
       for i in range(NetworkArm.NumServos):
         angles.append(arm.getAngle(i))

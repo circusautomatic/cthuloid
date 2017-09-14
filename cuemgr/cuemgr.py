@@ -22,13 +22,12 @@ from cueengine import CueEngine
 from trackspot import TrackSpot
 
 CuesFilename = 'cuesheet.txt'   #initial cuesheet automatically loaded
-#MaxPWM = 999
 
 CueMgr = CueEngine()
 
 # these functions define the min and max values for robot spotlight parameters
-def fitServoRange(v): return max(212, min(812, v))
-def fitLEDRange(v): return max(0, min(MaxPWM, v))
+#def fitServoRange(v): return max(212, min(812, v))
+#def fitLEDRange(v): return max(0, min(MaxPWM, v))
 
 def restAfterWord(word, line):
   return line[line.find(word) + len(word):].strip()
@@ -59,7 +58,7 @@ class LightArmView(View):
   def __init__(self):
     super().__init__()
 
-    self.PageWidth = 4#Arms.num()
+    self.PageWidth = 1#Arms.num()
     self.ixCursor = 0
     self.mode = 1   # index into self.Modes
 
@@ -114,14 +113,14 @@ class LightArmView(View):
   def modAngle(self, type, inc):
     dim = self.ServoDims[type]
     for id in self.selected():
-      angle = fitServoRange(Arms.getAngle(id, dim)) 
+      angle = Arms.fitServoRange(Arms.getAngle(id, dim)) 
       Arms.setAngle(id, dim, angle + inc)
 
   # add increment to the intensity of the currently selected arm(s)
-  def modI(self, inc):
+  def modI(self, inc, channel):
     print('ids:', self.selected())
     for id in self.selected():
-      Arms.setLED(id, fitLEDRange(Arms.getLED(id) + inc))
+      Arms.setLED(id, channel, Arms.fitLEDRange(Arms.getLED(id, channel) + inc))
 
   def handleLineInput(self, line):
     tokens = line.split()
@@ -132,7 +131,7 @@ class LightArmView(View):
     ch = ch.lower()
     if ch == 'x':
       self.toggleMode() 
-    if ch == 'r': 
+    if ch == 'q': 
       Arms.relax(self.selected())
     if ch == '0':
       pass #Arms.setAngles(self.selected(), [Arms.ServoCenter] * len(self.ServoDims))
@@ -144,10 +143,18 @@ class LightArmView(View):
       self.modAngle('x', self.inc())
     elif ch == 'd':
       self.modAngle('x', -self.inc())
-    elif ch == 'q':
-      self.modI(self.inc())
-    elif ch == 'e':
-      self.modI(-self.inc())
+    elif ch == 'r':
+      self.modI(self.inc(), 0)
+    elif ch == 'f':
+      self.modI(-self.inc(), 0)
+    elif ch == 't':
+      self.modI(self.inc(), 1)
+    elif ch == 'g':
+      self.modI(-self.inc(), 1)
+    elif ch == 'y':
+      self.modI(self.inc(), 2)
+    elif ch == 'h':
+      self.modI(-self.inc(), 2)
 
     elif ch == '<' or ch == ',':
       self.inc.prev()
@@ -212,12 +219,13 @@ class LightArmView(View):
 
     printHSep()
 
-    print('i: |', end='')
-    for i in range(numArms):
-      print('{0:^3}|'.format(Arms.getLED(i)), end='')
-    print('')
-
-    printHSep(False)
+    names = 'RGB'
+    for channel in range(Arms.NumLEDs):
+      print(names[channel] + ': |', end='')
+      for i in range(numArms):
+        print('{0:^3}|'.format(Arms.getLED(i, channel)), end='')
+      print('')
+      printHSep(channel+1 != Arms.NumLEDs)
 
 
 class SliderView(View):
@@ -533,9 +541,9 @@ def programExit():
 
 if __name__ == '__main__':
   if len(sys.argv) > 1 and sys.argv[1] == 'prinboo':
-    views = [CueView(), PrinbooView()]
+    views = [CueView(), LightArms()]
   else: #default is dmx mode
-    views = [CueView()]
+    views = [CueView(), LightArmView()]
     if DMX: views.append(SliderView())
   currentView = views[0]
 
