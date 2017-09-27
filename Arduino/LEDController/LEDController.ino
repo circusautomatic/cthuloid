@@ -3,10 +3,13 @@
 // - pwm <pwm1> <pwm2> ..., where <pwmN> is 0-65535 and N is up to NumChannels
 // - pwm <index1>:<pwm1> <index2>:<pwm2> ..., where <indexN> is 1-based index into the PWMPins list
 // - plevel <level>, change the amount of response text
+// 
+// NOTE: initHRPWM and myHRWrite are set specifically to work on MEGAS. It could be tuned to work on
+// unos.
 //////////////////////////////////////////////////////////////////////////////////////
 
 #include <SC.h>
-#include <PWM.h>
+//#include <PWM.h>
 
 // Comment this out to read and write from Serial instead of Ethernet.
 // Arduino IDE is wigging out when selecting which ethernet library to use; see line 35.
@@ -17,16 +20,17 @@
 // PWM globals
 /////////////////////////////////////////////////////////////////////////////////////
 
-// this flag will invert PWM output (255-output), for active-low devices
+// this flag will invert PWM output (65535 - PWM), for active-low devices
 #define INVERT_HIGH_AND_LOW
 
+#define RED_MAX_PWM 55535
 #define MAX_PWM 65535
-#define PWM_FREQ 1000
+//#define PWM_FREQ 1000
 
-const int PWMPins[] = {12};
-//const int PWMPins[] = {3, 5, 6, 13, 10 11, 12};
+// change initHRPWM and myHRWrite if you change these pins
+// The first pin is assumed to be red, second assume to be green, etc.
+const int PWMPins[] = {7, 8, 44, 45};
 const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
-const int fanPin = 6;
 
 // Ethernet via ENC28J60 
 // Library: https://github.com/ntruchsess/arduino_uip
@@ -58,7 +62,7 @@ const int fanPin = 6;
   //For Arduino Nano + nano ethernet shield
   //#include <UIPEthernet.h>
   const uint16_t PORT = 1337;
-  const uint8_t ID_IP = 250;
+  const uint8_t ID_IP = 84;
   static uint8_t MAC[6] = {0x00,0x01,0x02,0x03,0xff,ID_IP};
 
   IPAddress IP(10,0,0,ID_IP);
@@ -84,7 +88,6 @@ const char *MsgPWMTupleFormatError = "Error: takes up to 6 arguments between 0 a
 struct IDTuple { int id; long value; };
 
 int parseID(const char *arg);
-boolean parsePWMTuple(char *s, IDTuple *out);
 int parseListOfIDs(int *outIDs, int maxIDs);
 
 void cmdUnrecognized(const char *cmd);
@@ -104,7 +107,39 @@ SerialCommand CmdMgr(CommandsList, cmdUnrecognized);
 // helpers
 /////////////////////////////////////////////////////////////////////////////////////////////
 
+unsigned long invertPWM(unsigned long c) {
+  #ifdef INVERT_HIGH_AND_LOW
+    c = 65535 - c;
+  #endif
+  return c;
+}
 
+void initHRPWM() {
+  // setting MEGA pins 7-8 with timer 4
+  TCCR4A = B00101001; // Phase and frequency correct PWM change at OCRA
+  TCCR4B = B10001;  // System clock
+  OCR4A = 0xffff;   // max pwm value
+
+  // setting MEGA pins 44-45 with timer 5
+  TCCR5A = B00101001; // Phase and frequency correct PWM change at OCRA
+  TCCR5B = B10001;  // System clock
+  OCR5A = 0xffff;   // max pwm value
+}
+
+void myHRWrite(int pin, unsigned value) {
+    /*printAlways("setting pin to value: ");
+    printAlways(pin);
+    printAlways(" ");
+    printlnAlways(value);*/
+    
+    switch(pin) {
+      case 7: OCR4B = value;  break;   // MEGA pin 7
+      case 8: OCR4C = value;  break;   // MEGA pin 8
+      case 44: OCR5C = value; break;   // MEGA pin 44
+      case 45: OCR5B = value; break;   // MEGA pin 45
+      default: printlnError("invalid pin");
+    }
+}
 
 // Takes a string of an integer (numeric chars only). Returns the integer on success.
 // Prints error and returns 0 if there is a parse error or the ID is out of range.
@@ -122,45 +157,18 @@ int parseID(const char *arg) {
 
 // Takes a string of an integer (numeric chars only). Returns the integer on success.
 // Prints error and returns -1 if there is a parse error or the PWM value is out of range.
-long parsePWM(const char *arg) {
+long parsePWM(const char *arg, long maxPWM) {
   char *end;
   long v = strtol(arg, &end, 10);
 
-  if(*end != '\0' || v < 0 || v > MAX_PWM) {
+  if(*end != '\0' || v < 0 || v > maxPWM) {
       printlnError("Error: PWM value must be between 0 and ");
-      printlnError(MAX_PWM);
+      printlnError(maxPWM);
       return -1;
   }
   
   return v;
 }
-
-// convert "<index>:<value>" into 2 integers in a struct
-// returns false on error
-boolean parsePWMTuple(char *s, IDTuple *out) {
-  char *sIndex = strtok(s, ":");
-  if(sIndex == NULL) {
-    printlnError(MsgPWMTupleFormatError);
-    return false;
-  }
-  
-  int index = parseID(sIndex);
-  if(index == 0) return false;
-
-  char *sPWM = strtok(NULL, ":");
-  if(sPWM == NULL) {
-    printlnError(MsgPWMTupleFormatError);
-    return false; 
-  }
-  
-  long pwm = parsePWM(sPWM);
-  if(pwm == -1) return false;
-  
-  out->id = index;
-  out->value = (int)pwm;
-  return true;
-}
-
 
 void cmdUnrecognized(const char *cmd) {
   printlnError("unrecognized command");
@@ -168,7 +176,7 @@ void cmdUnrecognized(const char *cmd) {
 
 // expects space-delimited ints 0-65535, or space delimited <index>:<pwm> pairs
 void cmdPWMPins() {
-  const char *SetPWMUsageMsg = "Error: takes up to 6 arguments between 0 and 65535, or <index>:<value> pairs where <index> starts at 1.";
+  const char *SetPWMUsageMsg = "Error: takes up to 4 arguments between 0 and 65535 (except argument 3's max is 45000).";
 
   long channelValues[NumPWMPins];
   int count = 0;
@@ -179,9 +187,6 @@ void cmdPWMPins() {
    return;
   }
   
-  // see if we have a <index>:<value> tuple, or just an integer
-  boolean parsingTuples = strstr(arg, ":") != NULL;
-  
   do {
     int index;
     long value;
@@ -191,29 +196,12 @@ void cmdPWMPins() {
       return;
     }
 
-    // <index>:<PWM value>
-    if(parsingTuples) {
-      IDTuple tuple;
-      if(parsePWMTuple(arg, &tuple) == false) return;
-      index = tuple.id - 1;   // convert to zero-based index
-      value = tuple.value;
-      
-      if(index < 0 || index >= NumPWMPins) {
-        printError("Index must be between 1 and ");
-        printlnError(NumPWMPins);
-        return;
-      }
-    }
-    
-    // just a PWM value
-    else {
-      char *end;
-      index = count;
-      value = parsePWM(arg);
-      if (value < 0) {
-        printlnError(SetPWMUsageMsg);
-        return;
-      }
+    char *end;
+    index = count;
+    value = parsePWM(arg, count == 0? RED_MAX_PWM: MAX_PWM);
+    if (value < 0) {
+      printlnError(SetPWMUsageMsg);
+      return;
     }
     
     printInfo("Set pin ");
@@ -225,16 +213,10 @@ void cmdPWMPins() {
   } while(arg = CmdMgr.next());
   
   for(int i = 0; i < count; i++) {
-    long c = channelValues[i];
-    
-#ifdef INVERT_HIGH_AND_LOW
-
-
-    c = MAX_PWM - c;
-#endif
-    //analogWrite(PWMPins[i], c);
-    pwmWriteHR(PWMPins[i], c);
-    
+    unsigned long c = channelValues[i];
+    //analogWrite(PWMPins[i], invertPWM(c));
+    printlnAlways(c);
+    myHRWrite(PWMPins[i], invertPWM(c));
   }
   
   printAck("OK set ");
@@ -280,17 +262,24 @@ void setup() {
   // Initialize the high resolution PWM library.
   // Frequency: 10000 Hz
   // Run PWM.h example sketch to see all possible PWM settings for a given pin
-  InitTimersSafe(); //initialize all timers except for 0, to save time keeping functions
+//  InitTimersSafe(); //initialize all timers except for 0, to save time keeping functions
   
   for(int i = 0; i < NumPWMPins; i++) {
-    //pinMode(PWMPins[i], OUTPUT);
-    //analogWrite(PWMPins[i], 0);
-    Serial.print("setting PWM pin ");
-    Serial.print(PWMPins[i]);
-    Serial.print(" frequeny: ");
-    Serial.println(SetPinFrequency(PWMPins[i], PWM_FREQ));
+    pinMode(PWMPins[i], OUTPUT);
+    analogWrite(PWMPins[i], 0);
+    //Serial.print("setting PWM pin ");
+    //Serial.print(PWMPins[i]);
+    //Serial.print(" frequeny: ");
+    //Serial.println(SetPinFrequency(PWMPins[i], PWM_FREQ));
   }
 
+  initHRPWM();
+
+  /*    OCR4B = 65535;    // MEGA pin 7
+      OCR4C = 65535;    // MEGA pin 8
+      OCR5C = 45000;    // MEGA pin 44
+      OCR5B = 45000;    // MEGA pin 44
+*/
   /*printAlways("PWM controller. PWM pins are expected to be ");
   
   for(int i = 0; i < NumPWMPins; i++) {
