@@ -178,7 +178,7 @@ void cmdUnrecognized(const char *cmd) {
 void cmdPWMPins() {
   const char *SetPWMUsageMsg = "Error: takes up to 4 arguments between 0 and 65535 (except argument 3's max is 36000).";
 
-  long channelValues[NumPWMPins];
+  long channelValues[NumPWMPins] = {0};
   int count = 0;
 
   char *arg = CmdMgr.next();
@@ -212,12 +212,14 @@ void cmdPWMPins() {
     count++;
   } while(arg = CmdMgr.next());
   
-  for(int i = 0; i < count; i++) {
+  /*for(int i = 0; i < count; i++) {
     unsigned long c = channelValues[i];
     //analogWrite(PWMPins[i], invertPWM(c));
     printlnAlways(c);
     myHRWrite(PWMPins[i], invertPWM(c));
-  }
+  }*/
+
+  setRGB(PWMPins[0], PWMPins[1], PWMPins[2]);
   
   printAck("OK set ");
   printAck(count);
