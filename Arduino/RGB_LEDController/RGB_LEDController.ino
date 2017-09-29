@@ -9,6 +9,8 @@
 //////////////////////////////////////////////////////////////////////////////////////
 
 #include <SC.h>
+#include "Adafruit_TLC59711.h"
+#include <SPI.h>
 //#include <PWM.h>
 
 // Comment this out to read and write from Serial instead of Ethernet.
@@ -27,10 +29,18 @@
 #define MAX_PWM 65535
 //#define PWM_FREQ 1000
 
+// How many boards do you have chained?
+#define NUM_TLC59711 1
+
+#define data   11
+#define clock  13
+
+Adafruit_TLC59711 tlc = Adafruit_TLC59711(NUM_TLC59711, clock, data);
+
 // change initHRPWM and myHRWrite if you change these pins
 // The first pin is assumed to be red, second assume to be green, etc.
-const int PWMPins[] = {7, 8, 44, 45};
-const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
+//const int PWMPins[] = {7, 8, 44, 45};
+const int NumPWMPins = 3;//sizeof(PWMPins)/sizeof(*PWMPins);
 
 // Ethernet via ENC28J60 
 // Library: https://github.com/ntruchsess/arduino_uip
@@ -204,10 +214,10 @@ void cmdPWMPins() {
       return;
     }
     
-    printInfo("Set pin ");
+    /*printInfo("Set pin ");
     printInfo(PWMPins[index]);
     printInfo(" to ");
-    printlnInfo(value);
+    printlnInfo(value);*/
     channelValues[index] = value;
     count++;
   } while(arg = CmdMgr.next());
@@ -219,8 +229,9 @@ void cmdPWMPins() {
     myHRWrite(PWMPins[i], invertPWM(c));
   }*/
 
-  setRGB(PWMPins[0], PWMPins[1], PWMPins[2]);
-  
+  tlc.setLED(0, channelValues[0], channelValues[1], channelValues[2]);
+  tlc.write();  
+
   printAck("OK set ");
   printAck(count);
   printlnAck(" pins");
@@ -249,6 +260,7 @@ void cmdSetPrintLevel() {
 
 void setup() {
   Serial.begin(38400);
+  Serial.println("RGB Controller");
 
 #ifdef COMM_ETHERNET
   // setup ethernet module
@@ -261,12 +273,16 @@ void setup() {
   Serial.println(Ethernet.localIP());
 #endif
 
+  pinMode(10, OUTPUT);
+  tlc.begin();
+  tlc.write();
+
   // Initialize the high resolution PWM library.
   // Frequency: 10000 Hz
   // Run PWM.h example sketch to see all possible PWM settings for a given pin
 //  InitTimersSafe(); //initialize all timers except for 0, to save time keeping functions
   
-  for(int i = 0; i < NumPWMPins; i++) {
+/*  for(int i = 0; i < NumPWMPins; i++) {
     pinMode(PWMPins[i], OUTPUT);
     analogWrite(PWMPins[i], 0);
     //Serial.print("setting PWM pin ");
@@ -276,7 +292,7 @@ void setup() {
   }
 
   initHRPWM();
-
+*/
   /*    OCR4B = 65535;    // MEGA pin 7
       OCR4C = 65535;    // MEGA pin 8
       OCR5C = 45000;    // MEGA pin 44
@@ -284,7 +300,7 @@ void setup() {
 */
   /*printAlways("PWM controller. PWM pins are expected to be ");
   
-  for(int i = 0; i < NumPWMPins; i++) {
+/*  for(int i = 0; i < NumPWMPins; i++) {
     pinMode(PWMPins[i], OUTPUT);
     
     // high = off, so start high
