@@ -170,7 +170,7 @@ void cmdPWMPins() {
 
     char *end;
     index = count;
-    value = parsePWM(arg, count == 2 ? RED_MAX_PWM : MAX_PWM);
+    value = parsePWM(arg, count % 3 == 0 ? RED_MAX_PWM : MAX_PWM);
     if (value < 0) {
       printlnError(SetPWMUsageMsg);
       return;
