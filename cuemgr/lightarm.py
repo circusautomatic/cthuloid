@@ -34,7 +34,7 @@ import socket, os, errno, select, threading, time, random, signal, sys, struct
 #    # arguments are PWM values 0-255
 #    def setLED(self, channel, values):
 #      if isinstance(values, int): values = [values]
-#    
+#
 #      for v in values:
 #        self.values[channel] = v
 #        channel += 1
@@ -52,7 +52,7 @@ import socket, os, errno, select, threading, time, random, signal, sys, struct
 #        self.anglesDict[idOrDict] = angle
 #      elif isinstance(idOrDict, dict):
 #        for id,angle in idOrDict.items(): self.anglesDict[id] = angle
-#      elif isinstance(idOrDict, list): 
+#      elif isinstance(idOrDict, list):
 #        for id in idOrDict: self.anglesDict[id] = angle
 #      else: raise TypeError('bad argument to Servos.setAngle')
 #
@@ -71,7 +71,7 @@ import socket, os, errno, select, threading, time, random, signal, sys, struct
 #        # angle is set to 0 for missing IDs
 #        if binary:
 #            maxID = 0  # IDs start at 1, so numAngles = highest ID
-#            for id,angle in anglesDict.items(): 
+#            for id,angle in anglesDict.items():
 #                maxID = max(maxID, id)
 #
 #            cmd = 'B ' + str(maxID) + '\n'
@@ -82,10 +82,10 @@ import socket, os, errno, select, threading, time, random, signal, sys, struct
 #            for id in range(1, maxID+1):
 #                angle = 0
 #                if id in anglesDict: angle = anglesDict[id]
-#                
+#
 #                # 16-bit little endian
 #                buf += struct.pack('<H', angle)
-#            
+#
 #            print(buf)
 #            ucServos.write(buf)
 #
@@ -118,12 +118,12 @@ import socket, os, errno, select, threading, time, random, signal, sys, struct
 ##                elif key == 'pos': pos = int(kv[1])
 ##            self.anglesDict[id] = pos
 ##            self.numLinesToFollow -= 1
-##            
+##
 ##            # done, reset mode
 ##            if self.numLinesToFollow == 0:
 ##                print(self.anglesDict)
 ##                self.mode = None
-##                
+##
 ##        #else: print(line)
 #
 #    # takes one or a list of IDs
@@ -139,10 +139,10 @@ import socket, os, errno, select, threading, time, random, signal, sys, struct
 
 class NetworkArm:
   """Abstracts one spotlight robot over ethernet.
- 
+
   This class is collected by class LightArms and its socket is waited on by class SocketsThread.
   """
-  
+
   NumServos = 2
   NumLEDs = 3
 
@@ -152,21 +152,21 @@ class NetworkArm:
 
   def fitServoRange(v): return max(212, min(812, v))
   def fitLEDRange(v): return max(0, min(NetworkArm.MaxLEDValue, v))
-  
-  def __init__(self, id=None, addr=None, port=1337, inverted=None):
+
+  def __init__(self, id=None, addr=None, port=23, inverted=None):
     '''
     pass either id or addr
     id is the last byte of the IP address
     addr is the whole IP address as a string
     inverted is a list of NumServos booleans
-    
+
     '''
     self.address = addr
-    if self.address == None: self.address = '10.0.0.' + str(id)
+    if self.address == None: self.address = '192.168.42.' + str(id)
     self.port = port
     self.socket = None
 
-    self.inverted = inverted or [False] * self.NumServos 
+    self.inverted = inverted or [False] * self.NumServos
     self.angles = [512] * self.NumServos
     self.relaxed = False
 
@@ -185,8 +185,8 @@ class NetworkArm:
       print('error creating connection to', self.address, ':', errno.errorcode[err], os.strerror(err))
       return False
     return True
-   
-  def exit(self): 
+
+  def exit(self):
     self.socket.close()
 
   def getLED(self, channel): return self.intensities[channel]
@@ -214,7 +214,7 @@ class NetworkArm:
     self.relaxed = not self.relax
     self.send(cmd)
 
-  def invert(self, dim, angle): 
+  def invert(self, dim, angle):
     if self.inverted[dim]: return 1024 - angle
     else: return angle
 
@@ -225,7 +225,7 @@ class NetworkArm:
     #TODO: need to buffer this in case it is broken up by TCP while sending
     # then parse and update self.angles, inverting if necessary
 
-  def setAngle(self, dim, angle): 
+  def setAngle(self, dim, angle):
     self.angles[dim] = angle
     self.sendPosition()
 
@@ -248,9 +248,9 @@ class NetworkArm:
 
   # appends newline
   def send(self, string):
-    #print(string)
+    print(string, self.address)
     try:
-      self.socket.send((string + '\n').encode())
+      self.socket.send((string + '\r\n').encode())
     except (BrokenPipeError, BlockingIOError, OSError) as e:
       print(self.address, '-', str(e))
 
@@ -286,7 +286,7 @@ class SocketsThread (threading.Thread):
 
       for s in w:
         print('ready for writing:', s.getsockname())
-        s.send(b'speed 50\n')
+        #s.send(b'speed 50\n')
         self.arms.findArm(s).sendPosition()
 
         writers.remove(s)
@@ -306,19 +306,19 @@ class SocketsThread (threading.Thread):
           print('closed')
           r.remove(s)
           return#continue
-        #print('received:', data)
+        print('received:', data)
         arm = self.arms.findArm(s)
         arm.updateAngles(data)
 
 
 class LightArms:
   """Abstracts control of a network of spotlight robots.
-  
+
   It uses an instance of SocketsThread for non-blocking network communication. Calling exit()
   is necessary to terminate the thread.
-  
+
   self.arms is a list of class NetworkArm, each with an IP address.
-  
+
   """
 
   NumLEDs = NetworkArm.NumLEDs
@@ -326,10 +326,10 @@ class LightArms:
   def fitLEDRange(self, x): return NetworkArm.fitLEDRange(x)
 
   def __init__(self):
-    # 
+    #
     self.arms = [
       #NetworkArm(8)#, inverted=[True, False]),  # stage right side
-      NetworkArm(84, inverted=[True, False]), # stage right front
+      NetworkArm(152, inverted=[True, False]), # stage right front
 #      NetworkArm(85),                         # stage right back
 #      NetworkArm(2),                         # stage left back
 #      NetworkArm(4, inverted=[False, True]), # stage left front
@@ -381,7 +381,7 @@ class LightArms:
       d = {}
       for i in indexOrDict: d[i] = angle
       indexOrDict = d
-    
+
     if isinstance(indexOrDict, dict):
       # split a dict into multiple dicts based on each ID's route
       dicts = {}
@@ -412,7 +412,7 @@ class LightArms:
       arm = self.findArm(address)
       if arm is None: continue
       arm.setLED(d['intensity'])
-      angles = d['servos'] 
+      angles = d['servos']
       for i in range(len(angles)):
         arm.setAngle(i, angles[i])
 
@@ -425,4 +425,3 @@ if __name__ == '__main__':
     Arms.exit()
     #sys.exit(0)
   signal.signal(signal.SIGINT, signal_handler)
-

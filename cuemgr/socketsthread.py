@@ -4,7 +4,7 @@ class SocketOwner:
   '''Derive from this class to use with SocketsThread for multiple socket IO.
   '''
 
-  def readyForWriting(self): print('socket connected: ', self.address, ':', self.port) 
+  def readyForWriting(self): print('socket connected: ', self.address, ':', self.port)
   def dataReceived(self, data): print('data received: ', data)
   def socketClosed(self): print('socket closed: ', self.address, ':', self.port)
 
@@ -35,7 +35,7 @@ class LinedSocketOwner(SocketOwner):
   ''' SocketOwner which assembles received data into delimited lines.
   '''
 
-  def __init__(self, address, port, delim='\n'):
+  def __init__(self, address, port, delim='\r\n'):
     self.buffer = ''#bytearray()
     self.delim = delim
 
@@ -45,19 +45,19 @@ class LinedSocketOwner(SocketOwner):
 
   def dataReceived(self, data):
     self.buffer += data.decode("utf-8")
-            
+
     ixNewline = self.buffer.find(self.delim)
     while ixNewline != -1:
       v = self.buffer[:ixNewline]
       self.handleLine(v)
       self.buffer = self.buffer[ixNewline+1:]
       ixNewline = self.buffer.find(self.delim)
-                
+
 
 
 class SocketsThread (threading.Thread):
   """Single thread waits on and handles IO for multiple sockets. Designed for use with SocketOwner.
-  
+
   Maintains a map of sockets to owner. To use, call addSocket() for every socket, THEN call start(). You should not add or remove sockets once start is called.
 
   The thread will continue running until exit() is called.
@@ -132,8 +132,7 @@ class SocketsThread (threading.Thread):
         self.sockets[s].dataReceived(data)
 
 if __name__ == '__main__':
-    o = LinedSocketOwner('10.10.10.120', 1338)
+    o = LinedSocketOwner('192.168.42.152', 23)
     t = SocketsThread()
     t.addSocket(o.socket, o)
     t.start()
-

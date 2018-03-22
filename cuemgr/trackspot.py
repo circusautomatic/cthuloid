@@ -1,7 +1,7 @@
 """Keyboard control of a 7-channel knockoff stage tracklight with 2-axis motor"""
 
 class TrackSpot:
-  """Constructor arguments starting with up are keyboard key codes. 
+  """Constructor arguments starting with up are keyboard key codes.
   Brighter and Darker may change color instead of intensity."""
   def __init__(self, dmx, firstChannel, up, down, left, right, brighter, darker):
 
@@ -26,7 +26,7 @@ class TrackSpot:
     self.firstChannel = firstChannel - 1    # convert from 1-based to 0-based index
     self.x         = self.firstChannel
     self.y         = self.firstChannel + 1
-    self.color     = self.firstChannel + 2 
+    self.color     = self.firstChannel + 2
     self.pattern   = self.firstChannel + 3
     self.strobe    = self.firstChannel + 4
     self.intensity = self.firstChannel + 5
@@ -53,5 +53,3 @@ class TrackSpot:
     u = min(255, max(0, v + inc))
     print(1+channel, '=', v, '->', u)
     self.dmx.setAndSend(channel, u)
-
-

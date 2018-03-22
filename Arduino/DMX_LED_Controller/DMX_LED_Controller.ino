@@ -4,10 +4,10 @@
 // this flag will invert PWM output, for active-low devices
 #define INVERT_HIGH_AND_LOW
 
-int DMX_Address = 5;  // The DMX address of the first channel (using 1-based indexing)
+int DMX_Address = 2;  // The DMX address of the first channel (using 1-based indexing)
 
 // These pins will be mapped onto DMX channels in order (1-based indexing)
-const int PWM_Pins[] = {11, 12, 44, 45};
+const int PWM_Pins[] = {7, 8, 44, 45};
 const int Num_PWM_Pins = sizeof(PWM_Pins)/sizeof(*PWM_Pins);
 
 const long PWM_Frequency = 1000;    // timer frequency for generating PWM

@@ -4,7 +4,7 @@ import socket, math, time
 
 # Create a TCP/IP socket
 #server_addresses = [('10.0.2.3', 1337), ('10.0.2.4', 1337), ('10.0.2.6', 1337)]
-server_addresses = [('10.0.2.10', 1337)]
+server_addresses = [('10.0.0.253', 1337)]
 sockets = []
 
 try:
@@ -16,10 +16,10 @@ try:
     sockets.append(sock)
 
   print('connected?')
-  interval = .01 #seconds
-  maxpwm = 20000#65535
+  interval = .033 #seconds
+  maxpwm = 65535
   minpwm = 2000
-  inc = 10
+  inc = 36000
   i = minpwm
   while True:
     for sock in sockets:

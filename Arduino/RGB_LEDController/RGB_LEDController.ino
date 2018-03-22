@@ -40,7 +40,7 @@ Adafruit_TLC59711 tlc = Adafruit_TLC59711(NUM_TLC59711, clock, data);
 // change initHRPWM and myHRWrite if you change these pins
 // The first pin is assumed to be red, second assume to be green, etc.
 //const int PWMPins[] = {7, 8, 44, 45};
-const int NumPWMPins = 3;//sizeof(PWMPins)/sizeof(*PWMPins);
+const int NumPWMPins = 12;//sizeof(PWMPins)/sizeof(*PWMPins);
 
 // Ethernet via ENC28J60 
 // Library: https://github.com/ntruchsess/arduino_uip
@@ -124,32 +124,32 @@ unsigned long invertPWM(unsigned long c) {
   return c;
 }
 
-void initHRPWM() {
-  // setting MEGA pins 7-8 with timer 4
-  TCCR4A = B00101001; // Phase and frequency correct PWM change at OCRA
-  TCCR4B = B10001;  // System clock
-  OCR4A = 0xffff;   // max pwm value
+//void initHRPWM() {
+//  // setting MEGA pins 7-8 with timer 4
+//  TCCR4A = B00101001; // Phase and frequency correct PWM change at OCRA
+//  TCCR4B = B10001;  // System clock
+//  OCR4A = 0xffff;   // max pwm value
+//
+//  // setting MEGA pins 44-45 with timer 5
+//  TCCR5A = B00101001; // Phase and frequency correct PWM change at OCRA
+//  TCCR5B = B10001;  // System clock
+//  OCR5A = 0xffff;   // max pwm value
+//}
 
-  // setting MEGA pins 44-45 with timer 5
-  TCCR5A = B00101001; // Phase and frequency correct PWM change at OCRA
-  TCCR5B = B10001;  // System clock
-  OCR5A = 0xffff;   // max pwm value
-}
-
-void myHRWrite(int pin, unsigned value) {
-    /*printAlways("setting pin to value: ");
-    printAlways(pin);
-    printAlways(" ");
-    printlnAlways(value);*/
-    
-    switch(pin) {
-      case 7: OCR4B = value;  break;   // MEGA pin 7
-      case 8: OCR4C = value;  break;   // MEGA pin 8
-      case 44: OCR5C = value; break;   // MEGA pin 44
-      case 45: OCR5B = value; break;   // MEGA pin 45
-      default: printlnError("invalid pin");
-    }
-}
+//void myHRWrite(int pin, unsigned value) {
+//    /*printAlways("setting pin to value: ");
+//    printAlways(pin);
+//    printAlways(" ");
+//    printlnAlways(value);*/
+//    
+//    switch(pin) {
+//      case 7: OCR4B = value;  break;   // MEGA pin 7
+//      case 8: OCR4C = value;  break;   // MEGA pin 8
+//      case 44: OCR5C = value; break;   // MEGA pin 44
+//      case 45: OCR5B = value; break;   // MEGA pin 45
+//      default: printlnError("invalid pin");
+//    }
+//}
 
 // Takes a string of an integer (numeric chars only). Returns the integer on success.
 // Prints error and returns 0 if there is a parse error or the ID is out of range.

@@ -36,7 +36,7 @@ OLA.start()
 
 while 1:
   line = raw_input('save, load, or exit: ')
-  tokens = line.split()  
+  tokens = line.split()
   if len(tokens) == 0: continue
 
   if tokens[0] == 'exit':
@@ -49,7 +49,7 @@ while 1:
 
   if tokens[0] == 'save':
     filename = line[4:].strip()
-    data = str(list(OLA.data)) 
+    data = str(list(OLA.data))
     #print(data)
     try:
       with open(filename, 'w') as f:
@@ -66,9 +66,6 @@ while 1:
         #print(text)
         channels = ast.literal_eval(text)
         print(channels)
-        OLA.client.SendDmx(1, channels) 
+        OLA.client.SendDmx(1, channels)
 #    except:
 #      print('Error loading file')
-
-
-

@@ -4,7 +4,7 @@ Defines types of cues (sets of hardware parameters), and provides for loading an
 We unfortunately use the word 'cue' in two different ways:
 1. A cue is a text file containing hardware parameters in json. Note that cues may also be grouped together
    into a sequence, which is itself treated as a cue.
-2. A cue is an instruction to transition to a new set of hardware parameters, either by setting them 
+2. A cue is an instruction to transition to a new set of hardware parameters, either by setting them
    instantaneously or by incrementally fading from the previous parameters. An instruction is a one-word
    command followed by the name of the file that holds the hardware parameters
 
@@ -16,12 +16,12 @@ import sys, os, threading, ast, time, subprocess, random
 from console import *
 
 try:
-  import prinboo 
-  Prinboo = prinboo.Prinboo('192.168.1.106')
+  import prinboo
+  Prinboo = prinboo.Prinboo('92.168.42.152')
 except ImportError:
   Prinboo = None
   print('No Prinboo')
-  
+
 try:
   import lightarm
   Arms = lightarm.LightArms()
@@ -29,7 +29,7 @@ except:
   Arms = None
   print('No LightArms')
 
-try: 
+try:
   import dmx
   DMX = dmx.DmxChannels()
 except ImportError:
@@ -125,7 +125,7 @@ class CueLoad(Cue):
 
   def load(self):
       data = loadCueFile(self.filename)
-    
+
       self.targetDMX = None
       if DMX and 'DMX' in data and data['DMX']:
         self.targetDMX = data['DMX']
@@ -149,8 +149,8 @@ class CueLoad(Cue):
         Arms.load(self.armData)
 
 class CueFade(CueLoad):
-  """Fades from current scene to new scene. 
-  
+  """Fades from current scene to new scene.
+
   Blocks during run() for the duration of the fade.
   TODO: fix that fading can only be done for either DMX or LightArms.
 
@@ -165,7 +165,7 @@ class CueFade(CueLoad):
     if len(tokens) < 2:
       raise BaseException('usage: fade <optional time in seconds> <filename>')
 
-    try: 
+    try:
       tok = tokens[1]
       self.period = float(tok)
       self.filename = restAfterWord(tok, line)
@@ -214,7 +214,7 @@ class CueFade(CueLoad):
         while 1:
           # calculate new channel values and transmit
           for i in range(len(current)): current[i] += vel[i]
-          channels = [round(x) for x in current] 
+          channels = [round(x) for x in current]
           DMX.setAndSend(0, channels)
 
           now = time.time()
@@ -240,7 +240,7 @@ class CueFade(CueLoad):
 #        target = [0] * Arms.num()
 #        current = [0] * Arms.num()
 #        vel = [0] * Arms.num()
-#        
+#
 #        # map each address to an index
 #        for address, data in self.armData.items():
 #          i = Arms.arms.index(Arms.findArm(address))
@@ -263,7 +263,7 @@ class CueFade(CueLoad):
 #
 #        while 1:
 #          # calculate new channel values and transmit
-#          for i in range(len(current)): 
+#          for i in range(len(current)):
 #            current[i] += vel[i]
 #            Arms.setLED(i, current[i])
 #
@@ -284,14 +284,14 @@ class CueFade(CueLoad):
 
 class CuePrinboo(CueLoad):
   """Launches a thread to animate Prinboo's head and limbs with frames defined in a cuefile
-  
+
   """
   framerate = 30 #per second
 
   def __init__(self, line):
     self.frames = None
     CueLoad.__init__(self, line)
-    
+
 #  def load(self):
 #    self.frames = data['limbs']
 #    #self.framerate = data['framerate']
@@ -407,7 +407,7 @@ class PrinbooLimbsThread(threading.Thread):
 #        done = False
 #        while not self.shouldExit and ids:
 #          id = ids[random.randint(0, len(ids)-1)]
-#          
+#
 #          #if numInRow == 0: inc = self.vel * random.randint(1, 5)
 #          #numInRow = (numInRow + 1) % 5
 #
@@ -462,7 +462,7 @@ def cmdSave(tokens, line):
   text = "{\n 'version': 0,\n 'DMX': " + dmx + ",\n 'Limbs': " + angles + "\n}"
   #text = "{\n 'version': 0,\n 'DMX': " + dmx + ",\n 'LightArm': {\n  'Servos': " + str(ucServos) + ",\n  'LEDs': " + str(ucLEDs) + "\n }\n}"
   #text = "{'version': 0, 'DMX': " + dmx + ", 'LightArm': {'Servos': " + str(ucServos) + ", 'LEDs': " + str(ucLEDs) + "}}"
-  
+
   print(text)
   try:
     with openCueFile(filename, 'w') as f:

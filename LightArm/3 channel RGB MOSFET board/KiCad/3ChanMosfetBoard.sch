@@ -1,5 +1,34 @@
 EESchema Schematic File Version 2
 LIBS:3ChanMosfetBoard-rescue
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
 LIBS:ECA
 LIBS:Chris
 LIBS:3ChanMosfetBoard-cache
@@ -29,7 +58,7 @@ F 3 "" H 2300 2300 60  0000 C CNN
 	-1   0    0    1   
 $EndComp
 $Comp
-L R R1
+L R-RESCUE-3ChanMosfetBoard R1
 U 1 1 596E543C
 P 3150 1900
 F 0 "R1" V 3230 1900 40  0000 C CNN
@@ -40,7 +69,7 @@ F 3 "~" H 3150 1900 30  0000 C CNN
 	0    1    1    0   
 $EndComp
 $Comp
-L R R2
+L R-RESCUE-3ChanMosfetBoard R2
 U 1 1 596E544B
 P 3150 2350
 F 0 "R2" V 3230 2350 40  0000 C CNN
@@ -51,7 +80,7 @@ F 3 "~" H 3150 2350 30  0000 C CNN
 	0    1    1    0   
 $EndComp
 $Comp
-L R R3
+L R-RESCUE-3ChanMosfetBoard R3
 U 1 1 596E545A
 P 3150 2800
 F 0 "R3" V 3230 2800 40  0000 C CNN
@@ -76,7 +105,7 @@ Wire Wire Line
 Wire Wire Line
 	2800 2350 2800 2800
 $Comp
-L R R4
+L R-RESCUE-3ChanMosfetBoard R4
 U 1 1 596E5521
 P 4600 1900
 F 0 "R4" V 4680 1900 40  0000 C CNN
@@ -87,7 +116,7 @@ F 3 "~" H 4600 1900 30  0000 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L R R5
+L R-RESCUE-3ChanMosfetBoard R5
 U 1 1 596E5530
 P 4600 2350
 F 0 "R5" V 4680 2350 40  0000 C CNN
@@ -98,7 +127,7 @@ F 3 "~" H 4600 2350 30  0000 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L R R6
+L R-RESCUE-3ChanMosfetBoard R6
 U 1 1 596E553F
 P 4600 2800
 F 0 "R6" V 4680 2800 40  0000 C CNN

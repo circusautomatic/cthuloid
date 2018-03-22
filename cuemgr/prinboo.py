@@ -6,17 +6,17 @@ class Motors(SocketOwner):
 
   def __init__(self, address):
     SocketOwner.__init__(self, address, 1339)
-    self.speed = 0  # denotes number of L/Rs we will send to the arduino 
+    self.speed = 0  # denotes number of L/Rs we will send to the arduino
     self.STOP = ' '
     self.direction = self.STOP
 
   def readForWriting(self):
     self.sendSpeed()
-    
+
 
   def sendSpeed(self):
     s = self.STOP # initial character must reset the uc's internal counter to zero
-    
+
     if self.direction != self.STOP:
       # append a number of l and r's
       for i in range(self.speed): s += self.direction
@@ -26,30 +26,30 @@ class Motors(SocketOwner):
     self.speed += 1
     self.sendSpeed()
 
-  def decSpeed(self): 
+  def decSpeed(self):
     self.speed -= 1
     self.sendSpeed()
 
   def stop(self):
-    self.direction = self.STOP 
+    self.direction = self.STOP
     self.sendSpeed()
 
   def turnLeft(self):
-    self.direction = 'L' 
+    self.direction = 'L'
     self.sendSpeed()
 
   def turnRight(self):
-    self.direction = 'R' 
+    self.direction = 'R'
     self.sendSpeed()
 
   def forward(self):
-    self.direction = 'LR' 
+    self.direction = 'LR'
     self.sendSpeed()
 
   def backward(self):
-    self.direction = 'lr' 
+    self.direction = 'lr'
     self.sendSpeed()
-    
+
 
 class LimbServos(LinedSocketOwner):
     """ Serial connection to arduino controlling Prinboo limb and head servos"""
@@ -72,9 +72,9 @@ class LimbServos(LinedSocketOwner):
         self.anglesDict[idOrDict] = angle
       elif isinstance(idOrDict, dict) and angle == None:
         for id,a in idOrDict.items(): self.anglesDict[id] = a
-      elif isinstance(idOrDict, list) and angle == None: 
+      elif isinstance(idOrDict, list) and angle == None:
         id = 1
-        for a in idOrDict: 
+        for a in idOrDict:
           self.anglesDict[id] = a
           id += 1
       else: raise TypeError('bad argument to Servos.setAngle')
@@ -99,18 +99,18 @@ class LimbServos(LinedSocketOwner):
         #print(cmd)
         self.write(cmd)
 
-    def handleLine(self, line): 
+    def handleLine(self, line):
         # read the positions of all servos, which is given in a json/python dict format
-        preamble ='Servo Readings:' 
+        preamble ='Servo Readings:'
         if line.startswith(preamble):
-            readings_text = line[len(preamble):].strip() 
+            readings_text = line[len(preamble):].strip()
             readings = ast.literal_eval(readings_text)
             #print(readings_text)
-            if not isinstance(readings, dict): 
+            if not isinstance(readings, dict):
                 print('error reading servos')
                 return
             self.setAngle(readings, sendUpdate=False)
-            
+
         #else: print(line)
 
     def readServos(self):
@@ -119,7 +119,7 @@ class LimbServos(LinedSocketOwner):
 class Screen:
     '''Play videos on Prinboo's raspi via SSH connection.
     '''
-    def __init__(self, address): 
+    def __init__(self, address):
       #try:
         ssh = paramiko.SSHClient()
         self.ssh = ssh
@@ -130,7 +130,7 @@ class Screen:
       #except paramiko.ssh_exception.NoValidConnectionsError:
       #  self.ssh = None
 
-    def play(self, filename): 
+    def play(self, filename):
       # remove special characters and append it to the video player name
       special = '$\\#!|<>;'
       for c in special: filename.replace(c, ' ')
@@ -169,5 +169,3 @@ if __name__ == '__main__':
   #p = Prinboo(addr, '')
   s = Screen(addr)
   s.play('vlc ~/circusautomatic/cthuloid/ghettopticon/blender/prinboo0001-1000.mp4')
-
-

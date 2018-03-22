@@ -23,7 +23,7 @@
 // this flag will invert PWM output (65535 - PWM), for active-low devices
 #define INVERT_HIGH_AND_LOW
 
-#define RED_MAX_PWM 55535
+#define RED_MAX_PWM 65535
 #define MAX_PWM 65535
 //#define PWM_FREQ 1000
 
@@ -62,7 +62,7 @@ const int NumPWMPins = sizeof(PWMPins)/sizeof(*PWMPins);
   //For Arduino Nano + nano ethernet shield
   //#include <UIPEthernet.h>
   const uint16_t PORT = 1337;
-  const uint8_t ID_IP = 84;
+  const uint8_t ID_IP = 253;
   static uint8_t MAC[6] = {0x00,0x01,0x02,0x03,0xff,ID_IP};
 
   IPAddress IP(10,0,0,ID_IP);

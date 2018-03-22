@@ -37,4 +37,3 @@ from ola.ClientWrapper import ClientWrapper
 
 OLA = OlaThread()
 OLA.start()"""
-

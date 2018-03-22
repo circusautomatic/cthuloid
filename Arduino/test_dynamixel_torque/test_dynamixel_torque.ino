@@ -55,7 +55,7 @@ void setCompliance(int comp) {
 }
 
 void setup() {
-  analogWrite(11, 250);
+ // analogWrite(11, 250);
   Serial.begin(38400);
   Servos.setup(2);
   delay(500);

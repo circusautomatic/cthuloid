@@ -27,7 +27,7 @@ class CueEngine:
   def reset(self):
     self.ixScene = 0  # current scene
     self.ixCue = -1   # cue we just ran
-  
+
   def thisScene(self): return self.scenes[self.ixScene]
   def thisCue(self):   return self.thisScene().cues[self.ixCue]
 
@@ -40,7 +40,7 @@ class CueEngine:
 
   def printLocStr(self, printThisCue=True):
     s ='(' + self.thisScene().name + ')'
-    if printThisCue and len(self.thisScene().cues): 
+    if printThisCue and len(self.thisScene().cues):
       s += ' - '
       if self.ixCue >= 0: s+= self.thisCue().line.strip()
       else: s += self.thisScene().cues[1 + self.ixCue].line.strip()
@@ -85,7 +85,7 @@ class CueEngine:
     #print(self.getLoc(), 'previous cue:', self.thisCue().line.strip())
     self.thisCue().run(True)
 
-  def nextScene(self): 
+  def nextScene(self):
     if self.onLastScene():
       print('At End')
       return
@@ -122,10 +122,10 @@ class CueEngine:
         while line:
           lineNum += 1
           tokens = line.split()
-          
+
           try:
             # skip empty lines and lines where the first token is #
-            if len(tokens) and not tokens[0].startswith('#'): 
+            if len(tokens) and not tokens[0].startswith('#'):
               cmd = tokens[0]
               indent = line[:line.find(cmd)]
               indentLen = len(indent)
@@ -136,13 +136,13 @@ class CueEngine:
               if indent.find('\t') >= 0: seenTab = True
               if seenSpace and seenTab:
                 raise TabError('The cue file mixes spaces and tabs.  Please use one or the other')
-              
+
               # remove cmds with <= indent, because their block/revelance is over
               pops = 0
               while indentLen < topIndentLen():
                 popIndent()
                 pops += 1
-              
+
               # did we pop to a previously unused indent? Handles the following:
               # s
               #   s
@@ -167,7 +167,7 @@ class CueEngine:
               if thisNode:
                 topIndent()[0].add(thisNode)
                 pushIndent(thisNode, indentLen)
-         
+
           except BaseException as e:
             print('Error:', e)
             print('Line Number:', lineNum)
@@ -183,4 +183,3 @@ class CueEngine:
 if __name__ == '__main__':
   CueMgr = CueEngine()
   CueMgr.loadCueSheet('cuesheet.txt')
-

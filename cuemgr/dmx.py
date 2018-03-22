@@ -6,7 +6,7 @@ from console import *
 
 class DmxChannels:
     """Wrapper for a DMX over USB using the Open Lighting Architecture python cilent.
-    
+
     DMX Channels go from 0-511 and have value 0-255.
     OLA can't individually address DMX channels, so this class only invokes the DMX subsystem if there has been a change.
     To use, call set() on individual channels and then call send().
@@ -17,30 +17,30 @@ class DmxChannels:
         self.MinValue = 0
         self.MaxValue = 255
         self.data = bytearray(self.NumChannels)
-        
+
         self.dataChanged = False
         self.client = None
-        try: 
+        try:
             self.wrapper = ClientWrapper()
             self.client = self.wrapper.Client()
         except:
             print("Error: couldn't connect to OLA server")
             getchMsg()
-            
+
     def exit(self):
       pass
 
     def get(self, index=None):
         if index is not None: return self.data[index]
         else: return list(self.data)
-    
-    # sends to OLA if there has been a change    
+
+    # sends to OLA if there has been a change
     def send(self):
         if not self.client: return
         if not self.dataChanged: return
         self.dataChanged = False
         self.client.SendDmx(1, self.data)
-        
+
     # pass a start channel and any number of channel values
     # values are integers 0-255; -1 is no-op
     # you must call send to transmit the changes
@@ -57,7 +57,7 @@ class DmxChannels:
                 self.data[channel] = v
                 self.dataChanged = True
             channel += 1
-                
+
     # pass a start channel and any number of channel values
     # values are numbers between 0 and 1
     # you must call send to transmit the changes

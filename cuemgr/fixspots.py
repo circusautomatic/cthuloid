@@ -28,7 +28,7 @@ def turnOffSideSpots(dmx):
     dmx[spot.strobe] = 255
     dmx[spot.speed] = 255
     dmx[spot.intensity] = 0
-  
+
   return True
 
 for filename in os.listdir('scenes'):
@@ -50,16 +50,13 @@ for filename in os.listdir('scenes'):
 #  changed = sanitizeSpots(dmx)
   changed = turnOffSideSpots(dmx)
 
-  if changed: 
+  if changed:
     with open('scenes/' + filename, 'w') as f:
       if dmx == json:
         f.write(str(dmx))
       else:
         f.write(str(json))
-        f.write('\n') 
+        f.write('\n')
 
  #   except BaseException as e:
   #    print('Error reading file: "' + filename + '":', e)
-
-      
-

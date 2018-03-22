@@ -1,4 +1,5 @@
 EESchema Schematic File Version 2
+LIBS:Single Dual H-Bridge Driver-rescue
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -10,7 +11,6 @@ LIBS:cmos4000
 LIBS:adc-dac
 LIBS:memory
 LIBS:xilinx
-LIBS:special
 LIBS:microcontrollers
 LIBS:dsp
 LIBS:microchip
@@ -31,7 +31,7 @@ LIBS:contrib
 LIBS:valves
 LIBS:Chris
 LIBS:Single Dual H-Bridge Driver-cache
-EELAYER 27 0
+EELAYER 25 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
@@ -51,51 +51,51 @@ U 1 1 597B6FFD
 P 5350 3100
 F 0 "H1" H 5050 3100 60  0000 C CNN
 F 1 "HIP4080A" H 5400 3100 60  0000 C CNN
-F 2 "~" H 5400 3100 60  0000 C CNN
+F 2 "Socket_Strips:Socket_Strip_Straight_2x10_Pitch2.54mm" H 5400 3100 60  0000 C CNN
 F 3 "~" H 5400 3100 60  0000 C CNN
 	1    5350 3100
 	0    1    1    0   
 $EndComp
 $Comp
-L R R5
+L R-RESCUE-Single_Dual_H-Bridge_Driver R5
 U 1 1 597B7057
 P 8400 5050
 F 0 "R5" V 8480 5050 40  0000 C CNN
 F 1 "R" V 8407 5051 40  0000 C CNN
-F 2 "~" V 8330 5050 30  0000 C CNN
+F 2 "Resistors_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal" V 8330 5050 30  0000 C CNN
 F 3 "~" H 8400 5050 30  0000 C CNN
 	1    8400 5050
 	-1   0    0    1   
 $EndComp
 $Comp
-L R R4
+L R-RESCUE-Single_Dual_H-Bridge_Driver R4
 U 1 1 597B705D
 P 7400 5050
 F 0 "R4" V 7480 5050 40  0000 C CNN
 F 1 "R" V 7407 5051 40  0000 C CNN
-F 2 "~" V 7330 5050 30  0000 C CNN
+F 2 "Resistors_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal" V 7330 5050 30  0000 C CNN
 F 3 "~" H 7400 5050 30  0000 C CNN
 	1    7400 5050
 	1    0    0    -1  
 $EndComp
 $Comp
-L R R3
+L R-RESCUE-Single_Dual_H-Bridge_Driver R3
 U 1 1 597B7074
 P 4200 3050
 F 0 "R3" V 4280 3050 40  0000 C CNN
 F 1 "R" V 4207 3051 40  0000 C CNN
-F 2 "~" V 4130 3050 30  0000 C CNN
+F 2 "Resistors_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal" V 4130 3050 30  0000 C CNN
 F 3 "~" H 4200 3050 30  0000 C CNN
 	1    4200 3050
 	0    -1   -1   0   
 $EndComp
 $Comp
-L C C1
+L C-RESCUE-Single_Dual_H-Bridge_Driver C1
 U 1 1 597B707A
 P 4200 2850
 F 0 "C1" H 4200 2950 40  0000 L CNN
 F 1 "C" H 4206 2765 40  0000 L CNN
-F 2 "~" H 4238 2700 30  0000 C CNN
+F 2 "Capacitors_THT:CP_Radial_D10.0mm_P5.00mm" H 4238 2700 30  0000 C CNN
 F 3 "~" H 4200 2850 60  0000 C CNN
 	1    4200 2850
 	0    -1   -1   0   
@@ -106,7 +106,7 @@ U 1 1 597B7135
 P 2100 3000
 F 0 "J1" H 2300 3500 60  0000 C CNN
 F 1 "RJ45" H 1950 3500 60  0000 C CNN
-F 2 "" H 2100 3000 60  0000 C CNN
+F 2 "Connectors:RJ45_8" H 2100 3000 60  0001 C CNN
 F 3 "" H 2100 3000 60  0000 C CNN
 	1    2100 3000
 	0    -1   -1   0   
@@ -116,23 +116,23 @@ Text Notes 850  2800 0    60   ~ 0
 Text Notes 10150 3450 0    60   ~ 0
 1 - Batt GND\n2 - Batt + \n
 $Comp
-L R R1
+L R-RESCUE-Single_Dual_H-Bridge_Driver R1
 U 1 1 597B773E
 P 4000 3350
 F 0 "R1" V 4080 3350 40  0000 C CNN
 F 1 "20K" V 4007 3351 40  0000 C CNN
-F 2 "~" V 3930 3350 30  0000 C CNN
+F 2 "Resistors_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal" V 3930 3350 30  0000 C CNN
 F 3 "~" H 4000 3350 30  0000 C CNN
 	1    4000 3350
 	0    -1   -1   0   
 $EndComp
 $Comp
-L R R2
+L R-RESCUE-Single_Dual_H-Bridge_Driver R2
 U 1 1 597B774D
 P 4000 3500
 F 0 "R2" V 4080 3500 40  0000 C CNN
 F 1 "20K" V 4007 3501 40  0000 C CNN
-F 2 "~" V 3930 3500 30  0000 C CNN
+F 2 "Resistors_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal" V 3930 3500 30  0000 C CNN
 F 3 "~" H 4000 3500 30  0000 C CNN
 	1    4000 3500
 	0    -1   -1   0   
@@ -145,7 +145,7 @@ U 1 1 597B7027
 P 7950 3000
 F 0 "M1" H 7950 2750 60  0000 C CNN
 F 1 "MOTOR" H 7950 3050 60  0000 C CNN
-F 2 "~" H 7950 3000 60  0000 C CNN
+F 2 "Connectors_Molex:Molex_MegaFit_2x01x5.70mm_Straight" H 7950 3000 60  0000 C CNN
 F 3 "~" H 7950 3000 60  0000 C CNN
 	1    7950 3000
 	1    0    0    -1  
@@ -216,7 +216,7 @@ Wire Wire Line
 Wire Wire Line
 	8400 5400 8400 5300
 Wire Wire Line
-	4550 2950 4550 3600
+	4550 3600 4550 2950
 Wire Wire Line
 	4500 3050 4500 2850
 Wire Wire Line
@@ -252,8 +252,6 @@ Wire Wire Line
 Wire Wire Line
 	3400 3150 2550 3150
 Wire Wire Line
-	4550 3600 750  3600
-Wire Wire Line
 	2550 3350 2550 3900
 Wire Wire Line
 	9600 5400 9600 3600
@@ -267,17 +265,6 @@ Wire Wire Line
 	3750 3350 3750 3600
 Connection ~ 3750 3600
 Connection ~ 3750 3500
-Wire Wire Line
-	2550 3250 3150 3250
-Wire Wire Line
-	3150 3250 3150 2300
-Wire Wire Line
-	3150 2300 6250 2300
-Wire Wire Line
-	1750 2450 750  2450
-Wire Wire Line
-	750  2450 750  3600
-Connection ~ 2550 3600
 Wire Wire Line
 	8050 3650 8050 3400
 Wire Wire Line
@@ -338,79 +325,135 @@ Wire Wire Line
 Wire Wire Line
 	7100 2850 7100 3400
 $Comp
-L C_MOSF Q1
+L C_mosf Q1
 U 1 1 597B7E99
 P 7300 2600
 F 0 "Q1" H 7310 2770 60  0000 R CNN
 F 1 "C_MOSF" H 7310 2450 60  0000 R CNN
-F 2 "~" H 7300 2600 60  0000 C CNN
+F 2 "cp:CPTO-220" H 7300 2600 60  0000 C CNN
 F 3 "~" H 7300 2600 60  0000 C CNN
 	1    7300 2600
 	1    0    0    -1  
 $EndComp
 $Comp
-L C_MOSF Q3
+L C_mosf Q3
 U 1 1 597B7EA8
 P 8300 2550
 F 0 "Q3" H 8310 2720 60  0000 R CNN
 F 1 "C_MOSF" H 8310 2400 60  0000 R CNN
-F 2 "~" H 8300 2550 60  0000 C CNN
+F 2 "cp:CPTO-220" H 8300 2550 60  0000 C CNN
 F 3 "~" H 8300 2550 60  0000 C CNN
 	1    8300 2550
 	1    0    0    -1  
 $EndComp
 $Comp
-L C_MOSF Q4
+L C_mosf Q4
 U 1 1 597B7EB7
 P 8300 3400
 F 0 "Q4" H 8310 3570 60  0000 R CNN
 F 1 "C_MOSF" H 8310 3250 60  0000 R CNN
-F 2 "~" H 8300 3400 60  0000 C CNN
+F 2 "cp:CPTO-220" H 8300 3400 60  0000 C CNN
 F 3 "~" H 8300 3400 60  0000 C CNN
 	1    8300 3400
 	1    0    0    -1  
 $EndComp
 $Comp
-L C_MOSF Q2
+L C_mosf Q2
 U 1 1 597B7EC6
 P 7300 3400
 F 0 "Q2" H 7310 3570 60  0000 R CNN
 F 1 "C_MOSF" H 7310 3250 60  0000 R CNN
-F 2 "~" H 7300 3400 60  0000 C CNN
+F 2 "cp:CPTO-220" H 7300 3400 60  0000 C CNN
 F 3 "~" H 7300 3400 60  0000 C CNN
 	1    7300 3400
 	1    0    0    -1  
-$EndComp
-$Comp
-L CONN_3 K1
-U 1 1 597B824F
-P 2650 4250
-F 0 "K1" V 2600 4250 50  0000 C CNN
-F 1 "CONN_3" V 2700 4250 40  0000 C CNN
-F 2 "" H 2650 4250 60  0000 C CNN
-F 3 "" H 2650 4250 60  0000 C CNN
-	1    2650 4250
-	0    1    1    0   
 $EndComp
 Wire Wire Line
 	2650 3900 2650 2950
 Wire Wire Line
 	2650 2950 2550 2950
 Wire Wire Line
-	2750 3900 2750 2850
+	2750 2000 2750 3900
 Wire Wire Line
 	2750 2850 2550 2850
 Text Notes 3000 4100 0    60   ~ 0
-For Optional Motor feedback (rotary encoder)\n1- 5V\n2- Data\n3- GND
+For Optional Motor feedback (rotary encoder)\n1- 5V\n2- rot1\n3- rot2 \n4-GND
 $Comp
 L CONN_2 P1
 U 1 1 597B94E5
 P 9950 3500
 F 0 "P1" V 9900 3500 40  0000 C CNN
 F 1 "CONN_2" V 10000 3500 40  0000 C CNN
-F 2 "" H 9950 3500 60  0000 C CNN
+F 2 "Connectors_Molex:Molex_MegaFit_2x01x5.70mm_Straight" H 9950 3500 60  0001 C CNN
 F 3 "" H 9950 3500 60  0000 C CNN
 	1    9950 3500
 	1    0    0    -1  
 $EndComp
+$Comp
+L CONN_01X04 J2
+U 1 1 5997BD41
+P 2600 4100
+F 0 "J2" H 2600 4350 50  0000 C CNN
+F 1 "CONN_01X04" V 2700 4100 50  0000 C CNN
+F 2 "Connectors_JST:JST_EH_B04B-EH-A_04x2.50mm_Straight" H 2600 4100 50  0001 C CNN
+F 3 "" H 2600 4100 50  0001 C CNN
+	1    2600 4100
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	2450 3600 2450 3900
+Connection ~ 2450 3600
+$Comp
+L GND #PWR01
+U 1 1 5997BF66
+P 2000 3600
+F 0 "#PWR01" H 2000 3350 50  0001 C CNN
+F 1 "GND" H 2000 3450 50  0000 C CNN
+F 2 "" H 2000 3600 50  0001 C CNN
+F 3 "" H 2000 3600 50  0001 C CNN
+	1    2000 3600
+	1    0    0    -1  
+$EndComp
+$Comp
+L LM7812 U1
+U 1 1 59BAFCB3
+P 3550 1450
+F 0 "U1" H 3700 1254 50  0000 C CNN
+F 1 "LM7812" H 3550 1650 50  0000 C CNN
+F 2 "cpyarger:CPTO-220" H 3550 1450 50  0001 C CNN
+F 3 "" H 3550 1450 50  0001 C CNN
+	1    3550 1450
+	1    0    0    -1  
+$EndComp
+$Comp
+L LM7805 U2
+U 1 1 59BAFD68
+P 3550 1950
+F 0 "U2" H 3700 1754 50  0000 C CNN
+F 1 "LM7805" H 3550 2150 50  0000 C CNN
+F 2 "cpyarger:CPTO-220" H 3550 1950 50  0001 C CNN
+F 3 "" H 3550 1950 50  0001 C CNN
+	1    3550 1950
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	3950 1400 3950 2300
+Connection ~ 3950 2000
+Wire Wire Line
+	3950 2300 6250 2300
+Wire Wire Line
+	9600 3750 10400 3750
+Wire Wire Line
+	10400 3750 10400 1100
+Wire Wire Line
+	10400 1100 3150 1100
+Wire Wire Line
+	3150 1100 3150 1400
+Connection ~ 9600 3750
+Wire Wire Line
+	2750 2000 3150 2000
+Connection ~ 2750 2850
+Wire Wire Line
+	2000 3600 4550 3600
+NoConn ~ 1750 2450
 $EndSCHEMATC
