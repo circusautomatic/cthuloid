@@ -69,12 +69,21 @@ void ledsetup() {
   ledcAttachPin(22, ledChannel10);
   ledcAttachPin(21, ledChannel11);
 
-  for(uint8_t i=0; i < 12; i++) {
+  //for(uint8_t i=0; i < 12; i++)
   // ledcWrite(channel, dutycycle)
   // For 8-bit resolution duty cycle is 0 - 255
-  ledcWrite(ledArray[i], 4000);  // test high output of all leds in sequence
- }
-
+  ledcWrite(ledchannel, 4000);  // test high output of all leds in sequence
+  ledcWrite(ledchannel1, 4000);  // test high output of all leds in sequence
+  ledcWrite(ledchannel2, 4000);  // test high output of all leds in sequence
+  ledcWrite(ledchannel3, 4000);  // test high output of all leds in sequence
+  ledcWrite(ledchannel4, 4000);  // test high output of all leds in sequence
+  ledcWrite(ledchannel5, 4000);  // test high output of all leds in sequence
+  ledcWrite(ledchannel6, 4000);  // test high output of all leds in sequence
+  ledcWrite(ledchannel7, 4000);  // test high output of all leds in sequence
+  ledcWrite(ledchannel8, 4000);  // test high output of all leds in sequence
+  ledcWrite(ledchannel9, 4000);  // test high output of all leds in sequence
+  ledcWrite(ledchannel10, 4000);  // test high output of all leds in sequence
+  ledcWrite(ledchannel11, 4000);  // test high output of all leds in sequence
 }
 
 const int PWMPins[] = {32, 33, 25, 26, 27, 14, 12, 13, 2, 23, 22, 21};
