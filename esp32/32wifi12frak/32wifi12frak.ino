@@ -24,7 +24,7 @@ const int timeout = 30;
 #define RED_MAX_PWM 40000
 #define MAX_PWM 65535
 //////////////////////////////////////////////////////////////////////////////////////
-int freq = 480;
+int freq = 20000;
 int res = 16;
 int steps = 1;
 int defaultlight = 4000;
