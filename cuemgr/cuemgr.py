@@ -25,6 +25,29 @@ CuesFilename = 'cuesheet.txt'   #initial cuesheet automatically loaded
 
 CueMgr = CueEngine()
 
+try:
+  import prinboo
+  Prinboo = prinboo.Prinboo('92.168.42.152')
+except ImportError:
+  Prinboo = None
+  print('No Prinboo')
+
+try:
+  import lightarm
+  Arms = lightarm.Arms#.LightArms()
+except:
+  Arms = None
+  print('No LightArms')
+
+try:
+  import dmx
+  DMX = dmx.DmxChannels()
+except ImportError:
+  DMX = None
+  print('No DMX')
+
+print("\n\n")
+
 # these functions define the min and max values for robot spotlight parameters
 #def fitServoRange(v): return max(212, min(812, v))
 #def fitLEDRange(v): return max(0, min(MaxPWM, v))
@@ -58,7 +81,7 @@ class LightArmView(View):
   def __init__(self):
     super().__init__()
 
-    self.PageWidth = 1#Arms.num()
+    self.PageWidth = Arms.num()
     self.ixCursor = 0
     self.mode = 1   # index into self.Modes
 

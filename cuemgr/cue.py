@@ -15,27 +15,6 @@ We unfortunately use the word 'cue' in two different ways:
 import sys, os, threading, ast, time, subprocess, random
 from console import *
 
-try:
-  import prinboo
-  Prinboo = prinboo.Prinboo('92.168.42.152')
-except ImportError:
-  Prinboo = None
-  print('No Prinboo')
-
-try:
-  import lightarm
-  Arms = lightarm.LightArms()
-except:
-  Arms = None
-  print('No LightArms')
-
-try:
-  import dmx
-  DMX = dmx.DmxChannels()
-except ImportError:
-  DMX = None
-  print('No DMX')
-
 #########################################################################################################
 # helpers
 

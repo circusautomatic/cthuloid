@@ -153,7 +153,7 @@ class NetworkArm:
   def fitServoRange(v): return max(212, min(812, v))
   def fitLEDRange(v): return max(0, min(NetworkArm.MaxLEDValue, v))
 
-  def __init__(self, id=None, addr=None, port=23, inverted=None):
+  def __init__(self, id=None, addr=None, port=1337, inverted=None):
     '''
     pass either id or addr
     id is the last byte of the IP address
@@ -162,7 +162,7 @@ class NetworkArm:
 
     '''
     self.address = addr
-    if self.address == None: self.address = '192.168.42.' + str(id)
+    if self.address == None: self.address = '10.0.0.' + str(id)
     self.port = port
     self.socket = None
 
@@ -288,6 +288,7 @@ class SocketsThread (threading.Thread):
         print('ready for writing:', s.getsockname())
         #s.send(b'speed 50\n')
         self.arms.findArm(s).sendPosition()
+        self.arms.findArm(s).sendPWM()
 
         writers.remove(s)
         readers.append(s)
@@ -328,8 +329,8 @@ class LightArms:
   def __init__(self):
     #
     self.arms = [
-      #NetworkArm(8)#, inverted=[True, False]),  # stage right side
-      NetworkArm(152, inverted=[True, False]), # stage right front
+      NetworkArm(161, inverted=[True, False]),  # stage right side
+      NetworkArm(159, inverted=[True, False]), # stage right front
 #      NetworkArm(85),                         # stage right back
 #      NetworkArm(2),                         # stage left back
 #      NetworkArm(4, inverted=[False, True]), # stage left front
