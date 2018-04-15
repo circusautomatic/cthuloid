@@ -81,9 +81,12 @@ class LightArmView(View):
   def __init__(self):
     super().__init__()
 
-    self.PageWidth = Arms.num()
-    self.ixCursor = 0
+    self.VerticalGroups = int(Arms.NumLEDs / 3)
+    print(self.VerticalGroups)
+    self.PageWidth = min(Arms.num(), 32)
     self.mode = 1   # index into self.Modes
+    self.ixCursor = 0
+    self.iyCursor = 0
 
     self.inc = LinearStateMachine([1, 5, 20])
 
@@ -167,17 +170,17 @@ class LightArmView(View):
     elif ch == 'd':
       self.modAngle('x', -self.inc())
     elif ch == 'r':
-      self.modI(self.inc(), 0)
+      self.modI(self.inc(), 0 + self.iyCursor*3)
     elif ch == 'f':
-      self.modI(-self.inc(), 0)
+      self.modI(-self.inc(), 0 + self.iyCursor*3)
     elif ch == 't':
-      self.modI(self.inc(), 1)
+      self.modI(self.inc(), 1 + self.iyCursor*3)
     elif ch == 'g':
-      self.modI(-self.inc(), 1)
+      self.modI(-self.inc(), 1 + self.iyCursor*3)
     elif ch == 'y':
-      self.modI(self.inc(), 2)
+      self.modI(self.inc(), 2 + self.iyCursor*3)
     elif ch == 'h':
-      self.modI(-self.inc(), 2)
+      self.modI(-self.inc(), 2 + self.iyCursor*3)
 
     elif ch == '<' or ch == ',':
       self.inc.prev()
@@ -194,8 +197,11 @@ class LightArmView(View):
         if self.inSingleMode(): self.ixCursor -= 1
         else: self.ixCursor = self.ixCursor - self.ixCursor % self.PageWidth - self.PageWidth
         self.ixCursor = max(0, self.ixCursor)
-      elif seq == '[A': pass # up arrow
-      elif seq == '[B': pass # down arrow
+      elif seq == '[A': #pass # up arrow
+        self.iyCursor = max(0, self.iyCursor - 1)
+      elif seq == '[B': #pass # down arrow
+        self.iyCursor = min(self.VerticalGroups - 1, self.iyCursor + 1)
+      print(self.iyCursor)
 
   def onFocus(self):
     pass
@@ -242,7 +248,11 @@ class LightArmView(View):
 
     printHSep()
 
-    names = 'RGB'
+    names = ''
+    for i in range(self.VerticalGroups):
+      if i == self.iyCursor: names += 'BGR'
+      else: names += 'bgr'
+
     for channel in range(Arms.NumLEDs):
       print(names[channel] + ': |', end='')
       for i in range(numArms):

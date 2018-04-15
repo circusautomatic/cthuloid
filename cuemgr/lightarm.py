@@ -144,7 +144,7 @@ class NetworkArm:
   """
 
   NumServos = 2
-  NumLEDs = 3
+  NumLEDs = 12#3
 
   # this class doesn't limit the LED values
   MinLEDValue = 0
@@ -171,7 +171,8 @@ class NetworkArm:
     self.relaxed = False
 
     # LEDs
-    self.intensities = [int(self.MaxLEDValue/2)] * self.NumLEDs
+    self.intensities = [0] * self.NumLEDs
+    #self.intensities = [int(self.MaxLEDValue/2)] * self.NumLEDs
 
     self.createSocket()
     #for i in range(1, self.NumServos+1):
@@ -394,6 +395,9 @@ class LightArms:
         dicts[route][servo.id] = angle
       for route in dicts:
         route.setAngle(dicts[route])
+
+  def relax(self, index):
+    self.arms[index].relax()
 
   def __str__(self):
     d = {}
