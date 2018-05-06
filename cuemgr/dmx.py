@@ -13,10 +13,10 @@ class DmxChannels:
     """
 
     def __init__(self):
-        self.NumChannels = 512
+        self.MaxChannels = 512
         self.MinValue = 0
         self.MaxValue = 255
-        self.data = bytearray(self.NumChannels)
+        self.data = bytearray(self.MaxChannels)
 
         self.dataChanged = False
         self.client = None

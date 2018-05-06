@@ -15,6 +15,17 @@ TODO:
 
 """
 
+
+config = {
+  'LightArms': [
+    {'address':'10.0.0.167', 'numChannels':12},
+    
+    # this is how you would define a light arm
+    #{'address':'10.0.0.161', 'numChannels':3, 'numServos':2, 'inversions':[False, False]}
+  ]
+}
+
+
 import sys, os, os.path, threading, ast, time, signal
 from console import * 
 from cue import *
@@ -33,11 +44,11 @@ except ImportError:
   print('No Prinboo')
 
 try:
-  import lightarm
-  Arms = lightarm.Arms#.LightArms()
+  from lightarm import Arms
 except:
   Arms = None
   print('No LightArms')
+Arms.initialize(config['LightArms'])
 
 try:
   import dmx
@@ -50,7 +61,7 @@ print("\n\n")
 
 # these functions define the min and max values for robot spotlight parameters
 #def fitServoRange(v): return max(212, min(812, v))
-#def fitLEDRange(v): return max(0, min(MaxPWM, v))
+#def fitChannelRange(v): return max(0, min(MaxPWM, v))
 
 def restAfterWord(word, line):
   return line[line.find(word) + len(word):].strip()
@@ -81,7 +92,7 @@ class LightArmView(View):
   def __init__(self):
     super().__init__()
 
-    self.VerticalGroups = int(Arms.NumLEDs / 3)
+    self.VerticalGroups = int(Arms.MaxChannels / 3)
     print(self.VerticalGroups)
     self.PageWidth = min(Arms.num(), 32)
     self.mode = 1   # index into self.Modes
@@ -146,7 +157,7 @@ class LightArmView(View):
   def modI(self, inc, channel):
     print('ids:', self.selected())
     for id in self.selected():
-      Arms.setLED(id, channel, Arms.fitLEDRange(Arms.getLED(id, channel) + inc))
+      Arms.setChannel(id, channel, Arms.fitChannelRange(Arms.getChannel(id, channel) + inc))
 
   def handleLineInput(self, line):
     tokens = line.split()
@@ -227,9 +238,12 @@ class LightArmView(View):
       print('')
 
     def printAngle(dim, index):
-      angle = self.getAngle(dim, index) 
-      if angle < 1: print('XXX|', end='')
-      else: print('{0:^3}|'.format(angle), end='')
+      try:
+        angle = self.getAngle(dim, index) 
+        if angle < 1: print('XXX|', end='')
+        else: print('{0:^3}|'.format(angle), end='')
+      except:
+        print('---|', end='')
 
     print('   Light Arm View')
     printHSep(False)
@@ -253,12 +267,13 @@ class LightArmView(View):
       if i == self.iyCursor: names += 'BGR'
       else: names += 'bgr'
 
-    for channel in range(Arms.NumLEDs):
+    for channel in range(Arms.MaxChannels):
       print(names[channel] + ': |', end='')
       for i in range(numArms):
-        print('{0:^3}|'.format(Arms.getLED(i, channel)), end='')
+        try: print('{0:^3}|'.format(Arms.getChannel(i, channel)), end='')
+        except: print('---|', end='')
       print('')
-      printHSep(channel+1 != Arms.NumLEDs)
+      printHSep(channel+1 != Arms.MaxChannels)
 
 
 class SliderView(View):
@@ -267,7 +282,7 @@ class SliderView(View):
   def __init__(self): 
     super().__init__()
     self.ixCursor = 0
-    self.NumChannels = DMX.NumChannels
+    self.MaxChannels = DMX.MaxChannels
     self.MinValue = 0
     self.MaxValue = 255
 
@@ -320,7 +335,7 @@ class SliderView(View):
           return
 
         if len(tokens) == 1:
-          v = [value] * self.NumChannels 
+          v = [value] * self.MaxChannels 
           DMX.setAndSend(0, v)
           return
 
@@ -365,12 +380,12 @@ class SliderView(View):
         elif seq == '[B': # down arrow
           DMX.setAndSend(self.ixCursor, max(self.MinValue, DMX.get(self.ixCursor) - 1))
         elif seq == '[C': # left arrow
-          self.ixCursor = min(self.NumChannels-1, self.ixCursor + 1)
+          self.ixCursor = min(self.MaxChannels-1, self.ixCursor + 1)
         elif seq == '[D': # right arrow
           self.ixCursor = max(0, self.ixCursor - 1)
         elif seq == '[5': # page up
           getch() # eat trailing ~
-          self.ixCursor = min(self.NumChannels-1, ixPageStart + self.PageWidth)
+          self.ixCursor = min(self.MaxChannels-1, ixPageStart + self.PageWidth)
         elif seq == '[6': # page down
           getch() # eat trailing ~
           self.ixCursor = max(0, ixPageStart - self.PageWidth)
@@ -381,11 +396,11 @@ class PrinbooView(View):
   def __init__(self): 
     super().__init__()
     self.ixCursor = 0
-    self.NumChannels = 11 #TODO get from Prinboo.limbs, but they may not have loaded yet?
+    self.MaxChannels = 11 #TODO get from Prinboo.limbs, but they may not have loaded yet?
     self.MinValue = 0
     self.MaxValue = 180
 
-    self.PageWidth = self.NumChannels
+    self.PageWidth = self.MaxChannels
  
   def onFocus(self):
     pass
@@ -438,7 +453,7 @@ class PrinbooView(View):
           return
 
         if len(tokens) == 1:
-          v = [value] * self.NumChannels 
+          v = [value] * self.MaxChannels 
           #DMX.setAndSend(0, v)
           return
 
@@ -486,7 +501,7 @@ class PrinbooView(View):
         elif seq == '[B': # down arrow
           Prinboo.limbs.setAngle(id, max(self.MinValue, Prinboo.limbs.getAngle(id) - 1))
         elif seq == '[C': # left arrow
-          self.ixCursor = min(self.NumChannels-1, self.ixCursor + 1)
+          self.ixCursor = min(self.MaxChannels-1, self.ixCursor + 1)
         elif seq == '[D': # right arrow
           self.ixCursor = max(0, self.ixCursor - 1)
     except(KeyError):

@@ -1,7 +1,7 @@
 """Interface for communicating with spotlight robots via network sockets.
 
 A spotlight robot:
-- has two servos and an LED.
+- has two servos and an Channel.
 - has an ethernet port and separate IP address
 - listens on port 1337
 - speaks a human-readable protocol.
@@ -9,6 +9,7 @@ A spotlight robot:
 """
 #raise BaseError('Not using Lightarms at the moment')
 import socket, os, errno, select, threading, time, random, signal, sys, struct
+from console import * 
 
 #######################################################################
 # dynamixel servos
@@ -19,7 +20,7 @@ import socket, os, errno, select, threading, time, random, signal, sys, struct
 #        self.numLinesToFollow = 0
 #        self.anglesDict = {}
 #
-#        # LEDs
+#        # Channels
 #        self.MinValue = 0
 #        self.MaxValue = 255
 #        self.NumChannels = NumArrays
@@ -29,10 +30,10 @@ import socket, os, errno, select, threading, time, random, signal, sys, struct
 #        #for i in range(1, self.NumServos+1):
 #        #    self.set(i, 512)
 #
-#    def getLED(self, channel): return self.values[channel]
+#    def getChannel(self, channel): return self.values[channel]
 #
 #    # arguments are PWM values 0-255
-#    def setLED(self, channel, values):
+#    def setChannel(self, channel, values):
 #      if isinstance(values, int): values = [values]
 #
 #      for v in values:
@@ -58,7 +59,7 @@ import socket, os, errno, select, threading, time, random, signal, sys, struct
 #
 #      self.setServoPos()
 #
-#    def __str__(self): return str({'LEDs':self.values, 'Servos':self.anglesDict})
+#    def __str__(self): return str({'Channels':self.values, 'Servos':self.anglesDict})
 #
 #    # argument is a dictionary of id:angle
 #    # angles are 0-1023; center is 512; safe angle range is 200-824
@@ -143,39 +144,43 @@ class NetworkArm:
   This class is collected by class LightArms and its socket is waited on by class SocketsThread.
   """
 
-  NumServos = 2
-  NumLEDs = 12#3
+  #NumServos = 2
+  #self.numServos = 12#3
 
-  # this class doesn't limit the LED values
-  MinLEDValue = 0
-  MaxLEDValue = 999
+  # this class doesn't limit the Channel values
+  MinChannelValue = 0
+  MaxChannelValue = 999
 
   def fitServoRange(v): return max(212, min(812, v))
-  def fitLEDRange(v): return max(0, min(NetworkArm.MaxLEDValue, v))
+  def fitChannelRange(v): return max(0, min(NetworkArm.MaxChannelValue, v))
 
-  def __init__(self, id=None, addr=None, port=1337, inverted=None):
+  def __init__(self, id=None, address=None, port=1337, numChannels=1, numServos=0, inversions=None):
     '''
     pass either id or addr
     id is the last byte of the IP address
     addr is the whole IP address as a string
-    inverted is a list of NumServos booleans
+    inverted is a list of numServos booleans
 
     '''
-    self.address = addr
+    print('NetworkArm: ', address, numChannels)
+    self.numChannels = numChannels
+    self.numServos = numServos
+
+    self.address = address
     if self.address == None: self.address = '10.0.0.' + str(id)
     self.port = port
     self.socket = None
 
-    self.inverted = inverted or [False] * self.NumServos
-    self.angles = [512] * self.NumServos
+    self.inverted = inversions or [False] * self.numServos
+    self.angles = [512] * self.numServos
     self.relaxed = False
 
-    # LEDs
-    self.intensities = [0] * self.NumLEDs
-    #self.intensities = [int(self.MaxLEDValue/2)] * self.NumLEDs
+    # Channels
+    self.channels = [0] * self.numChannels
+    #self.channels = [int(self.MaxChannelValue/2)] * self.numChannels
 
     self.createSocket()
-    #for i in range(1, self.NumServos+1):
+    #for i in range(1, self.numServos+1):
     #    self.set(i, 512)
 
   def createSocket(self):
@@ -190,22 +195,31 @@ class NetworkArm:
   def exit(self):
     self.socket.close()
 
-  def getLED(self, channel): return self.intensities[channel]
-
   # input range is 0-999
   # output range is 0-65535
   def toHighFreq(self, pwm):
     #return int(10535 + pwm / 999 * 55000)
     return int(pwm / 999 * 65535)
 
+  def getChannels(self): return list(self.channels)
+  def getChannel(self, channel): return self.channels[channel]
+
   # argument is PWM value 0-999
-  def setLED(self, channel, intensity):
-    self.intensities[channel] = intensity
+  def setChannel(self, channel, value):
+    self.channels[channel] = value
+    self.sendPWM()
+
+  def setChannels(self, channels):
+    if len(channels) != len(self.channels):
+      print("Number of channels doesn't match on address: ", self.address)
+      getchMsg()
+    for i in range(min(self.numChannels, len(channels))):
+      self.channels[i] = channels[i]
     self.sendPWM()
 
   def sendPWM(self):
     cmd = 'pwm '
-    for i in self.intensities:
+    for i in self.channels:
       cmd += str(self.toHighFreq(i)) + ' '
     self.send(cmd)
 
@@ -240,7 +254,7 @@ class NetworkArm:
     # but we're storing angles in a zero-indexed list
     cmd = 's'
 
-    for i in range(self.NumServos):
+    for i in range(self.numServos):
       dim = (i-1) % len(self.angles)
       angle = self.invert(i, self.angles[i])
       cmd += ' ' + str(i+1) + ':' + str(angle)
@@ -249,7 +263,7 @@ class NetworkArm:
 
   # appends newline
   def send(self, string):
-    print(string, self.address)
+    #print(self.address, ':', string)
     try:
       self.socket.send((string + '\r\n').encode())
     except (BrokenPipeError, BlockingIOError, OSError) as e:
@@ -323,24 +337,33 @@ class LightArms:
 
   """
 
-  NumLEDs = NetworkArm.NumLEDs
-  def fitServoRange(self, x): return NetworkArm.fitServoRange(x)
-  def fitLEDRange(self, x): return NetworkArm.fitLEDRange(x)
+  MaxChannels = 12 # max displayed
 
+  _singleton = None
+
+  def __new__(cls):
+    if not cls._singleton:
+      print('making Arms singleton')
+      cls._singleton = object.__new__(cls)
+    return cls._singleton
+    
   def __init__(self):
-    #
-    self.arms = [
-      NetworkArm(161, inverted=[True, False]),  # stage right side
-      NetworkArm(159, inverted=[True, False]), # stage right front
+    self.arms = []
+    self.thread = SocketsThread(self)
+
+  def initialize(self, config):
+    for args in config:
+      self.arms.append(NetworkArm(**args))
+
+#      NetworkArm(167, inverted=[True, False]),  # stage right side
+      #NetworkArm(158, inverted=[True, False]), # stage right front
 #      NetworkArm(85),                         # stage right back
 #      NetworkArm(2),                         # stage left back
 #      NetworkArm(4, inverted=[False, True]), # stage left front
 #      NetworkArm(5, inverted=[True, False]), # stage left side
       #NetworkArm(10),                        # aerial overhead
-    ]
+#    ]
     #for i in range(5): self.arms.append(NetworkArm(addr='localhost', port=3001+i))
-
-    self.thread = SocketsThread(self)
 
     # TODO command to center for now, but read position in future
     #ids = [s.id for s in self.servos if s.route == serial]
@@ -350,6 +373,8 @@ class LightArms:
     for arm in self.arms: arm.exit()
     self.thread.exit()
 
+  def fitServoRange(self, x): return NetworkArm.fitServoRange(x)
+  def fitChannelRange(self, x): return NetworkArm.fitChannelRange(x)
   def num(self): return len(self.arms)
 
   def findArm(self, socketOrIP):
@@ -360,12 +385,21 @@ class LightArms:
         if socketOrIP == arm.socket: return arm
     return None
 
-  def getLED(self, index, channel):
+  def getChannels(self, index):
     route = self.arms[index]
-    return route.getLED(channel)
-  def setLED(self, index, channel, value):
+    return route.getChannels()
+ 
+  def getChannel(self, index, channel):
     route = self.arms[index]
-    route.setLED(channel, value)
+    return route.getChannel(channel)
+
+  def setChannels(self, index, values):
+    route = self.arms[index]
+    route.setChannels(values)
+
+  def setChannel(self, index, channel, value):
+    route = self.arms[index]
+    route.setChannel(channel, value)
 
   def getAngle(self, index, dim):
     arm = self.arms[index]
@@ -403,21 +437,40 @@ class LightArms:
     d = {}
     for arm in self.arms:
       led = []
-      for channel in range(arm.NumLEDs):
-        led.append(arm.getLED(channel))
+      for channel in range(arm.numChannels):
+        led.append(arm.getChannel(channel))
+      d[arm.address] = {'channels':led}
+
+      if arm.numServos == 0: return
       angles = []
-      for i in range(NetworkArm.NumServos):
+      for i in range(arm.numServos):
         angles.append(arm.getAngle(i))
-      d[arm.address] = {'servos':angles, 'intensity':led}
+      d[arm.address]['servos'] = angles
 
     return str(d)
 
   def load(self, armData):
     for address, d in armData.items():
       arm = self.findArm(address)
-      if arm is None: continue
-      arm.setLED(d['intensity'])
+      if arm is None:
+        print("Address not found:", self.address)
+        getchMsg()
+        continue
+
+      channels = d['channels'] 
+      if len(channels) != arm.numChannels:
+        print("Number of channels doesn't match for address:", arm.address)
+        getchMsg()
+        continue
+
+      arm.setChannels(channels)
+
       angles = d['servos']
+      if len(angles) != arm.numServos:
+        print("Number of servos doesn't match for address:", arm.address)
+        getchMsg()
+        continue
+
       for i in range(len(angles)):
         arm.setAngle(i, angles[i])
 

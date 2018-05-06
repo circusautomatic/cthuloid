@@ -14,6 +14,7 @@ We unfortunately use the word 'cue' in two different ways:
 
 import sys, os, threading, ast, time, subprocess, random
 from console import *
+from lightarm import Arms
 
 #########################################################################################################
 # helpers
@@ -106,13 +107,20 @@ class CueLoad(Cue):
       data = loadCueFile(self.filename)
 
       self.targetDMX = None
-      if DMX and 'DMX' in data and data['DMX']:
-        self.targetDMX = data['DMX']
-        if not isinstance(self.targetDMX, list) or not isinstance(sum(self.targetDMX), int):
-          raise BaseException('error in DMX portion of cue file')
+      try:
+        if DMX and 'DMX' in data and data['DMX']:
+          self.targetDMX = data['DMX']
+          if not isinstance(self.targetDMX, list) or not isinstance(sum(self.targetDMX), int):
+            raise BaseException('error in DMX portion of cue file')
+      except: pass
 
-      self.limbs = Prinboo.limbs and data.get('Limbs')
-      self.armData = Arms and data.get('LightArm')
+      self.limbs = None
+      try: self.limbs = Prinboo.limbs and data.get('Limbs')
+      except: pass
+
+      self.armData = None
+      try: self.armData = Arms and data.get('LightArms')
+      except: pass
 
   def run(self, immediate=False):
       # load the file again in case it has changed since the cuesheet was loading
@@ -127,15 +135,38 @@ class CueLoad(Cue):
       if self.armData:
         Arms.load(self.armData)
 
+class WaitForPreviousThread(threading.Thread):
+  def __init__(self, prevThread, runner):
+    threading.Thread.__init__(self)
+    self.prevThread = prevThread
+    self.runner = runner
+    self.shouldExit = False
+    self.start()
+
+  def exit(self):
+    self.shouldExit = True
+
+  def run(self, immediate=False):
+    if self.prevThread:
+      while self.prevThread.isAlive():
+        time.sleep(.01)
+    self.runner()
+
+class Stepper:
+  def __init__(self): pass
+  def step(self): pass
+  def finish(self): pass
+
 class CueFade(CueLoad):
   """Fades from current scene to new scene.
 
-  Blocks during run() for the duration of the fade.
-  TODO: fix that fading can only be done for either DMX or LightArms.
+  Launches a thread to do the fading for DMX and other lights. Cancels a previous fade.
 
   usage:
   fade <optional time in seconds> <filename>
   """
+
+  _LightsThread = None
 
   def __init__(self, line):
     Cue.__init__(self, line)    # ignore CueLoad's constructor so we can parse differently
@@ -146,119 +177,126 @@ class CueFade(CueLoad):
 
     try:
       tok = tokens[1]
-      self.period = float(tok)
+      self.duration = float(tok)
       self.filename = restAfterWord(tok, line)
     except:
-      self.period = 5.0
+      self.duration = 5.0
       self.filename = restAfterWord(tokens[0], line)
 
     # load the file to syntax check it, so we can report an error at beginning
     # instead of during a run through
     self.load()
 
-  # TODO make this code not block
   def run(self, immediate=False):
-    #try:
-      # load the file again in case it has changed since the cuesheet was loading
-      self.load()
+    if self._LightsThread:
+      self._LightsThread.exit()
 
-      timestep = .05
-      printPeriodPeriod = .25
-      printPeriodTimestepCount = printPeriodPeriod / timestep
+    # load the file again in case it has changed since the cuesheet was loading
+    self.load()
 
-      # Light Arms - may be absent
-      # TODO fade light arms!
-      try:
-        if self.armData: Arms.load(self.armData)
-      except:
-        pass
+    # create a new thread that will call us
+    self._LightsThread = WaitForPreviousThread(self._LightsThread, self) 
 
-      # DMX
-      if self.targetDMX:
-        target = self.targetDMX
-        current = DMX.get()
-        vel = [0] * len(current)
+  # called by the thread created in run()
+  def __call__(self):
+    timestep = .05
+    printPeriodPeriod = .25
+    printPeriodTimestepCount = printPeriodPeriod / timestep
+    startTime = time.time()
+    endTime = startTime + self.duration
+    nextTime = startTime + timestep
+    nextPrintTime = startTime + printPeriodPeriod
 
-        # calculate delta for each timestep
-        # -1 means don't change
-        for i in range(len(target)):
-          if target[i] >= 0:
-            vel[i] = (target[i] - current[i]) * (timestep / self.period)
+    print('                 fading for', self.duration, 'seconds..', end='', flush=True)
 
-        print('                 fading for', self.period, 'seconds..', end='', flush=True)
-        startTime = time.time()
-        endTime = startTime + self.period
-        nextTime = startTime + timestep
-
-        while 1:
-          # calculate new channel values and transmit
-          for i in range(len(current)): current[i] += vel[i]
-          channels = [round(x) for x in current]
-          DMX.setAndSend(0, channels)
-
-          now = time.time()
-
-          # print a period every so often
-          if now >= nextPrintTime:
-            print('.', end='', flush=True)
-            nextPrintTime += printPeriodPeriod
-
-          if now > endTime: break
-          nexTime += timestep
-          time.sleep(nextTime - time.time())
-
-        # make sure we arrive at the target numbers, as rounding error may creep in
-        DMX.setAndSend(0, target)
-        print('DONE')
-    #except:
-    #  raise BaseException('Error talking to OLA DMX server')
-    # TODO other exceptions having to do with the fade math
-
-# blocking code for fading arm light intensities
-#      if self.armData:
-#        target = [0] * Arms.num()
-#        current = [0] * Arms.num()
-#        vel = [0] * Arms.num()
+#    try:
+#      if self.armData: Arms.load(self.armData)
+#    except:
+#      pass
 #
-#        # map each address to an index
-#        for address, data in self.armData.items():
-#          i = Arms.arms.index(Arms.findArm(address))
-#          target[i] = data.get('intensity', 0)
-#
-#        for i in range(Arms.num()):
-#          current[i] = Arms.getLED(i)
-#
-#        # calculate delta for each timestep
-#        # -1 means don't change
-#        for i in range(len(target)):
-#          if target[i] >= 0:
-#            vel[i] = (target[i] - current[i]) * (timestep / self.period)
-#
-#        print('                 fading for', self.period, 'seconds..', end='', flush=True)
-#        startTime = time.time()
-#        endTime = startTime + self.period
-#        nextTime = startTime + timestep
-#        nextPrintTime = startTime + printPeriodPeriod
-#
-#        while 1:
-#          # calculate new channel values and transmit
-#          for i in range(len(current)):
-#            current[i] += vel[i]
-#            Arms.setLED(i, current[i])
-#
-#          now = time.time()
-#
-#          # print a period every so often
-#          if now >= nextPrintTime:
-#            print('.', end='', flush=True)
-#            nextPrintTime += printPeriodPeriod
-#
-#          if now > endTime: break
-#          nextTime += timestep
-#          time.sleep(nextTime - time.time())
-#
-#        # make sure we arrive at the target numbers, as rounding error may creep in
-#        Arms.load(self.armData)
+    steppers = []
+
+    if self.targetDMX:
+      steppers.append(DmxFader(self.duration, timestep, self.targetDMX))
+
+    if self.armData:
+      steppers.append(PwmFader(self.duration, timestep, self.armData))
+    
+    while 1:
+      for s in steppers: s.step()
+      now = time.time()
+
+      # print a duration every so often
+      if now >= nextPrintTime:
+        print('.', end='', flush=True)
+        nextPrintTime += printPeriodPeriod
+
+      if now > endTime: break
+      nextTime += timestep
+      time.sleep(nextTime - time.time())
+
+    print('DONE')
+    # TODO exceptions having to do with the fade math
+
+
+class DmxFader:
+  def __init__(self, duration, timestep, targetDMX):
+    self.target = targetDMX
+    self.current = DMX.get()
+    self.vel = [0] * len(self.current)
+
+    # calculate delta for each timestep
+    # -1 means don't change
+    for i in range(len(target)):
+      if target[i] >= 0:
+        self.vel[i] = (self.target[i] - self.current[i]) * (timestep / duration)
+
+  def step(self):
+    # calculate new channel values and transmit
+    for i in range(len(self.current)): self.current[i] += vel[i]
+    channels = [round(x) for x in self.current]
+    DMX.setAndSend(0, channels)
+
+  def finish(self):
+    # make sure we arrive at the target numbers, as rounding error may creep in
+    DMX.setAndSend(0, self.target)
+
+#except:
+#  raise BaseException('Error talking to OLA DMX server')
+
+class PwmFader:
+  def __init__(self, duration, timestep, armData):
+    self.armData = armData
+    self.target = []
+    self.current = []
+    self.vel = []
+
+    # map each address to an index
+    for address, arm in self.armData.items():
+      i = Arms.arms.index(Arms.findArm(address))
+      self.target.append(arm.get('channels', []))
+
+    for i in range(Arms.num()):
+      self.current.append(Arms.getChannels(i))
+
+    # calculate delta for each timestep
+    # -1 means don't change
+    for i in range(len(self.target)):
+      self.vel.append([])
+      for j in range(len(self.target[i])):
+        if self.target[i][j] >= 0:
+          self.vel[i].append((self.target[i][j] - self.current[i][j]) * (timestep / duration))
+        else: self.vel[i].append(0)
+
+  def step(self):
+      # calculate new channel values and transmit
+      for i in range(len(self.current)):
+        self.current[i] = [a+b for a,b in zip(self.current[i], self.vel[i])]
+        Arms.setChannels(i, self.current[i])
+
+  def finish(self):
+    # make sure we arrive at the target numbers, as rounding error may creep in
+    Arms.load(self.armData)
 
 
 class CuePrinboo(CueLoad):
@@ -282,7 +320,7 @@ class CuePrinboo(CueLoad):
       timestep = 1. / self.framerate
       vel = 1
 
-      # Signal the previous thread to exit, and hand it to the next thread
+      # Signal the previous thread to exit, and hand it to the next threadV
       # so it can wait.
       if Prinboo.limbsThread:
         Prinboo.limbsThread.exit()
@@ -435,10 +473,21 @@ def cmdSave(tokens, line):
     raise BaseException('no filename')
 
   filename = restAfterWord(tokens[0], line)
-  dmx = 'None' #str(DMX.get())
-  #arms = str(Arms)
-  angles = str(Prinboo.limbs)
-  text = "{\n 'version': 0,\n 'DMX': " + dmx + ",\n 'Limbs': " + angles + "\n}"
+  text = "{\n 'version': 0"
+  
+  #try:
+  text += ",\n  'LightArms': " + str(Arms)
+  #except: pass
+
+  try: 
+    text += ",\n  'DMX': " + str(DMX.get())
+  except: pass
+  
+  try:
+    text += ",\n  'Limbs': " + str(Prinboo.limbs)
+  except: pass
+    
+  text += "\n}\n"
   #text = "{\n 'version': 0,\n 'DMX': " + dmx + ",\n 'LightArm': {\n  'Servos': " + str(ucServos) + ",\n  'LEDs': " + str(ucLEDs) + "\n }\n}"
   #text = "{'version': 0, 'DMX': " + dmx + ", 'LightArm': {'Servos': " + str(ucServos) + ", 'LEDs': " + str(ucLEDs) + "}}"
 
@@ -446,7 +495,6 @@ def cmdSave(tokens, line):
   try:
     with openCueFile(filename, 'w') as f:
       f.write(text)
-      f.write('\n')
   except OSError as e:
     #raise BaseException('Error saving file')
     print(e)
