@@ -548,25 +548,25 @@ class CueView(View):
     elif ch == ',' or ch == '<':
       CueMgr.prevScene()
 
-    # Prinboo live controls
-    elif ch == 'w':
-      Prinboo.screen.togglePlayback()
-    elif ch == 'a':
-      Prinboo.motors.incSpeed()
-    elif ch == 'd':
-      Prinboo.motors.decSpeed()
-    elif ch == 's':
-      Prinboo.motors.stop()
-    elif ch == '\x1b':
-      seq = getch() + getch()
-      if seq == '[A': # up arrow
-        Prinboo.motors.forward() 
-      elif seq == '[B': # down arrow
-        Prinboo.motors.backward() 
-      elif seq == '[C': # left arrow
-        Prinboo.motors.turnLeft() 
-      elif seq == '[D': # right arrow
-        Prinboo.motors.turnRight()
+#    # Prinboo live controls
+#    elif ch == 'w':
+#      Prinboo.screen.togglePlayback()
+#    elif ch == 'a':
+#      Prinboo.motors.incSpeed()
+#    elif ch == 'd':
+#      Prinboo.motors.decSpeed()
+#    elif ch == 's':
+#      Prinboo.motors.stop()
+#    elif ch == '\x1b':
+#      seq = getch() + getch()
+#      if seq == '[A': # up arrow
+#        Prinboo.motors.forward() 
+#      elif seq == '[B': # down arrow
+#        Prinboo.motors.backward() 
+#      elif seq == '[C': # left arrow
+#        Prinboo.motors.turnLeft() 
+#      elif seq == '[D': # right arrow
+#        Prinboo.motors.turnRight()
 
 
 

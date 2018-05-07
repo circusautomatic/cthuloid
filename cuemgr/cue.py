@@ -483,7 +483,6 @@ def cmdSave(tokens, line):
   #except: pass
 
   try: 
-    import pdb; pdb.set_trace()
     text += ",\n  'DMX': " + str(DMX.get())
   except: pass
   
