@@ -15,6 +15,9 @@ We unfortunately use the word 'cue' in two different ways:
 import sys, os, threading, ast, time, subprocess, random
 from console import *
 from lightarm import Arms
+from dmx import DMX
+from pivideo import Video
+#from prinboo import Prinboo
 
 #########################################################################################################
 # helpers
@@ -199,7 +202,7 @@ class CueFade(CueLoad):
 
   # called by the thread created in run()
   def __call__(self):
-    timestep = .05
+    timestep = 1/30.0
     printPeriodPeriod = .25
     printPeriodTimestepCount = printPeriodPeriod / timestep
     startTime = time.time()
@@ -247,14 +250,15 @@ class DmxFader:
 
     # calculate delta for each timestep
     # -1 means don't change
-    for i in range(len(target)):
-      if target[i] >= 0:
+    for i in range(len(self.target)):
+      if self.target[i] >= 0:
         self.vel[i] = (self.target[i] - self.current[i]) * (timestep / duration)
 
   def step(self):
     # calculate new channel values and transmit
-    for i in range(len(self.current)): self.current[i] += vel[i]
-    channels = [round(x) for x in self.current]
+    for i in range(len(self.current)): self.current[i] += self.vel[i]
+    #print(self.current[0])
+    channels = [DMX.fitRange(x) for x in self.current]
     DMX.setAndSend(0, channels)
 
   def finish(self):
@@ -454,8 +458,7 @@ class CueVideo(CueLoad):
   def load(self):
     pass #maybe check file exists
   def run(self, immediate=False):
-    #subprocess.call([self.player, self.filename])
-    Prinboo.screen.play(self.filename)
+    Video.playVideo(self.filename)
 
 def cmdCue(line, CueClass):
   """instantiate a type of cue and run it immediately"""
@@ -480,6 +483,7 @@ def cmdSave(tokens, line):
   #except: pass
 
   try: 
+    import pdb; pdb.set_trace()
     text += ",\n  'DMX': " + str(DMX.get())
   except: pass
   
@@ -503,7 +507,7 @@ def cmdSave(tokens, line):
 CueClassMap = {
   'load':CueLoad,
   'fade':CueFade,
-  'limbs':CuePrinboo,
-  'c':CuePrinboo,
-#  'video':CueVideo,
+  #'limbs':CuePrinboo,
+  #'c':CuePrinboo,
+  'video':CueVideo,
 }

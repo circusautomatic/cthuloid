@@ -1,3 +1,12 @@
 scene Start
-	load off
-	load prinboo_test
+  load off
+
+scene All
+  seq
+    fade 3 testboth
+    video rachshort.mp4
+
+scene Closing
+  seq
+    fade 5 off
+    video black

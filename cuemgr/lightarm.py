@@ -11,133 +11,6 @@ A spotlight robot:
 import socket, os, errno, select, threading, time, random, signal, sys, struct
 from console import * 
 
-#######################################################################
-# dynamixel servos
-#class Servos(SerialThread):
-#    def __init__(self, path):
-#        SerialThread.__init__(self, path)
-#        self.mode = None
-#        self.numLinesToFollow = 0
-#        self.anglesDict = {}
-#
-#        # Channels
-#        self.MinValue = 0
-#        self.MaxValue = 255
-#        self.NumChannels = NumArrays
-#        self.values = [self.MinValue] * self.NumChannels
-#
-#        #self.NumServos = 4 * NumArrays
-#        #for i in range(1, self.NumServos+1):
-#        #    self.set(i, 512)
-#
-#    def getChannel(self, channel): return self.values[channel]
-#
-#    # arguments are PWM values 0-255
-#    def setChannel(self, channel, values):
-#      if isinstance(values, int): values = [values]
-#
-#      for v in values:
-#        self.values[channel] = v
-#        channel += 1
-#
-#      cmd = 'pwm'
-#      for v in self.values: cmd += ' ' + str(v)
-#      cmd += '\n'
-#
-#      self.write(str.encode(cmd))
-#
-#    def getAngle(self, id): return self.anglesDict[id]
-#
-#    def setAngle(self, idOrDict, angle=None):
-#      if isinstance(idOrDict, int):
-#        self.anglesDict[idOrDict] = angle
-#      elif isinstance(idOrDict, dict):
-#        for id,angle in idOrDict.items(): self.anglesDict[id] = angle
-#      elif isinstance(idOrDict, list):
-#        for id in idOrDict: self.anglesDict[id] = angle
-#      else: raise TypeError('bad argument to Servos.setAngle')
-#
-#      self.setServoPos()
-#
-#    def __str__(self): return str({'Channels':self.values, 'Servos':self.anglesDict})
-#
-#    # argument is a dictionary of id:angle
-#    # angles are 0-1023; center is 512; safe angle range is 200-824
-#    def setServoPos(self, binary=False):
-#        print(self.anglesDict)
-#        if not self.valid(): return
-#
-#        # send a text command which says to expect a block of binary
-#        # then send the angles as an array of 16-bit ints in order
-#        # angle is set to 0 for missing IDs
-#        if binary:
-#            maxID = 0  # IDs start at 1, so numAngles = highest ID
-#            for id,angle in anglesDict.items():
-#                maxID = max(maxID, id)
-#
-#            cmd = 'B ' + str(maxID) + '\n'
-#            #print(cmd)
-#            self.write(str.encode(cmd))
-#
-#            buf = bytearray()
-#            for id in range(1, maxID+1):
-#                angle = 0
-#                if id in anglesDict: angle = anglesDict[id]
-#
-#                # 16-bit little endian
-#                buf += struct.pack('<H', angle)
-#
-#            print(buf)
-#            ucServos.write(buf)
-#
-#        # text protocol of id:angle pairs
-#        else:
-#            cmd = 's'
-#            for id,angle in self.anglesDict.items():
-#                cmd += ' ' + str(id) + ':' + str(angle)
-#
-#            cmd += '\n'
-#            #print(cmd)
-#            self.write(str.encode(cmd))
-#
-#    def handleLine(self, line): pass
-#        # read the positions of all servos, which is spread over multiple lines
-#        # expect the next some number of lines to be servo info
-##        if line.startswith('Servo Readings:'):
-##            self.numLinesToFollow = int(line[15:])
-##            self.mode = 'r'
-##            self.anglesDict = {}
-##            print('expecting', self.numLinesToFollow, 'servo readings')
-##
-##        # information about a single servo, on a single line
-##        elif self.mode == 'r':
-##            id, pos = None, None
-##            for pair in line.split():
-##                kv = pair.split(':')
-##                key = kv[0]
-##                if   key == 'ID':  id = int(kv[1])
-##                elif key == 'pos': pos = int(kv[1])
-##            self.anglesDict[id] = pos
-##            self.numLinesToFollow -= 1
-##
-##            # done, reset mode
-##            if self.numLinesToFollow == 0:
-##                print(self.anglesDict)
-##                self.mode = None
-##
-##        #else: print(line)
-#
-#    # takes one or a list of IDs
-#    # relaxes all if IDs is None
-#    def moveAllServos(self, pos, binary=False):
-#        anglesDict = {}
-#        for i in range(numServos):
-#            anglesDict[i+1] = pos
-#        self.setServoPos(binary)
-#
-#    def readServos(self):
-#        self.write(b'r\n')
-
 class NetworkArm:
   """Abstracts one spotlight robot over ethernet.
 
@@ -351,23 +224,9 @@ class LightArms:
     self.arms = []
     self.thread = SocketsThread(self)
 
-  def initialize(self, config):
-    for args in config:
+  def initialize(self, configDict):
+    for args in configDict.get('LightArms', {}):
       self.arms.append(NetworkArm(**args))
-
-#      NetworkArm(167, inverted=[True, False]),  # stage right side
-      #NetworkArm(158, inverted=[True, False]), # stage right front
-#      NetworkArm(85),                         # stage right back
-#      NetworkArm(2),                         # stage left back
-#      NetworkArm(4, inverted=[False, True]), # stage left front
-#      NetworkArm(5, inverted=[True, False]), # stage left side
-      #NetworkArm(10),                        # aerial overhead
-#    ]
-    #for i in range(5): self.arms.append(NetworkArm(addr='localhost', port=3001+i))
-
-    # TODO command to center for now, but read position in future
-    #ids = [s.id for s in self.servos if s.route == serial]
-    #serial.setAngle(ids, 512)
 
   def exit(self):
     for arm in self.arms: arm.exit()
@@ -411,24 +270,24 @@ class LightArms:
     arm.setAngle(dim, angle)
     return
 
-    if isinstance(indexOrDict, int):
-      indexOrDict = {indexOrDict:angle}
-    elif isinstance(indexOrDict, list):
-      d = {}
-      for i in indexOrDict: d[i] = angle
-      indexOrDict = d
-
-    if isinstance(indexOrDict, dict):
-      # split a dict into multiple dicts based on each ID's route
-      dicts = {}
-      for index,angle in indexOrDict.items():
-        servo = self.servos[index]
-        if servo.invert: angle = Servo.inverse(angle)
-        route = servo.route
-        if route not in dicts: dicts[route] = {}
-        dicts[route][servo.id] = angle
-      for route in dicts:
-        route.setAngle(dicts[route])
+#    if isinstance(indexOrDict, int):
+#      indexOrDict = {indexOrDict:angle}
+#    elif isinstance(indexOrDict, list):
+#      d = {}
+#      for i in indexOrDict: d[i] = angle
+#      indexOrDict = d
+#
+#    if isinstance(indexOrDict, dict):
+#      # split a dict into multiple dicts based on each ID's route
+#      dicts = {}
+#      for index,angle in indexOrDict.items():
+#        servo = self.servos[index]
+#        if servo.invert: angle = Servo.inverse(angle)
+#        route = servo.route
+#        if route not in dicts: dicts[route] = {}
+#        dicts[route][servo.id] = angle
+#      for route in dicts:
+#        route.setAngle(dicts[route])
 
   def relax(self, index):
     self.arms[index].relax()
@@ -441,11 +300,11 @@ class LightArms:
         led.append(arm.getChannel(channel))
       d[arm.address] = {'channels':led}
 
-      if arm.numServos == 0: return
-      angles = []
-      for i in range(arm.numServos):
-        angles.append(arm.getAngle(i))
-      d[arm.address]['servos'] = angles
+      if arm.numServos > 0:
+        angles = []
+        for i in range(arm.numServos):
+          angles.append(arm.getAngle(i))
+        d[arm.address]['servos'] = angles
 
     return str(d)
 
@@ -465,7 +324,7 @@ class LightArms:
 
       arm.setChannels(channels)
 
-      angles = d['servos']
+      angles = d.get('servos', [])
       if len(angles) != arm.numServos:
         print("Number of servos doesn't match for address:", arm.address)
         getchMsg()

@@ -16,46 +16,44 @@ TODO:
 """
 
 
-config = {
-  'LightArms': [
-    {'address':'10.0.0.167', 'numChannels':12},
-    
-    # this is how you would define a light arm
-    #{'address':'10.0.0.161', 'numChannels':3, 'numServos':2, 'inversions':[False, False]}
-  ]
-}
-
 
 import sys, os, os.path, threading, ast, time, signal
 from console import * 
 from cue import *
 from cueengine import CueEngine
 from trackspot import TrackSpot
+from config import config
 
 CuesFilename = 'cuesheet.txt'   #initial cuesheet automatically loaded
 
 CueMgr = CueEngine()
 
-try:
-  import prinboo
-  Prinboo = prinboo.Prinboo('92.168.42.152')
-except ImportError:
-  Prinboo = None
-  print('No Prinboo')
+#try:
+#  from prinboo import Prinboo
+#except ImportError:
+Prinboo = None
+#  print('No Prinboo')
 
 try:
-  from lightarm import Arms
-except:
+  from pivideo import Video
+except ImportError:
+  Video = None
+  print('No Video')
+
+try: from lightarm import Arms
+except ImportError:
   Arms = None
   print('No LightArms')
-Arms.initialize(config['LightArms'])
 
-try:
-  import dmx
-  DMX = dmx.DmxChannels()
-except ImportError:
+try: from dmx import DMX
+except KeyError:
   DMX = None
   print('No DMX')
+
+# call initialize outside of try-except to show errors to user
+if Arms: Arms.initialize(config)
+if DMX: DMX.initialize(config)
+if Video: Video.initialize(config)
 
 print("\n\n")
 
@@ -150,14 +148,18 @@ class LightArmView(View):
   def modAngle(self, type, inc):
     dim = self.ServoDims[type]
     for id in self.selected():
-      angle = Arms.fitServoRange(Arms.getAngle(id, dim)) 
+      try: a = Arms.getAngle(id, dim)
+      except IndexError: return
+      angle = Arms.fitServoRange(a)
       Arms.setAngle(id, dim, angle + inc)
 
   # add increment to the intensity of the currently selected arm(s)
   def modI(self, inc, channel):
-    print('ids:', self.selected())
+    #print('ids:', self.selected())
     for id in self.selected():
-      Arms.setChannel(id, channel, Arms.fitChannelRange(Arms.getChannel(id, channel) + inc))
+      try: v = Arms.getChannel(id, channel)
+      except IndexError: return
+      Arms.setChannel(id, channel, Arms.fitChannelRange(v + inc))
 
   def handleLineInput(self, line):
     tokens = line.split()
@@ -169,7 +171,7 @@ class LightArmView(View):
     if ch == 'x':
       self.toggleMode() 
     if ch == 'q': 
-      Arms.relax(self.selected())
+      for id in self.selected(): Arms.relax(id)
     if ch == '0':
       pass #Arms.setAngles(self.selected(), [Arms.ServoCenter] * len(self.ServoDims))
     elif ch == 'w':
@@ -581,6 +583,7 @@ def signal_handler(signal, frame):
   if DMX: DMX.exit()
   if Arms: Arms.exit()
   if Prinboo: Prinboo.exit()
+  if Video: Video.exit()
   exit()
 
 def programExit(): 

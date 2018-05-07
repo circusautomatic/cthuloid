@@ -124,7 +124,7 @@ class Screen:
         ssh = paramiko.SSHClient()
         self.ssh = ssh
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(address, username='pi', password='raspberry')
+        ssh.connect(address, username='pi', password='tankgirl')
         # start playing immediately
         self.play('~/cthuloid/ghettopticon/blender/prinboo-talking.mp4')
       #except paramiko.ssh_exception.NoValidConnectionsError:
