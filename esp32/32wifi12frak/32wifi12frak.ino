@@ -28,6 +28,8 @@ int freq = 20000;
 int res = 16;
 int steps = 1;
 int defaultlight = 4000;
+int maxfreq = 40000;
+
 
 int ledChannel = 0;
 int ledChannel1 = 1;
@@ -214,7 +216,7 @@ void cmdSetFrequency() {
     char *end;
     double v = strtod(arg, &end);
 
-    if(*end != '\0' || v < 1 || v > 1000) {
+    if(*end != '\0' || v < 1 || v > maxfreq) {
       printlnError("Error: speed is in angle-units per second; between 1 and 1000");
       return;
     }
@@ -306,7 +308,10 @@ void cmdServo() {
 
 void setup() {
   ledsetup();
-  myHRWrite(PWMPins[2], 0);//RED_PWM_MAX);
+  for (int i=0; i <= sizeof(PWMPins) - 1; i++){
+  myHRWrite(PWMPins[i], 0);//RED_PWM_MAX);
+  delay(10);
+  }
   Serial.begin(115200);
 
   WiFi.begin(ssid, password);
@@ -370,7 +375,7 @@ void loop() {
       if (client.available()) {             // if there's bytes to read from the client,
         char c = client.read();             // read a byte, then
         CmdMgr.handleChar(c);
-        Serial.write(c);  // print it out the serial monitor
+        //Serial.write(c);  // print it out the serial monitor
       }
     }
   }
