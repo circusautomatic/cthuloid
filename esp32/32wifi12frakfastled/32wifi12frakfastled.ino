@@ -1,10 +1,11 @@
 // Arduino sketch which outputs PWM for a set of channels based on serial input.
+// This is the most recent one and the one that is currently being worked on with current issues november 16 2018 AMV
 
 
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <WiFiClient.h>
-#include "FastLED.h"
+#include <FastLED.h>
 #include <SC.h>
 #include <PrintLevel.h>
 
@@ -68,6 +69,7 @@ const char *MsgPWMTupleFormatError = "Error: takes up to 6 arguments between 0 a
 /////////////////////////////////////////////////////////////////////////////////////////
 // Command Manager and forward declarations for commands accessible from text interface
 /////////////////////////////////////////////////////////////////////////////////////////
+
 struct IDTuple {
   int id;
   long value;
@@ -160,6 +162,13 @@ void updateFrequency() {
   ledcAttachPin(23, ledChannel9);
   ledcAttachPin(22, ledChannel10);
   ledcAttachPin(21, ledChannel11);
+}
+
+//AMV additions
+void testfastled() {
+	for(uint8_t i=0, i < NUM_LEDS; i++){
+		leds[i].setRGB(255, 68, 221);
+	}
 }
 
 void ledsetup() {
