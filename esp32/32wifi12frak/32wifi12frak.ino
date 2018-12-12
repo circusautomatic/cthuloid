@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <WiFiClient.h>
+#include "/home/fleeky/Arduino/hardware/espressif/esp32/tools/sdk/include/freertos/freertos/task.h"
 
 const char* ssid = "ubitron";
 const char* password = "superduper";
@@ -21,8 +22,12 @@ const int timeout = 30;
 #include <SC.h>
 #include <PrintLevel.h>
 #define INVERT_HIGH_AND_LOW
-#define RED_MAX_PWM 40000
-#define MAX_PWM 65535
+#define RED_MAX_PWM 65534
+#define MAX_PWM 65534
+
+constexpr int NumPeriods = 10;     // number of steps in fade
+constexpr int PeriodLength = 10;   // sleep for this many ms
+
 //////////////////////////////////////////////////////////////////////////////////////
 int freq = 20000;
 int res = 16;
@@ -46,8 +51,8 @@ int ledChannel11 = 11;
 
 const int PWMPins[] = {32, 33, 25, 26, 27, 14, 12, 13, 2, 23, 22, 21};
 const int NumPWMPins = sizeof(PWMPins) / sizeof(*PWMPins);
+int PinCurrentValues[NumPWMPins] = {0};
 // this flag will invert PWM output (65535 - PWM), for active-low devices
-
 
 const char *MsgPWMTupleFormatError = "Error: takes up to 6 arguments between 0 and 255";
 
@@ -268,13 +273,25 @@ void cmdPWMPins() {
     count++;
   } while (arg = CmdMgr.next());
 
-  for (int i = 0; i < count; i++) {
-    unsigned long c = channelValues[i];
-    printlnAlways(c);
-    myHRWrite(PWMPins[i], c);
+  // interpolate over a period of time
+  const TickType_t xDelay = PeriodLength / portTICK_PERIOD_MS;
+
+  for (int period = 1; period < 1+NumPeriods; period++) {
+    float fraction = period / (float)NumPeriods;
+    for (int i = 0; i < count; i++) {
+      unsigned long v = PinCurrentValues[i] + (channelValues[i] - PinCurrentValues[i]) * fraction;
+      //printlnAlways(v);
+      myHRWrite(PWMPins[i], v);
+    }
+    vTaskDelay(xDelay); 
   }
 
-
+  for (int i = 0; i < count; i++) {
+    unsigned long v = channelValues[i];
+    PinCurrentValues[i] = v;
+    myHRWrite(PWMPins[i], v);
+  }
+  
   printAck("OK set ");
   printAck(count);
   printlnAck(" pins");
@@ -308,18 +325,15 @@ void cmdServo() {
 
 void setup() {
   ledsetup();
-  for (int i=0; i <= sizeof(PWMPins) - 1; i++){
-  myHRWrite(PWMPins[i], 0);//RED_PWM_MAX);
-  delay(10);
+  for (int i=0; i < NumPWMPins; i++){
+    myHRWrite(PWMPins[i], 0);
+    PinCurrentValues[i] = 0;
+    delay(10);
   }
   Serial.begin(115200);
 
   WiFi.begin(ssid, password);
   Serial.println("");
-
-//  cmdPWMPins();
-
-  
 
   // Wait for connection
   int i = 0;
@@ -365,20 +379,22 @@ void setup() {
   Serial.println("Initial LED Setup");
 }
 
+WiFiClient LastClient;
+
 void loop() {
   CmdMgr.readSerial();
-  WiFiClient client = server.available();
-  if (client) {                             // if you get a client,
-    Serial.println("New Client.");           // print a message out the serial port
-    String currentLine = "";                // make a String to hold incoming data from the client
-    while (client.connected()) {            // loop while the client's connected
-      if (client.available()) {             // if there's bytes to read from the client,
-        char c = client.read();             // read a byte, then
+  if (WiFiClient newClient = server.available()) {
+      Serial.println("New Client.");
+      LastClient = newClient;
+  }
+
+  if (LastClient && LastClient.connected()) {
+      while (LastClient.available()) {
+        char c = LastClient.read();             // read a byte, then
         CmdMgr.handleChar(c);
-        //Serial.write(c);  // print it out the serial monitor
+        Serial.write(c);  // print it out the serial monitor
       }
     }
-  }
 }
 
 
