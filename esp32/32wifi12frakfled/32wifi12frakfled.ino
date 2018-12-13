@@ -9,7 +9,7 @@
 #include <PrintLevel.h>
 
 // How many leds are in the strip?
-#define NUM_LEDS 18
+#define NUM_LEDS 114
 
 // Data pin that led data will be written out over
 #define DATA_PIN 27
@@ -27,8 +27,8 @@ const int numColors = 3;
 
 
 //WIFI PASS
-const char* ssid = "touchametron";
-const char* password = "superduper";
+const char* ssid = "****";
+const char* password = "****";
 
 // TCP server at port 80 will respond to HTTP requests
 WiFiServer server(1337);
@@ -111,48 +111,28 @@ void cmdMultiColor() {
   FastLED.show();
 //  delay(30);
 }
-
-//void cmdSetColor(){
-//  long colorSet[numColors];
-//  char *arg = CmdMgr.next();
-//  if (arg == NULL) {
-//    printlnError("Error: no arguments");
-//    }
-//  while (arg = CmdMgr.next());
-//
-//  for (int i = 0; i < numColors; i++) {
-////    colorSet[i] = arg[i];
-//    unsigned long c = colorSet[i];
-//    printlnAlways(c);
-//  }
-//
-////  else {
-////    for (int i=arg; i<3; i++)
-////    {
-////      
-//////    numb = atoi(arg1);
-//////    numg = atoi(arg2);
-//////    numr = atoi(arg3);
-////    }
-////  }
-////  fill_solid( leds, NUM_LEDS, CRGB(numr, numg, numb));
-////  FastLED.show();
-////  printlnError(numb);
-////  printlnError(numg);
-////  printlnError(numr);
-//  return;
-//}
-
 void cmdSetColor(){
   char *arg = CmdMgr.next();
   if (arg == NULL) {
-    printlnError("Error: no arguments");
+    printlnError("Error: no red arguments");
     }
   else{
-   numb = atoi(arg);
-   numg = 0;
-   numr = 0;
+   numr = atoi(arg);
   }
+  char *arg1 = CmdMgr.next();
+  if (arg1 == NULL) {
+    printlnError("Error: no green arguments");
+    }
+  else{
+   numg = atoi(arg1);
+  }
+  char *arg2 = CmdMgr.next();
+  if (arg2 == NULL) {
+    printlnError("Error: no blue arguments");
+    }
+  else{
+   numb = atoi(arg2);
+  }  
   for(uint8_t i=0; i < NUM_LEDS; i++){
     fill_solid( leds, NUM_LEDS, CRGB(numr, numg, numb));
      }
@@ -168,7 +148,7 @@ void cmdSetColor(){
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void setup() {
-  FastLED.addLeds<WS2811, DATA_PIN, GRB>(leds, NUM_LEDS);
+  FastLED.addLeds<WS2811, DATA_PIN, RGB>(leds, NUM_LEDS);
   fill_solid( leds, NUM_LEDS, CRGB(0, 0, 0));
   FastLED.show();
   delay(10);
