@@ -9,7 +9,7 @@
 #include <PrintLevel.h>
 
 // How many leds are in the strip?
-#define NUM_LEDS 114
+#define NUM_LEDS 18
 
 // Data pin that led data will be written out over
 #define DATA_PIN 27
@@ -17,18 +17,30 @@
 // This is an array of leds.  One item for each led in your strip.
 CRGB leds[NUM_LEDS];
 
+//Max RGB value
+#define MAX_RGB 255
+
 //Initial Values for CMDSetColor
+int id = 0;
+int ledr = 0;
+int ledg = 0;
+int ledb = 0;
 int numr = 0;
 int numg = 0;
 int numb = 0;
 
-int colorSetBlock[]={0,0,0};
+//Values for individiaul rgb setting
+const int rows = 18;
+const int cols = 3;
+//int carray[ rows ][ cols ] = {};
+
+int colorSetBlock[] = {0, 0, 0};
 const int numColors = 3;
 
 
 //WIFI PASS
-const char* ssid = "****";
-const char* password = "****";
+const char* ssid = "touchametron";
+const char* password = "superduper";
 
 // TCP server at port 80 will respond to HTTP requests
 WiFiServer server(1337);
@@ -46,15 +58,19 @@ void cmdAmber();
 void cmdBlack();
 void cmdMultiColor();
 void cmdSetColor();
+void cmdSetInd();
+//void cmdSetIndHelper();
 
 SerialCommand::Entry CommandsList[] = {
   {"red",       cmdRed},
   {"blue",      cmdBlue},
   {"green",     cmdGreen},
   {"amber",     cmdAmber},
-  {"black",     cmdBlack},  
-  {"multi",     cmdMultiColor},
+  {"black",     cmdBlack},
+  {"m",     cmdMultiColor},
   {"c",      cmdSetColor},
+  {"i",      cmdSetInd},
+//  {"test",  cmdSetIndHelper},
   {NULL,     NULL}
 };
 SerialCommand CmdMgr(CommandsList, cmdUnrecognized);
@@ -69,86 +85,172 @@ void cmdUnrecognized(const char *cmd) {
 }
 
 void cmdRed() {
-    // Turn the LED red
+  // Turn the LED red
   fill_solid( leds, NUM_LEDS, CRGB(255, 0, 0));
   FastLED.show();
-//  delay(30); 
+  //  delay(30);
 
 }
 
 void cmdBlue() {
-    // Turn the LED blue
+  // Turn the LED blue
   fill_solid( leds, NUM_LEDS, CRGB(0, 0, 255));
   FastLED.show();
-//  delay(30);
+  //  delay(30);
 }
 
 void cmdGreen() {
-    // Turn the LED green
+  // Turn the LED green
   fill_solid( leds, NUM_LEDS, CRGB(0, 255, 0));
   FastLED.show();
-//  delay(30);
+  //  delay(30);
 }
 
 void cmdBlack() {
-    // Turn the LED off
+  // Turn the LED off
   fill_solid( leds, NUM_LEDS, CRGB(0, 0, 0));
   FastLED.show();
-//  delay(30);
+  //  delay(30);
 }
 
 void cmdAmber() {
-    // Turn the LED amber
+  // Turn the LED amber
   fill_solid( leds, NUM_LEDS, CRGB(178, 68, 0));
   FastLED.show();
-//  delay(30);
+  //  delay(30);
 }
 
 void cmdMultiColor() {
-    // Turn the LED amber
-  fill_solid( leds, NUM_LEDS, CRGB(0, 0, 255));
-  fill_solid( leds, 9, CRGB(255, 0, 0));
+char *larg = CmdMgr.next();
+  if (larg == NULL) {
+    printlnError("Error: no id arguments");
+  }
+  else {
+    id = atoi(larg);
+  }
+  char *larg1 = CmdMgr.next();
+  if (larg1 == NULL) {
+    printlnError("Error: no red arguments");
+  }
+  else {
+    ledr = atoi(larg1);
+  }
+  char *larg2 = CmdMgr.next();
+  if (larg2 == NULL) {
+    printlnError("Error: no green arguments");
+  }
+  else {
+    ledg = atoi(larg2);
+  }
+  char *larg3 = CmdMgr.next();
+  if (larg3 == NULL) {
+    printlnError("Error: no blue arguments");
+  }
+  else {
+    ledb = atoi(larg3);
+  }
+  leds[id].setRGB( ledr, ledg, ledb);
   FastLED.show();
-//  delay(30);
+  //  delay(30);
 }
-void cmdSetColor(){
+void cmdSetColor() {
   char *arg = CmdMgr.next();
   if (arg == NULL) {
     printlnError("Error: no red arguments");
-    }
-  else{
-   numr = atoi(arg);
+  }
+  else {
+    numr = atoi(arg);
   }
   char *arg1 = CmdMgr.next();
   if (arg1 == NULL) {
     printlnError("Error: no green arguments");
-    }
-  else{
-   numg = atoi(arg1);
+  }
+  else {
+    numg = atoi(arg1);
   }
   char *arg2 = CmdMgr.next();
   if (arg2 == NULL) {
     printlnError("Error: no blue arguments");
-    }
-  else{
-   numb = atoi(arg2);
-  }  
-  for(uint8_t i=0; i < NUM_LEDS; i++){
-    fill_solid( leds, NUM_LEDS, CRGB(numr, numg, numb));
-     }
+  }
+  else {
+    numb = atoi(arg2);
+  }
+  for (uint8_t i = 0; i < NUM_LEDS; i++) {
+    leds[i].setRGB(numr, numg, numb);
+  }
   FastLED.show();
-  printlnError(numb);
-  printlnError(numg);
-  printlnError(numr);
+  Serial.println(numb);
+  Serial.println(numg);
+  Serial.println(numr);
   return;
 }
+
+// Takes a string of an integer (numeric chars only). Returns the integer on success.
+// Prints error and returns -1 if there is a parse error or the PWM value is out of range.
+long parseRGB(const char *arg, long maxRGB) {
+  char *end;
+  long v = strtol(arg, &end, 10);
+  
+  if (*end != '\0' || v < 0 || v > maxRGB) {
+    printlnError("Error: RGB value must be between 0 and ");
+    printlnError(maxRGB);
+    return -1;
+  }
+
+  return v;
+}
+void cmdSetInd() {
+  int count = 0;
+  char *arg = CmdMgr.next();
+  if (arg == NULL) {
+    printlnError("you missed something");
+  }
+   for ( int i = 0; i < NUM_LEDS; i++ ) {
+      // loop through columns of current row
+      for ( int j = 0; j < 3; j++ ){
+          leds[i][j] = parseRGB(arg, MAX_RGB);//need j here
+          char *arg = CmdMgr.next();
+          break;
+//          leds[i][1] = parseRGB(arg, MAX_RGB);
+//          leds[i][2] = parseRGB(arg, MAX_RGB);
+      //leds[i].b = arg[arg%3=0] basically you want every 3rd argument to be here and then for it to restart at 0, so try and find the math that accomplishes that.
+      } 
+   }
+   FastLED.show();
+  }
+//}
+
+//// void cmdSetIndHelper(int & r[], int & g[], int & b[], int r_sz, int g_sz, int b_sz, int n){
+//  int rx = 0;
+//  int gx =0;
+//  int bx = 0;
+//  
+//  for (int i=0; i < r_sz; i+n){
+//    r[rx++]=r[i];
+//    printlnError(i);
+//    }
+//  for (int i=1; i < g_sz; i+n){
+//    g[gx++]=g[i];
+//    printlnError(i);
+//    }
+//  for (int i=2; i < b_sz; i+n){
+//    b[bx++]=b[i];
+//    printlnError(i);
+//    }
+//  
+//}
+//
+//void cmdTest() {
+//  cmdSetIndHelper();
+//}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // setup & loop
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void setup() {
-  FastLED.addLeds<WS2811, DATA_PIN, RGB>(leds, NUM_LEDS);
+  FastLED.addLeds<WS2812, DATA_PIN, GRB>(leds, NUM_LEDS);
   fill_solid( leds, NUM_LEDS, CRGB(0, 0, 0));
   FastLED.show();
   delay(10);
@@ -157,9 +259,9 @@ void setup() {
   WiFi.begin(ssid, password);
   Serial.println("");
 
-//  cmdPWMPins();
+  //  cmdPWMPins();
 
-  
+
 
   // Wait for connection
   int i = 0;
@@ -205,20 +307,22 @@ void setup() {
   Serial.println("Done setting up");
 }
 
+WiFiClient LastClient;
+
 void loop() {
   CmdMgr.readSerial();
-  WiFiClient client = server.available();
-  if (client) {                             // if you get a client,
-    Serial.println("New Client.");           // print a message out the serial port
-    String currentLine = "";                // make a String to hold incoming data from the client
-    while (client.connected()) {            // loop while the client's connected
-      if (client.available()) {             // if there's bytes to read from the client,
-        char c = client.read();             // read a byte, then
+  if (WiFiClient newClient = server.available()) {
+      Serial.println("New Client.");
+      LastClient = newClient;
+  }
+
+  if (LastClient && LastClient.connected()) {
+      while (LastClient.available()) {
+        char c = LastClient.read();             // read a byte, then
         CmdMgr.handleChar(c);
         Serial.write(c);  // print it out the serial monitor
       }
     }
-  }
 }
 
 
