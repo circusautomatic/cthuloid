@@ -57,6 +57,7 @@ void cmdGreen();
 void cmdAmber();
 void cmdBlack();
 void cmdMultiColor();
+void cmdMultiMultiColor();
 void cmdSetColor();
 void cmdSetInd();
 //void cmdSetIndHelper();
@@ -68,6 +69,7 @@ SerialCommand::Entry CommandsList[] = {
   {"amber",     cmdAmber},
   {"black",     cmdBlack},
   {"m",     cmdMultiColor},
+  {"mm",     cmdMultiMultiColor},
   {"c",      cmdSetColor},
   {"i",      cmdSetInd},
 //  {"test",  cmdSetIndHelper},
@@ -120,8 +122,45 @@ void cmdAmber() {
   //  delay(30);
 }
 
+void cmdMultiMultiColor() {
+  int index = 0;
+  while (1) {
+    char *larg = CmdMgr.next();
+    if (larg == NULL) {
+      printlnError("Error: no id arguments");
+      break;
+    }
+    else {
+      index = atoi(larg);
+    }
+    char *larg1 = CmdMgr.next();
+    if (larg1 == NULL) {
+      printlnError("Error: no red arguments");
+    }
+    else {
+      ledr = atoi(larg1);
+    }
+    char *larg2 = CmdMgr.next();
+    if (larg2 == NULL) {
+      printlnError("Error: no green arguments");
+    }
+    else {
+      ledg = atoi(larg2);
+    }
+    char *larg3 = CmdMgr.next();
+    if (larg3 == NULL) {
+      printlnError("Error: no blue arguments");
+    }
+    else {
+      ledb = atoi(larg3);
+    }
+    leds[index].setRGB( ledr, ledg, ledb);
+    FastLED.show();
+  }
+}
+
 void cmdMultiColor() {
-char *larg = CmdMgr.next();
+  char *larg = CmdMgr.next();
   if (larg == NULL) {
     printlnError("Error: no id arguments");
   }
@@ -153,6 +192,7 @@ char *larg = CmdMgr.next();
   FastLED.show();
   //  delay(30);
 }
+
 void cmdSetColor() {
   char *arg = CmdMgr.next();
   if (arg == NULL) {
@@ -200,11 +240,11 @@ long parseRGB(const char *arg, long maxRGB) {
   return v;
 }
 void cmdSetInd() {
-  int count = 0;
-  char *arg = CmdMgr.next();
-  if (arg == NULL) {
-    printlnError("you missed something");
-  }
+   int count = 0;
+   char *arg = CmdMgr.next();
+   if (arg == NULL) {
+     printlnError("you missed something");
+   }
    for ( int i = 0; i < NUM_LEDS; i++ ) {
       // loop through columns of current row
       for ( int j = 0; j < 3; j++ ){
@@ -324,6 +364,3 @@ void loop() {
       }
     }
 }
-
-
-
