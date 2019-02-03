@@ -69,7 +69,7 @@ SerialCommand::Entry CommandsList[] = {
   {"amber",     cmdAmber},
   {"black",     cmdBlack},
   {"m",     cmdMultiColor},
-  {"mm",     cmdMultiMultiColor},
+  {"mm",     cmdMultiMultiColor}, // [led index] [red] [green] [blue] i.e. 0 30 60 90 for light aqua
   {"c",      cmdSetColor},
   {"i",      cmdSetInd},
 //  {"test",  cmdSetIndHelper},
