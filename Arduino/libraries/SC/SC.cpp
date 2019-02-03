@@ -23,6 +23,9 @@
  */
 #include "SC.h"
 
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
 /**
  * Constructor makes sure some things are set.
  */
@@ -146,7 +149,7 @@ void SerialCommand::handleChar(char inChar) {
 }
 
 void SerialCommand::enterBinaryMode(int numBytes, void (*function)(char*, int)) {
-  numBinaryBytes = min(sizeof(buffer), numBytes);
+  numBinaryBytes = MIN(sizeof(buffer), numBytes);
   binaryDone = function;
   clearBuffer();
 }
