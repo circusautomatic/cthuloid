@@ -4,7 +4,7 @@ import socket, math, time
 
 # Create a TCP/IP socket
 #server_addresses = [('10.0.2.3', 1337), ('10.0.2.4', 1337), ('10.0.2.6', 1337)]
-server_addresses = [('10.0.0.159', 1337)]
+server_addresses = [('10.0.0.16', 1337)]
 sockets = []
 
 try:
@@ -16,21 +16,21 @@ try:
     sockets.append(sock)
 
   print('connected?')
-  interval = .01 #seconds
+  interval = .03 #seconds
   maxpwm = 65535
   minpwm = 2000
-  inc = 200
+  inc = 1000
   i = minpwm
   while i<=maxpwm:
     for sock in sockets:
-      s = 'pwm ' + str(abs(i)) + '\n'
+      s = 'pwm2 ' + str(inc) + " 1 " + str(abs(i)) + " " + str(abs(i)) + " " + str(abs(i)) + " " + str(abs(i)) + " " + str(abs(i)) + " " + str(abs(i)) + " " + str(abs(i)) + " " + str(abs(i)) + " " + str(abs(i)) + " " + str(abs(i)) + " " + str(abs(i)) + " " + str(abs(i)) + '\n'
 #      print(s)
       sock.sendall(bytes(s, 'UTF-8'))
 #      if i % 1000 == 0: print(i)
 
       i += inc
       if i >= maxpwm: sock.close()
-      time.sleep(interval)
+      #time.sleep(interval)
 
 except socket.timeout:
     print('error: connected timed out')

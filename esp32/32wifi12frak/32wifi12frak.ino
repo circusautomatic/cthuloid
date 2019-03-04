@@ -53,6 +53,7 @@ int ledChannel11 = 11;
 const int PWMPins[] = {32, 33, 25, 26, 27, 14, 12, 13, 2, 23, 22, 21};
 const int NumPWMPins = sizeof(PWMPins) / sizeof(*PWMPins);
 int PinCurrentValues[NumPWMPins] = {0};
+
 // this flag will invert PWM output (65535 - PWM), for active-low devices
 
 const char *MsgPWMTupleFormatError = "Error: takes up to 6 arguments between 0 and 255";
@@ -69,6 +70,7 @@ int parseListOfIDs(int *outIDs, int maxIDs);
 void cmdUnrecognized(const char *cmd);
 void cmdSetFrequency();
 void cmdPWMPins();
+void cmdPWMPins2();
 void cmdSetPrintLevel();
 void cmdServo();
 
@@ -76,6 +78,7 @@ SerialCommand::Entry CommandsList[] = {
   {"plevel", cmdSetPrintLevel},
   {"freq",   cmdSetFrequency},
   {"pwm",    cmdPWMPins},
+  {"pwm2",   cmdPWMPins2},
   {"s",      cmdServo},
   {NULL,     NULL}
 };
@@ -233,6 +236,81 @@ void cmdSetFrequency() {
   updateFrequency();
   printAck("frequency: ");
   printlnAck(freq);
+}
+
+void cmdPWMPins2() {
+  const char *SetPWM2UsageMsg = "Error: takes up to 13 arguments between 0 and 65535 (except argument 3's max is 45000).";
+
+  long channelValues[NumPWMPins];
+  int count = 0;
+
+  char *arg = CmdMgr.next();
+  if (arg == NULL) {
+    printlnError("Error: no arguments");
+    return;
+  }
+
+  long numPeriods = parsePWM(arg, 100);
+  arg = CmdMgr.next();
+  long periodLength = parsePWM(arg, 100);
+  arg = CmdMgr.next();
+      
+  do {
+    int index;
+    long value;
+
+    if (count >= NumPWMPins) {
+      printlnError(SetPWM2UsageMsg);
+      return;
+    }
+
+    char *end;
+    index = count;
+    value = parsePWM(arg, count % 3 == 2 ? RED_MAX_PWM : MAX_PWM);
+    if (value < 0) {
+      printlnError(SetPWM2UsageMsg);
+//      value = 4000;
+      return;
+    }
+
+    //printInfo("Set pin ");
+    //printInfo(PWMPins[index]);
+    //printInfo(" to ");
+    //printlnInfo(value);
+    channelValues[index] = value;
+    count++;
+  } while (arg = CmdMgr.next());
+
+  // interpolate over a period of time
+  const TickType_t xDelay = periodLength / portTICK_PERIOD_MS;
+
+  float frameDelay = 9.14;   // 9.14ms - length of time between frames at 60fps
+
+  long beginTime = micros();
+  long endTime = beginTime + 9140;
+
+  for (long period = 1; period < 1+numPeriods; period++) {
+    //long beginTime = millis();
+    float fraction = period / (float)numPeriods;
+    for (int i = 0; i < count; i++) {
+      unsigned long v = PinCurrentValues[i] + (channelValues[i] - PinCurrentValues[i]) * fraction;
+      //printlnAlways(v);
+      myHRWrite(PWMPins[i], v);
+    }
+    //long endTime = millis();
+    //printlnAlways(endTime - beginTime);
+    //vTaskDelay(xDelay); 
+  }
+
+  for (int i = 0; i < count; i++) {
+    unsigned long v = channelValues[i];
+    PinCurrentValues[i] = v;
+    myHRWrite(PWMPins[i], v);
+  }
+  
+  //printAck("OK set ");
+  //printAck(count);
+  //printlnAck(" pins");
 }
 
 // expects space-delimited ints 0-65535, or space delimited <index>:<pwm> pairs
