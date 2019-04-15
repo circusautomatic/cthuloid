@@ -6,10 +6,18 @@
 // GND    ...  GND
 
 #include <Arduino.h>
+#include <WiFi.h>
+#include <WiFiMulti.h>
 
 long int rotValue=0, swValue=0;
 uint8_t state=0;
 
+// 10.0.0.30 1337
+// 10.0.0.31 1337
+
+WiFiClient client;
+bool connected, pressed, onOrOff;
+WiFiMulti wifi;
 
 #define ROTARY_PINA 2
 #define ROTARY_PINB 4
@@ -47,6 +55,7 @@ void IRAM_ATTR isrSWAll() {
  swValue++;
  portEXIT_CRITICAL_ISR(&gpioMux);
 
+ pressed = true;
 }
 
 void setup(){
@@ -58,15 +67,42 @@ void setup(){
   attachInterrupt(ROTARY_PINB, isrAB, CHANGE);
   attachInterrupt(ROTARY_PINSW, isrSWAll, CHANGE);
   Serial.begin(115200);
+
+  wifi.addAP("ubitron", "superduper");
+
+  Serial.println();
+  Serial.println();
+  Serial.print("Waiting for WiFi... ");
+
+  while(wifi.run() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(500);
+  }
+  
+  connected = client.connect("10.0.0.63", 1337);
+
+  onOrOff = false;
 }
 
 
 void loop(){
- Serial.print("isrSWAll ");
- Serial.print(swValue);
- Serial.print(" rotValue ");
- Serial.println(rotValue);
+  Serial.print("isrSWAll ");
+  Serial.print(swValue);
+  Serial.print(" rotValue ");
+  Serial.println(rotValue);
+
+  if (pressed) {
+    if (onOrOff) {
+      Serial.print("RED\n");
+      client.println("pwm2 1 0 10000 30000"); 
+    } else {
+      Serial.print("BLUE\n");
+      client.println("pwm2 1 40000 10000 10000");       
+    }
+    
+    pressed = false;
+    onOrOff = ! onOrOff;
+  }
+
   delay(1000);
 }
-
-
