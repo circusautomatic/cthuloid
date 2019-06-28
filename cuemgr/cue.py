@@ -15,9 +15,9 @@ We unfortunately use the word 'cue' in two different ways:
 import sys, os, threading, ast, time, subprocess, random
 from console import *
 from lightarm import Arms
-from dmx import DMX
+#from dmx import DMX
 from pivideo import Video
-#from prinboo import Prinboo
+from prinboo import Prinboo
 
 #########################################################################################################
 # helpers
@@ -202,7 +202,7 @@ class CueFade(CueLoad):
 
   # called by the thread created in run()
   def __call__(self):
-    timestep = 1/30.0
+    timestep = 1/35.0
     printPeriodPeriod = .25
     printPeriodTimestepCount = printPeriodPeriod / timestep
     startTime = time.time()
@@ -323,6 +323,7 @@ class CuePrinboo(CueLoad):
 
       timestep = 1. / self.framerate
       vel = 1
+      if self.line == 'left' or self.line == 'right': vel = 5
 
       # Signal the previous thread to exit, and hand it to the next threadV
       # so it can wait.
@@ -338,7 +339,7 @@ class PrinbooLimbsThread(threading.Thread):
         self.prevThread = prevThread
         if isinstance(poses, dict): poses = [poses] # convert one frame into a list of frames
         self.poses = poses
-        self.vel = 5#vel
+        self.vel = vel
         self.timestep = .05#timestep
 
         self.shouldExit = False
@@ -359,7 +360,7 @@ class PrinbooLimbsThread(threading.Thread):
         #endTime = startTime + self.period
         nextTime = startTime + self.timestep
 
-        NumIds = 2
+        NumIds = 9
 
         def popRandom(li):
           i = random.randint(0, len(li)-1)
@@ -448,17 +449,46 @@ class PrinbooLimbsThread(threading.Thread):
 #          time.sleep(nextTime - time.time())
 
 
-class CueVideo(CueLoad):
-  """Play a video by running a shell command"""
+class CueRemoteVideo(CueLoad):
+  """Play a video by running a shell command to communicate with omxd"""
 
-  player = "/usr/bin/omxplayer"
+  #player = "/usr/bin/omxplayer"
 
   def __init__(self, line):
     CueLoad.__init__(self, line)
+    tokens = line.split()
+    if len(tokens) < 3:
+      raise BaseException('needs IP address and filename')
+
+    self.address = tokens[1]
+    self.filename = restAfterWord(tokens[1], line)
+
   def load(self):
     pass #maybe check file exists
   def run(self, immediate=False):
-    Video.playVideo(self.filename)
+    Video.playVideo(self.filename, self.address)
+
+class CueLocalVideo(CueLoad):
+  """Play a video by running VLC"""
+
+  player = 'vlc'
+  headless = '--qt-start-minimized'
+
+  def __init__(self, line):
+    CueLoad.__init__(self, line)
+    tokens = line.split()
+    if len(tokens) < 2:
+      raise BaseException('needs filename')
+
+    self.filename = restAfterWord(tokens[0], line)
+
+  def load(self):
+    pass #maybe check file exists
+  def run(self, immediate=False):
+    if Video.VlcProcess:
+      Video.VlcProcess.kill()
+    if self.filename != 'off':
+      Video.VlcProcess = subprocess.Popen([self.player, self.headless, self.filename])
 
 def cmdCue(line, CueClass):
   """instantiate a type of cue and run it immediately"""
@@ -486,9 +516,7 @@ def cmdSave(tokens, line):
     text += ",\n  'DMX': " + str(DMX.get())
   except: pass
   
-  try:
-    text += ",\n  'Limbs': " + str(Prinboo.limbs)
-  except: pass
+  text += ",\n  'Limbs': " + str(Prinboo.limbs)
     
   text += "\n}\n"
   #text = "{\n 'version': 0,\n 'DMX': " + dmx + ",\n 'LightArm': {\n  'Servos': " + str(ucServos) + ",\n  'LEDs': " + str(ucLEDs) + "\n }\n}"
@@ -506,7 +534,8 @@ def cmdSave(tokens, line):
 CueClassMap = {
   'load':CueLoad,
   'fade':CueFade,
-  #'limbs':CuePrinboo,
-  #'c':CuePrinboo,
-  'video':CueVideo,
+  'limbs':CuePrinboo,
+  'c':CuePrinboo,
+  'video':CueRemoteVideo,
+  'audio':CueLocalVideo,
 }

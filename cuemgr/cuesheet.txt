@@ -1,12 +1,166 @@
 scene Start
-  load off
+	seq
+		load off
+		audio off
+		video 10.0.0.162 black
+		video 10.0.0.173 black
+scene One
+	seq
+		audio /home/cayuga/cayuga-lasty/queen.mp3
+		video 10.0.0.162 coco.mp4
+		video 10.0.0.173 coco.mp4
+		fade 5 funeral
+scene fade
+	seq
+		fade 5 off
+		video 10.0.0.162 roses.mp4
+		video 10.0.0.173 roses.mp4
+		audio off
+scene onehalf
+	seq
+		audio /home/cayuga/cayuga-lasty/c.ogg
+scene Two
+	seq
+		audio /home/cayuga/cayuga-lasty/waltz.mp3
+		fade temp
+scene fade1
+	seq
+		fade 5 off
+		video 10.0.0.162 roses.mp4
+		video 10.0.0.173 roses.mp4
+		audio off
+scene three
+	seq
+		audio /home/cayuga/cayuga-lasty/fly.mp3
+		fade 5 tree 
+scene fade2
+	seq
+		fade 5 off
+		video 10.0.0.162 roses.mp4
+		video 10.0.0.173 roses.mp4
+		audio off
+scene four
+	seq
+		audio /home/cayuga/cayuga-lasty/crab.mp3
+scene fade3
+	seq
+		fade 5 off
+		video 10.0.0.162 roses.mp4
+		video 10.0.0.173 roses.mp4
+		audio off
+scene five
+	seq
+		audio /home/cayuga/cayuga-lasty/bill.mp3
+		fade 5 aircorn
+scene fade4
+	seq
+		fade 5 off
+		video 10.0.0.162 roses.mp4
+		video 10.0.0.173 roses.mp4
+		audio off
+scene sixa
+	seq
+		audio /home/cayuga/cayuga-lasty/seacreature.mp3
+scene six
+	seq
+		audio /home/cayuga/cayuga-lasty/fool.mp3
+		fade 5 tealblue
+scene fade5
+	seq
+		fade 5 off
+		video 10.0.0.162 roses.mp4
+		video 10.0.0.173 roses.mp4
+		audio off
+scene seven
+	seq
+		audio /home/cayuga/cayuga-lasty/thereis.mp3
+		fade 5 airpurple
+scene fade6
+	seq
+		fade 5 off
+		audio /home/cayuga/cayuga-lasty/shipdown.mp3
+		video 10.0.0.162 roses.mp4
+		video 10.0.0.173 roses.mp4
+scene eight
+	seq
+		audio /home/cayuga/cayuga-lasty/maggie.mp3
+		fade 5 brightcorn
+scene fade7
+	seq
+		fade 5 off
+		video 10.0.0.162 roses.mp4
+		video 10.0.0.173 roses.mp4
+		audio off
+scene nine
+	seq
+		audio /home/cayuga/cayuga-lasty/skeleton.mp3
+		fade 5 s-bar 
+scene fade8
+	seq
+		fade off
+		video 10.0.0.162 roses.mp4
+		video 10.0.0.173 roses.mp4
+		audio off
+scene ninehalf
+	seq
+		audio /home/cayuga/cayuga-lasty/biancaintro.mp3
+scene ten
+	seq
+		audio /home/cayuga/cayuga-lasty/printboowaiting.mp3
+		fade 5 sidered
+scene fade9
+	seq
+		fade 5 off
+		video 10.0.0.162 roses.mp4
+		video 10.0.0.173 roses.mp4
+		audio off
+scene 11 
+	seq
+		audio /home/cayuga/cayuga-lasty/greg-blue.mp3
+		fade 5 supblue
+scene fade10
+	seq
+		fade 5 off
+		video 10.0.0.162 roses.mp4
+		video 10.0.0.173 roses.mp4
+		audio off
+scene 12
+	seq
+		audio /home/cayuga/cayuga-lasty/letsgetlost.mp3
+		fade 5 aircorn
+scene fade11
+	seq
+		fade 5 off
+		video 10.0.0.162 roses.mp4
+		video 10.0.0.173 roses.mp4
+		audio off
+scene prefinale
+	seq
+		audio /home/cayuga/cayuga-lasty/royals.mp3
+		fade 5 brightcorn
+scene fade12
+	seq
+		fade 5 off
+		audio off
+scene 13
+	seq
+		audio /home/cayuga/cayuga-lasty/greglanding.mp3
+scene 13one
+	seq
+		audio /home/cayuga/cayuga-lasty/bianca_final.mp3 
+scene 13two
+	seq
+		audio /home/cayuga/cayuga-lasty/fly.mp3
+		fade 5 tree 
+scene fade12
+	seq
+		fade 5 off
+		video 10.0.0.162 roses.mp4
+		video 10.0.0.173 roses.mp4
+		audio off
+scene finale
+	seq
+		audio /home/cayuga/cayuga-lasty/castlesburning.mp3 
+		fade 5 finale
 
-scene All
-  seq
-    fade 3 testboth
-    video rachshort.mp4
 
-scene Closing
-  seq
-    fade 5 off
-    video black

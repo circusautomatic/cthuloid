@@ -4,8 +4,10 @@
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <WiFiClient.h>
-#include "/Users/jmzorko/work/circusautomatic/hardware/espressif/esp32/tools/sdk/include/soc/soc/rtc.h"
+//#include "/Users/jmzorko/work/circusautomatic/hardware/espressif/esp32/tools/sdk/include/soc/soc/rtc.h"
 //#include "/home/fleeky/Arduino/hardware/espressif/esp32/tools/sdk/include/freertos/freertos/task.h"
+//#include "/home/cayuga/.arduino15/packages/esp32/hardware/esp32/1.0.1/tools/sdk/include/soc/soc/rtc.h"
+#include "/home/fleeky/Arduino/hardware/espressif/esp32/tools/sdk/include/soc/soc/rtc.h"
 
 const char* ssid = "ubitron";
 const char* password = "superduper";
@@ -26,8 +28,8 @@ const int timeout = 30;
 #define RED_MAX_PWM 65534
 #define MAX_PWM 65534
 
-constexpr int NumPeriods = 3;     // number of steps in fade
-constexpr int PeriodLength = 1;   // sleep for this many ms
+constexpr int NumPeriods = 1;     // number of steps in fade
+constexpr int PeriodLength = 10;   // sleep for this many ms
 
 //////////////////////////////////////////////////////////////////////////////////////
 int freq = 20000;

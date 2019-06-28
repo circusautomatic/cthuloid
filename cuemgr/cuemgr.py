@@ -15,9 +15,7 @@ TODO:
 
 """
 
-
-
-import sys, os, os.path, threading, ast, time, signal
+import sys, os, os.path, threading, ast, time, signal, paramiko
 from console import * 
 from cue import *
 from cueengine import CueEngine
@@ -28,11 +26,12 @@ CuesFilename = 'cuesheet.txt'   #initial cuesheet automatically loaded
 
 CueMgr = CueEngine()
 
-#try:
-#  from prinboo import Prinboo
-#except ImportError:
-Prinboo = None
-#  print('No Prinboo')
+#Prinboo = None
+try:
+  from prinboo import Prinboo
+except (ImportError, paramiko.ssh_exception.NoValidConnectionsError) as e:
+  Prinboo = None
+  print('No Prinboo')
 
 try:
   from pivideo import Video
@@ -45,10 +44,10 @@ except ImportError:
   Arms = None
   print('No LightArms')
 
-try: from dmx import DMX
-except KeyError:
-  DMX = None
-  print('No DMX')
+#try: from dmx import DMX
+#except:
+DMX = None
+print('No DMX')
 
 # call initialize outside of try-except to show errors to user
 if Arms: Arms.initialize(config)
@@ -97,7 +96,7 @@ class LightArmView(View):
     self.ixCursor = 0
     self.iyCursor = 0
 
-    self.inc = LinearStateMachine([1, 5, 20])
+    self.inc = LinearStateMachine([1, 5, 20, 100, 1000])
 
   # map names to servo vector indices
   ServoDims = {'x':1, 'y':0}
@@ -155,7 +154,7 @@ class LightArmView(View):
 
   # add increment to the intensity of the currently selected arm(s)
   def modI(self, inc, channel):
-    #print('ids:', self.selected())
+    print('ids:', self.selected())
     for id in self.selected():
       try: v = Arms.getChannel(id, channel)
       except IndexError: return
@@ -170,10 +169,8 @@ class LightArmView(View):
     ch = ch.lower()
     if ch == 'x':
       self.toggleMode() 
-    if ch == 'q': 
+    elif ch == 'q': 
       for id in self.selected(): Arms.relax(id)
-    if ch == '0':
-      pass #Arms.setAngles(self.selected(), [Arms.ServoCenter] * len(self.ServoDims))
     elif ch == 'w':
       self.modAngle('y', self.inc())
     elif ch == 's':
@@ -229,23 +226,23 @@ class LightArmView(View):
 
       if self.inSingleMode():
         for i in range(numArms):
-          if i == self.ixCursor: print('===|', end='')
-          else: print('---|', end='')
+          if i == self.ixCursor: print('=====|', end='')
+          else: print('-----|', end='')
       else:
         for i in range(numArms):
           if self.inGroup(i):
-            if self.inGroup(i+1, i): print('====', end='')
-            else: print('===|', end='')
-          else: print('---|', end='')
+            if self.inGroup(i+1, i): print('======', end='')
+            else: print('=====|', end='')
+          else: print('-----|', end='')
       print('')
 
     def printAngle(dim, index):
       try:
         angle = self.getAngle(dim, index) 
-        if angle < 1: print('XXX|', end='')
-        else: print('{0:^3}|'.format(angle), end='')
+        if angle < 1: print('XXXXX|', end='')
+        else: print('{0:^5}|'.format(angle), end='')
       except:
-        print('---|', end='')
+        print('-----|', end='')
 
     print('   Light Arm View')
     printHSep(False)
@@ -272,7 +269,7 @@ class LightArmView(View):
     for channel in range(Arms.MaxChannels):
       print(names[channel] + ': |', end='')
       for i in range(numArms):
-        try: print('{0:^3}|'.format(Arms.getChannel(i, channel)), end='')
+        try: print('{0:^5}|'.format(Arms.getChannel(i, channel)), end='')
         except: print('---|', end='')
       print('')
       printHSep(channel+1 != Arms.MaxChannels)
@@ -548,27 +545,25 @@ class CueView(View):
     elif ch == ',' or ch == '<':
       CueMgr.prevScene()
 
-#    # Prinboo live controls
-#    elif ch == 'w':
-#      Prinboo.screen.togglePlayback()
-#    elif ch == 'a':
-#      Prinboo.motors.incSpeed()
-#    elif ch == 'd':
-#      Prinboo.motors.decSpeed()
-#    elif ch == 's':
-#      Prinboo.motors.stop()
-#    elif ch == '\x1b':
-#      seq = getch() + getch()
-#      if seq == '[A': # up arrow
-#        Prinboo.motors.forward() 
-#      elif seq == '[B': # down arrow
-#        Prinboo.motors.backward() 
-#      elif seq == '[C': # left arrow
-#        Prinboo.motors.turnLeft() 
-#      elif seq == '[D': # right arrow
-#        Prinboo.motors.turnRight()
-
-
+    # Prinboo live controls
+    elif ch == 'w':
+      Prinboo.screen.togglePlayback()
+    elif ch == 'a':
+      Prinboo.motors.incSpeed()
+    elif ch == 'd':
+      Prinboo.motors.decSpeed()
+    elif ch == 's':
+      Prinboo.motors.stop()
+    elif ch == '\x1b':
+      seq = getch() + getch()
+      if seq == '[A': # up arrow
+        Prinboo.motors.forward() 
+      elif seq == '[B': # down arrow
+        Prinboo.motors.backward() 
+      elif seq == '[C': # left arrow
+        Prinboo.motors.turnRight()
+      elif seq == '[D': # right arrow
+        Prinboo.motors.turnLeft() 
 
   def handleLineInput(self, line):
     pass
@@ -592,9 +587,9 @@ def programExit():
 
 if __name__ == '__main__':
   if len(sys.argv) > 1 and sys.argv[1] == 'prinboo':
-    views = [CueView(), LightArms()]
+    views = [CueView(), PrinbooView()]
   else: #default is dmx mode
-    views = [CueView(), LightArmView()]
+    views = [CueView(), LightArmView(), PrinbooView()]
     if DMX: views.append(SliderView())
   currentView = views[0]
 

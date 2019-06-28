@@ -124,7 +124,7 @@ class Screen:
         ssh = paramiko.SSHClient()
         self.ssh = ssh
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(address, username='pi', password='tankgirl')
+        ssh.connect(address, username='pi', password='raspberry')
         # start playing immediately
         self.play('~/cthuloid/ghettopticon/blender/prinboo-talking.mp4')
       #except paramiko.ssh_exception.NoValidConnectionsError:
@@ -148,7 +148,7 @@ class Screen:
       self.stdin.write('q')
       #ssh.close()
 
-class Prinboo:
+class PrinbooClass:
   def __init__(self, address):
     self.limbs = LimbServos(address)
     self.motors = Motors(address)
@@ -163,6 +163,8 @@ class Prinboo:
     self.screen.exit()
     self.thread.exit()
     if self.limbsThread: self.limbsThread.exit()
+
+Prinboo = PrinbooClass('10.0.0.23')
 
 if __name__ == '__main__':
   addr = 'localhost'

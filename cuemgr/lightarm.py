@@ -22,7 +22,7 @@ class NetworkArm:
 
   # this class doesn't limit the Channel values
   MinChannelValue = 0
-  MaxChannelValue = 999
+  MaxChannelValue = 65534
 
   def fitServoRange(v): return max(212, min(812, v))
   def fitChannelRange(v): return max(0, min(NetworkArm.MaxChannelValue, v))
@@ -69,10 +69,11 @@ class NetworkArm:
     self.socket.close()
 
   # input range is 0-999
-  # output range is 0-65535
+  # output range is 0-65534
   def toHighFreq(self, pwm):
     #return int(10535 + pwm / 999 * 55000)
-    return int(pwm / 999 * 65535)
+    #return int(pwm / 999 * 65534)
+    return int(pwm)
 
   def getChannels(self): return list(self.channels)
   def getChannel(self, channel): return self.channels[channel]
@@ -94,6 +95,7 @@ class NetworkArm:
     cmd = 'pwm '
     for i in self.channels:
       cmd += str(self.toHighFreq(i)) + ' '
+    #print(cmd)
     self.send(cmd)
 
   def relax(self):

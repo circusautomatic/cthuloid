@@ -19,7 +19,7 @@ try:
   interval = .03 #seconds
   maxpwm = 65535
   minpwm = 2000
-  inc = 1000
+  inc = 100
   i = minpwm
   while i<=maxpwm:
     for sock in sockets:

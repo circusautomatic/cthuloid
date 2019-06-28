@@ -59,16 +59,21 @@ class Screens:
       cls._singleton = object.__new__(cls)
     return cls._singleton
 
-  def __init__(self): self.screens = None
+  def __init__(self): 
+      self.screens = None
+      self.VlcProcess = None
   
   def initialize(self, configDict):
-    self.screens = [Screen('10.0.0.19'), Screen('10.0.0.22')]
+    self.screens = {} #[Screen('10.0.0.19'), Screen('10.0.0.22')]
 
-  def playVideo(self, filename):
-    for s in self.screens: s.sendVideoCommand(filename)
+  def playVideo(self, filename, targetIp):
+    if not self.screens.get(targetIp):
+      self.screens[targetIp] = Screen(targetIp)
+
+    self.screens[targetIp].sendVideoCommand(filename)
 
   def exit(self):
-    for s in self.screens: s.exit()
+    for address,s in self.screens.items(): s.exit()
 
 Video = Screens()
 
