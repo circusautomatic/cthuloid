@@ -1,16 +1,16 @@
 // Arduino sketch which outputs PWM for a set of channels based on serial input.
 
 
-#include <WiFi.h>
-#include <ESPmDNS.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
 #include <WiFiClient.h>
 //#include "/Users/jmzorko/work/circusautomatic/hardware/espressif/esp32/tools/sdk/include/soc/soc/rtc.h"
 //#include "/home/fleeky/Arduino/hardware/espressif/esp32/tools/sdk/include/freertos/freertos/task.h"
 //#include "/home/cayuga/.arduino15/packages/esp32/hardware/esp32/1.0.1/tools/sdk/include/soc/soc/rtc.h"
-#include "/home/fleeky/Arduino/hardware/espressif/esp32/tools/sdk/include/soc/soc/rtc.h"
+//#include "/home/fleeky/Arduino/hardware/espressif/esp32/tools/sdk/include/soc/soc/rtc.h"
 
-const char* ssid = "ubitron";
-const char* password = "superduper";
+const char* ssid = "open.wifi";
+const char* password = "";
 
 // TCP server at port 80 will respond to HTTP requests
 WiFiServer server(1337);
@@ -25,8 +25,12 @@ const int timeout = 30;
 #include <SC.h>
 #include <PrintLevel.h>
 #define INVERT_HIGH_AND_LOW
-#define RED_MAX_PWM 65534
-#define MAX_PWM 65534
+#define RED_MAX_PWM 1023
+#define MAX_PWM 1023
+
+static const uint8_t D2   = 4;
+static const uint8_t D3   = 0;
+static const uint8_t D4   = 2;
 
 constexpr int NumPeriods = 1;     // number of steps in fade
 constexpr int PeriodLength = 10;   // sleep for this many ms
@@ -42,17 +46,9 @@ int maxfreq = 40000;
 int ledChannel = 0;
 int ledChannel1 = 1;
 int ledChannel2 = 2;
-int ledChannel3 = 3;
-int ledChannel4 = 4;
-int ledChannel5 = 5;
-int ledChannel6 = 6;
-int ledChannel7 = 7;
-int ledChannel8 = 8;
-int ledChannel9 = 9;
-int ledChannel10 = 10;
-int ledChannel11 = 11;
 
-const int PWMPins[] = {32, 33, 25, 26, 27, 14, 12, 13, 2, 23, 22, 21};
+
+const int PWMPins[] = {D4, D3, D2};
 const int NumPWMPins = sizeof(PWMPins) / sizeof(*PWMPins);
 int PinCurrentValues[NumPWMPins] = {0};
 
@@ -93,7 +89,7 @@ SerialCommand CmdMgr(CommandsList, cmdUnrecognized);
 
 unsigned long invertPWM(unsigned long c) {
 #ifdef INVERT_HIGH_AND_LOW
-  c = 65535 - c;
+  c = 1023 - c;
 #endif
   return c;
 }
@@ -106,81 +102,81 @@ void myHRWrite(int pin, unsigned value) {
   value = invertPWM(value);
 
   switch (pin) {
-    case 32: ledcWrite(ledChannel, value);  break;
-    case 33: ledcWrite(ledChannel1, value);  break;
-    case 25: ledcWrite(ledChannel2, value);  break;
-    case 26: ledcWrite(ledChannel3, value);  break;
-    case 27: ledcWrite(ledChannel4, value);  break;
-    case 14: ledcWrite(ledChannel5, value);  break;
-    case 12: ledcWrite(ledChannel6, value);  break;
-    case 13: ledcWrite(ledChannel7, value);  break;
-    case 2: ledcWrite(ledChannel8, value);  break;
-    case 23: ledcWrite(ledChannel9, value);  break;
-    case 22: ledcWrite(ledChannel10, value);  break;
-    case 21: ledcWrite(ledChannel11, value);  break;
+    case D4: analogWrite(D4, value);  break;
+    case D3: analogWrite(D3, value);  break;
+    case D2: analogWrite(D2, value);  break;
+    //    case 26: analogWrite(ledChannel3, value);  break;
+    //    case 27: analogWrite(ledChannel4, value);  break;
+    //    case 14: analogWrite(ledChannel5, value);  break;
+    //    case 12: analogWrite(ledChannel6, value);  break;
+    //    case 13: analogWrite(ledChannel7, value);  break;
+    //    case 2: analogWrite(ledChannel8, value);  break;
+    //    case 23: analogWrite(ledChannel9, value);  break;
+    //    case 22: analogWrite(ledChannel10, value);  break;
+    //    case 21: analogWrite(ledChannel11, value);  break;
     default: printlnError("invalid pin");
   }
 }
 
-void updateFrequency() {
-  ledcSetup(ledChannel, freq, res);
-  ledcAttachPin(32, ledChannel);
-  myHRWrite(PWMPins[0], 0);
-  
-  ledcSetup(ledChannel1, freq, res);
-  ledcAttachPin(33, ledChannel);
-  myHRWrite(PWMPins[1], 0);
-  
-  ledcSetup(ledChannel2, freq, res);
-  ledcAttachPin(25, ledChannel);
-  myHRWrite(PWMPins[2], 0);
-  
-  ledcSetup(ledChannel3, freq, res);
-  ledcSetup(ledChannel4, freq, res);
-  ledcSetup(ledChannel5, freq, res);
-  ledcSetup(ledChannel6, freq, res);
-  ledcSetup(ledChannel7, freq, res);
-  ledcSetup(ledChannel8, freq, res);
-  ledcSetup(ledChannel9, freq, res);
-  ledcSetup(ledChannel10, freq, res);
-  ledcSetup(ledChannel11, freq, res);
-
-  ledcAttachPin(32, ledChannel);
-  ledcAttachPin(33, ledChannel1);
-  ledcAttachPin(25, ledChannel2);
-  ledcAttachPin(26, ledChannel3);
-  ledcAttachPin(27, ledChannel4);
-  ledcAttachPin(14, ledChannel5);
-  ledcAttachPin(12, ledChannel6);
-  ledcAttachPin(13, ledChannel7);
-  ledcAttachPin(2, ledChannel8);
-  ledcAttachPin(23, ledChannel9);
-  ledcAttachPin(22, ledChannel10);
-  ledcAttachPin(21, ledChannel11);
-}
-
-void ledsetup() {
-  updateFrequency();
-
-// Pins that work 27,26,25 23,22,21 32,33,14 12,13,2 
-  
-
-  //for(uint8_t i=0; i < 12; i++)
-  // ledcWrite(channel, dutycycle)
-  // For 8-bit resolution duty cycle is 0 - 255
-//  ledcWrite(ledChannel, 0);  // test high output of all leds in sequence
-//  ledcWrite(ledChannel1, 0);  // test high output of all leds in sequence
-//  ledcWrite(ledChannel2, 0);  // test high output of all leds in sequence
-//  ledcWrite(ledChannel3, 0);  // test high output of all leds in sequence
-//  ledcWrite(ledChannel4, 0);  // test high output of all leds in sequence
-//  ledcWrite(ledChannel5, 0);  // test high output of all leds in sequence
-//  ledcWrite(ledChannel6, 0);  // test high output of all leds in sequence
-//  ledcWrite(ledChannel7, 0);  // test high output of all leds in sequence
-//  ledcWrite(ledChannel8, 0);  // test high output of all leds in sequence
-//  ledcWrite(ledChannel9, 0);  // test high output of all leds in sequence
-//  ledcWrite(ledChannel10, 0);  // test high output of all leds in sequence
-//  ledcWrite(ledChannel11, 0);  // test high output of all leds in sequence
-}
+//void updateFrequency() {
+//  ledcSetup(ledChannel, freq, res);
+//  ledcAttachPin(32, ledChannel);
+//  myHRWrite(PWMPins[0], 0);
+//
+//  ledcSetup(ledChannel1, freq, res);
+//  ledcAttachPin(33, ledChannel);
+//  myHRWrite(PWMPins[1], 0);
+//
+//  ledcSetup(ledChannel2, freq, res);
+//  ledcAttachPin(25, ledChannel);
+//  myHRWrite(PWMPins[2], 0);
+//
+//  ledcSetup(ledChannel3, freq, res);
+//  ledcSetup(ledChannel4, freq, res);
+//  ledcSetup(ledChannel5, freq, res);
+//  ledcSetup(ledChannel6, freq, res);
+//  ledcSetup(ledChannel7, freq, res);
+//  ledcSetup(ledChannel8, freq, res);
+//  ledcSetup(ledChannel9, freq, res);
+//  ledcSetup(ledChannel10, freq, res);
+//  ledcSetup(ledChannel11, freq, res);
+//
+//  ledcAttachPin(32, ledChannel);
+//  ledcAttachPin(33, ledChannel1);
+//  ledcAttachPin(25, ledChannel2);
+//  ledcAttachPin(26, ledChannel3);
+//  ledcAttachPin(27, ledChannel4);
+//  ledcAttachPin(14, ledChannel5);
+//  ledcAttachPin(12, ledChannel6);
+//  ledcAttachPin(13, ledChannel7);
+//  ledcAttachPin(2, ledChannel8);
+//  ledcAttachPin(23, ledChannel9);
+//  ledcAttachPin(22, ledChannel10);
+//  ledcAttachPin(21, ledChannel11);
+//}
+//
+//void ledsetup() {
+//  updateFrequency();
+//
+//// Pins that work 27,26,25 23,22,21 32,33,14 12,13,2
+//
+//
+//  //for(uint8_t i=0; i < 12; i++)
+//  // analogWrite(channel, dutycycle)
+//  // For 8-bit resolution duty cycle is 0 - 255
+////  analogWrite(ledChannel, 0);  // test high output of all leds in sequence
+////  analogWrite(ledChannel1, 0);  // test high output of all leds in sequence
+////  analogWrite(ledChannel2, 0);  // test high output of all leds in sequence
+////  analogWrite(ledChannel3, 0);  // test high output of all leds in sequence
+////  analogWrite(ledChannel4, 0);  // test high output of all leds in sequence
+////  analogWrite(ledChannel5, 0);  // test high output of all leds in sequence
+////  analogWrite(ledChannel6, 0);  // test high output of all leds in sequence
+////  analogWrite(ledChannel7, 0);  // test high output of all leds in sequence
+////  analogWrite(ledChannel8, 0);  // test high output of all leds in sequence
+////  analogWrite(ledChannel9, 0);  // test high output of all leds in sequence
+////  analogWrite(ledChannel10, 0);  // test high output of all leds in sequence
+////  analogWrite(ledChannel11, 0);  // test high output of all leds in sequence
+//}
 
 // Takes a string of an integer (numeric chars only). Returns the integer on success.
 // Prints error and returns 0 if there is a parse error or the ID is out of range.
@@ -218,8 +214,8 @@ void cmdUnrecognized(const char *cmd) {
 // if no argument, prints the frequency
 // if one argument, sets the frequency and then prints it
 void cmdSetFrequency() {
-  if(char *arg = CmdMgr.next()) {
-    if(CmdMgr.next()) {
+  if (char *arg = CmdMgr.next()) {
+    if (CmdMgr.next()) {
       printlnError("Error: takes 0 or 1 arguments");
       return;
     }
@@ -227,15 +223,15 @@ void cmdSetFrequency() {
     char *end;
     double v = strtod(arg, &end);
 
-    if(*end != '\0' || v < 1 || v > maxfreq) {
+    if (*end != '\0' || v < 1 || v > maxfreq) {
       printlnError("Error: speed is in angle-units per second; between 1 and 1000");
       return;
     }
-    
+
     freq = round(v);
   }
-  
-  updateFrequency();
+
+  //  updateFrequency();
   printAck("frequency: ");
   printlnAck(freq);
 }
@@ -256,7 +252,7 @@ void cmdPWMPins2() {
   arg = CmdMgr.next();
   long periodLength = parsePWM(arg, 100);
   arg = CmdMgr.next();
-      
+
   do {
     int index;
     long value;
@@ -271,7 +267,7 @@ void cmdPWMPins2() {
     value = parsePWM(arg, count % 3 == 2 ? RED_MAX_PWM : MAX_PWM);
     if (value < 0) {
       printlnError(SetPWM2UsageMsg);
-//      value = 4000;
+      //      value = 4000;
       return;
     }
 
@@ -284,14 +280,14 @@ void cmdPWMPins2() {
   } while (arg = CmdMgr.next());
 
   // interpolate over a period of time
-  const TickType_t xDelay = periodLength / portTICK_PERIOD_MS;
+  //  const TickType_t xDelay = periodLength / portTICK_PERIOD_MS;
 
-  float frameDelay = 9.14;   // 9.14ms - length of time between frames at 60fps
+  //  float frameDelay = 9.14;   // 9.14ms - length of time between frames at 60fps
 
   long beginTime = micros();
   long endTime = beginTime + 9140;
 
-  for (long period = 1; period < 1+numPeriods; period++) {
+  for (long period = 1; period < 1 + numPeriods; period++) {
     //long beginTime = millis();
     float fraction = period / (float)numPeriods;
     for (int i = 0; i < count; i++) {
@@ -301,7 +297,7 @@ void cmdPWMPins2() {
     }
     //long endTime = millis();
     //printlnAlways(endTime - beginTime);
-    //vTaskDelay(xDelay); 
+    //vTaskDelay(xDelay);
   }
 
   for (int i = 0; i < count; i++) {
@@ -309,7 +305,7 @@ void cmdPWMPins2() {
     PinCurrentValues[i] = v;
     myHRWrite(PWMPins[i], v);
   }
-  
+
   //printAck("OK set ");
   //printAck(count);
   //printlnAck(" pins");
@@ -342,7 +338,7 @@ void cmdPWMPins() {
     value = parsePWM(arg, count % 3 == 2 ? RED_MAX_PWM : MAX_PWM);
     if (value < 0) {
       printlnError(SetPWMUsageMsg);
-//      value = 4000;
+      //      value = 4000;
       return;
     }
 
@@ -355,16 +351,16 @@ void cmdPWMPins() {
   } while (arg = CmdMgr.next());
 
   // interpolate over a period of time
-  const TickType_t xDelay = PeriodLength / portTICK_PERIOD_MS;
+  //  const TickType_t xDelay = PeriodLength / portTICK_PERIOD_MS;
 
-  for (int period = 1; period < 1+NumPeriods; period++) {
+  for (int period = 1; period < 1 + NumPeriods; period++) {
     float fraction = period / (float)NumPeriods;
     for (int i = 0; i < count; i++) {
       unsigned long v = PinCurrentValues[i] + (channelValues[i] - PinCurrentValues[i]) * fraction;
       //printlnAlways(v);
       myHRWrite(PWMPins[i], v);
     }
-    //vTaskDelay(xDelay); 
+    //vTaskDelay(xDelay);
   }
 
   for (int i = 0; i < count; i++) {
@@ -372,7 +368,7 @@ void cmdPWMPins() {
     PinCurrentValues[i] = v;
     myHRWrite(PWMPins[i], v);
   }
-  
+
   printAck("OK set ");
   printAck(count);
   printlnAck(" pins");
@@ -405,9 +401,13 @@ void cmdServo() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void setup() {
-  rtc_clk_cpu_freq_set(RTC_CPU_FREQ_240M);
-  ledsetup();
-  for (int i=0; i < NumPWMPins; i++){
+  //  rtc_clk_cpu_freq_set(RTC_CPU_FREQ_240M);
+  //  ledsetup();
+  pinMode(D2, OUTPUT);
+  pinMode(D3, OUTPUT);
+  pinMode(D4, OUTPUT);
+  
+  for (int i = 0; i < NumPWMPins; i++) {
     myHRWrite(PWMPins[i], 0);
     PinCurrentValues[i] = 0;
     delay(10);
@@ -466,15 +466,15 @@ WiFiClient LastClient;
 void loop() {
   CmdMgr.readSerial();
   if (WiFiClient newClient = server.available()) {
-      Serial.println("New Client.");
-      LastClient = newClient;
+    Serial.println("New Client.");
+    LastClient = newClient;
   }
 
   if (LastClient && LastClient.connected()) {
-      while (LastClient.available()) {
-        char c = LastClient.read();             // read a byte, then
-        CmdMgr.handleChar(c);
-        Serial.write(c);  // print it out the serial monitor
-      }
+    while (LastClient.available()) {
+      char c = LastClient.read();             // read a byte, then
+      CmdMgr.handleChar(c);
+      Serial.write(c);  // print it out the serial monitor
     }
+  }
 }
