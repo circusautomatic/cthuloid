@@ -16,3 +16,7 @@ Folders of note:
 *-firmware for ethernet-enabled controller for LEDs at high resolution*
 - ### ghettopticon 
 *-humanoid robot mounted on a motorized wheelchair (should be moved to its own repo)*
+
+## License
+
+Not yet declared.
